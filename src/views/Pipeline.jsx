@@ -820,19 +820,20 @@ const SCOPE_OPTIONS = [
   { id: 'all', label: 'All' },
 ];
 
-export function PipelineView({ onOpenLoan, persona = 'LO' }) {
+export function PipelineView({ onOpenLoan, persona = 'LO', intent }) {
   const isProcessor = persona === 'Processor';
   const initialCols = isProcessor ? PROCESSOR_COLUMN_ORDER : DEFAULT_COLUMN_ORDER;
 
   const [loans, setLoans] = React.useState(INITIAL_PIPELINE_LOANS);
   const [viewMode, setViewMode] = React.useState('pipeline'); // 'pipeline' | 'tasks' | 'hybrid'
   const [scope, setScope] = React.useState('my');
-  const [view, setView] = React.useState('all');
+  const [view, setView] = React.useState(() => (intent && intent.view) || 'all');
   const [query, setQuery] = React.useState('');
   const [columnOrder, setColumnOrder] = React.useState(initialCols);
   const [columnsVisible, setColumnsVisible] = React.useState(new Set(initialCols));
   const [sort, setSort] = React.useState({ col: null, dir: 'asc' });
-  const [filters, setFilters] = React.useState([]);
+  const [filters, setFilters] = React.useState(() => (intent && intent.filters) || []);
+  const intentLabel = intent && intent.label;
   const [colsMenuOpen, setColsMenuOpen] = React.useState(false);
   const [filterBuilderOpen, setFilterBuilderOpen] = React.useState(false);
   const [groupBy, setGroupBy] = React.useState(null);

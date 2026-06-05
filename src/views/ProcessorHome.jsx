@@ -172,7 +172,7 @@ export function ProcessorHomeView({ onNavigate, onOpenLoan, onOpenAi, onOpenDepo
               Processor Mode
             </span>
             <span style={{ fontSize: 12, color: 'rgba(255,255,255,0.4)' }}>
-              {WEATHER.icon} {WEATHER.temp}° {WEATHER.condition} · {WEATHER.city}
+              {WEATHER.icon} {WEATHER.temp}° {WEATHER.condition} · {WEATHER.city} · 📍 Greenwood Branch
             </span>
           </div>
 
