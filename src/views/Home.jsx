@@ -352,9 +352,18 @@ const CELEBRATIONS = [
   { emoji: '🎊', name: 'Priya Shah',  sub: '3-year workiversary',  color: '#2A8C53', initials: 'PS', today: false },
 ];
 
-// Mock weather + branch (would be live via API + auth context in production)
+// Mock weather + branch + lender (would be live via API + auth context in production)
 const WEATHER = { temp: 68, condition: 'Mostly Cloudy', icon: '🌥️', city: 'Greenwood, IN' };
-const BRANCH  = { name: 'Greenwood Branch', code: 'GRW-04' };
+const BRANCH  = { name: 'Camp Hill Branch', code: 'CHL-04' };
+const LENDER  = { name: 'Lakeside Mortgage', tagline: 'Lending built on trust since 1987', mark: 'L' };
+
+// Hero KPI tiles — sourced from pipeline state in production.
+const HERO_TILES = [
+  { icon: 'calculator',  value: '7', label: 'Due today',           sub: '2 high priority',    route: 'pipeline' },
+  { icon: 'fileSearch',  value: '3', label: 'Awaiting your review', sub: 'Clear to close',     route: 'pipeline' },
+  { icon: 'clock',       value: '2', label: 'Locks expiring ≤7d',  sub: 'Action required',    route: 'pipeline' },
+  { icon: 'zap',         value: '5', label: 'New leads',            sub: 'Assigned overnight', route: 'pipeline' },
+];
 
 function greeting() {
   const h = new Date().getHours();
@@ -1045,7 +1054,7 @@ export function HomeView({ onNavigate, onOpenLoan }) {
       <div style={{
         background: 'linear-gradient(135deg, #1a1535 0%, #1e1b4b 40%, #1a1d3a 100%)',
         borderBottom: '1px solid rgba(255,255,255,0.07)',
-        padding: '24px 36px 28px',
+        padding: '20px 36px 32px',
         flexShrink: 0,
         position: 'relative',
         overflow: 'hidden',
@@ -1053,34 +1062,64 @@ export function HomeView({ onNavigate, onOpenLoan }) {
         {/* Subtle glow blob */}
         <div style={{ position: 'absolute', top: -60, right: 200, width: 340, height: 340, borderRadius: 999, background: 'radial-gradient(circle, rgba(126,104,250,0.15) 0%, transparent 70%)', pointerEvents: 'none' }}/>
 
-        <div style={{ display: 'flex', alignItems: 'center', gap: 48, position: 'relative' }}>
+        {/* Top utility row — brand left, branch + weather right */}
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 16, marginBottom: 24, position: 'relative' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+            <div style={{
+              width: 32, height: 32, borderRadius: 8,
+              background: '#fff', color: '#1e1b4b',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              fontSize: 15, fontWeight: 800, letterSpacing: '-0.02em',
+              flexShrink: 0,
+            }}>{LENDER.mark}</div>
+            <div style={{ lineHeight: 1.2 }}>
+              <div style={{ fontSize: 14, fontWeight: 700, color: '#fff', letterSpacing: '-0.01em' }}>{LENDER.name}</div>
+              <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.45)' }}>{LENDER.tagline}</div>
+            </div>
+          </div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 18, fontSize: 13, color: 'rgba(255,255,255,0.55)' }}>
+            <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+              <Icon name="pin" size={13} strokeWidth={1.7}/>
+              <span style={{ color: 'rgba(255,255,255,0.85)' }}>{BRANCH.name}</span>
+            </span>
+            <span style={{ width: 3, height: 3, borderRadius: 999, background: 'rgba(255,255,255,0.25)' }}/>
+            <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+              <span>{WEATHER.icon}</span>
+              <span style={{ color: 'rgba(255,255,255,0.85)', fontWeight: 600 }}>{WEATHER.temp}°</span>
+              <span>{WEATHER.condition}</span>
+            </span>
+          </div>
+        </div>
+
+        {/* Main row — greeting block left, 2x2 KPI grid right */}
+        <div style={{ display: 'grid', gridTemplateColumns: '1.15fr 1fr', gap: 36, alignItems: 'center', position: 'relative' }}>
 
           {/* Left — greeting block */}
-          <div style={{ flex: 1, minWidth: 0 }}>
-            {/* Weather + branch line */}
-            <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 12.5, color: 'rgba(255,255,255,0.38)', marginBottom: 14 }}>
-              <span>{WEATHER.icon}</span>
-              <span>{WEATHER.temp}° · {WEATHER.condition} · {WEATHER.city}</span>
-              <span style={{ width: 3, height: 3, borderRadius: 999, background: 'rgba(255,255,255,0.3)', margin: '0 4px' }}/>
-              <Icon name="pin" size={11} strokeWidth={1.8}/>
-              <span style={{ color: 'rgba(255,255,255,0.62)' }}>{BRANCH.name}</span>
+          <div style={{ minWidth: 0 }}>
+            {/* Date pill */}
+            <div style={{
+              display: 'inline-flex', alignItems: 'center', gap: 8,
+              fontSize: 12, fontWeight: 600, letterSpacing: '0.14em',
+              color: 'rgba(255,255,255,0.5)',
+              marginBottom: 16,
+            }}>
+              <span style={{ width: 6, height: 6, borderRadius: 999, background: 'rgba(255,255,255,0.5)' }}/>
+              {new Date().toLocaleDateString(undefined, { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' }).toUpperCase()}
             </div>
 
             {/* Greeting */}
-            <h1 style={{ margin: '0 0 10px', fontSize: 38, fontWeight: 800, letterSpacing: '-0.03em', color: '#fff', lineHeight: 1.1 }}>
-              {greeting()}, Jordan
+            <h1 style={{ margin: '0 0 12px', fontSize: 38, fontWeight: 800, letterSpacing: '-0.03em', color: '#fff', lineHeight: 1.1 }}>
+              {greeting()}, Jordan.
             </h1>
 
-            {/* AI context line */}
-            <p style={{ margin: '0 0 22px', fontSize: 14, color: 'rgba(255,255,255,0.5)', lineHeight: 1.6, maxWidth: 480 }}>
-              8 loans active — Anderson's income verification is ready to clear.{' '}
-              {/* Not a link — use plain text styling so purple doesn't imply interactivity */}
-              <span style={{ color: 'rgba(255,255,255,0.82)', fontWeight: 500 }}>One action moves it forward.</span>
+            {/* Subcopy */}
+            <p style={{ margin: '0 0 22px', fontSize: 14, color: 'rgba(255,255,255,0.6)', lineHeight: 1.6, maxWidth: 480 }}>
+              Glad to see you back. Pick up where you left off, or jump straight into your pipeline.
             </p>
 
             {/* CTAs */}
-            <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-              <button onClick={() => onNavigate('feed')} style={{
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
+              <button onClick={() => onNavigate('pipeline')} style={{
                 display: 'flex', alignItems: 'center', gap: 8,
                 height: 38, padding: '0 20px',
                 background: '#fff', color: '#1e1b4b',
@@ -1088,24 +1127,56 @@ export function HomeView({ onNavigate, onOpenLoan }) {
                 fontSize: 13.5, fontWeight: 700, letterSpacing: '-0.01em',
                 boxShadow: '0 2px 12px rgba(0,0,0,0.3)',
               }}>
-                Review priorities <Icon name="arrowRight" size={13} strokeWidth={2.5}/>
+                Open my pipeline <Icon name="arrowRight" size={13} strokeWidth={2.5}/>
               </button>
               <button onClick={() => onNavigate('pipeline')} style={{
                 display: 'flex', alignItems: 'center', gap: 8,
                 height: 38, padding: '0 18px',
-                background: 'rgba(255,255,255,0.08)', color: 'rgba(255,255,255,0.75)',
-                border: '1px solid rgba(255,255,255,0.14)', borderRadius: 9, cursor: 'pointer', fontFamily: 'inherit',
+                background: 'rgba(255,255,255,0.08)', color: 'rgba(255,255,255,0.85)',
+                border: '1px solid rgba(255,255,255,0.18)', borderRadius: 9, cursor: 'pointer', fontFamily: 'inherit',
                 fontSize: 13.5, fontWeight: 600,
               }}>
-                Open pipeline
+                <Icon name="plus" size={14} strokeWidth={2.4}/>
+                Start application
               </button>
             </div>
           </div>
 
-          {/* Right — ring gauges */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: 28, flexShrink: 0 }}>
-            <RingGauge value={85} label="On-Time Rate" color="#818CF8" size={118}/>
-            <RingGauge value={74} label="Q2 to Goal"   color="#34D399" size={118}/>
+          {/* Right — 2x2 KPI tile grid */}
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, alignSelf: 'center' }}>
+            {HERO_TILES.map((t, i) => (
+              <button key={i} onClick={() => onNavigate(t.route)} style={{
+                background: 'rgba(255,255,255,0.06)',
+                border: '1px solid rgba(255,255,255,0.12)',
+                borderRadius: 12,
+                padding: '14px 16px 12px',
+                color: '#fff',
+                display: 'flex', flexDirection: 'column',
+                cursor: 'pointer',
+                fontFamily: 'inherit',
+                textAlign: 'left',
+                transition: 'background 0.15s, border-color 0.15s',
+                minWidth: 0,
+              }}
+              onMouseEnter={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.10)'; e.currentTarget.style.borderColor = 'rgba(255,255,255,0.22)'; }}
+              onMouseLeave={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.06)'; e.currentTarget.style.borderColor = 'rgba(255,255,255,0.12)'; }}
+              >
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 8 }}>
+                  <div style={{
+                    width: 26, height: 26, borderRadius: 7,
+                    background: 'rgba(255,255,255,0.10)',
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    color: 'rgba(255,255,255,0.85)',
+                  }}>
+                    <Icon name={t.icon} size={13} strokeWidth={1.85}/>
+                  </div>
+                  <span style={{ color: 'rgba(255,255,255,0.4)', fontSize: 13, lineHeight: 1 }}>↗</span>
+                </div>
+                <div style={{ fontSize: 26, fontWeight: 800, letterSpacing: '-0.02em', lineHeight: 1, fontFamily: 'DM Mono' }}>{t.value}</div>
+                <div style={{ fontSize: 12, fontWeight: 600, color: 'rgba(255,255,255,0.92)', marginTop: 6 }}>{t.label}</div>
+                <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.5)', marginTop: 2 }}>{t.sub}</div>
+              </button>
+            ))}
           </div>
         </div>
       </div>
