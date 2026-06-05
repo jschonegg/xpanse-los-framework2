@@ -353,7 +353,7 @@ const CELEBRATIONS = [
 ];
 
 // Mock weather + branch + lender (would be live via API + auth context in production)
-const WEATHER = { temp: 68, condition: 'Mostly Cloudy', icon: '🌥️', city: 'Greenwood, IN' };
+const WEATHER = { temp: 68, condition: 'Mostly Cloudy', icon: '🌥️', city: 'Camp Hill, PA' };
 const BRANCH  = { name: 'Camp Hill Branch', code: 'CHL-04' };
 const LENDER  = { name: 'Lakeside Mortgage', tagline: 'Lending built on trust since 1987', mark: 'L' };
 
@@ -376,7 +376,7 @@ const HERO_TILES = [
   { icon: 'fileSearch', value: '3', label: 'Awaiting your review', sub: 'Clear to close',
     intent: { filters: [{ field: 'aiStatus', op: 'is', value: 'Needs Review' }], label: 'Awaiting your review' } },
   { icon: 'clock',      value: '2', label: 'Locks expiring ≤7d',  sub: 'Action required',
-    intent: { view: 'urgent', label: 'Locks expiring ≤7d' } },
+    intent: { filters: [{ field: 'lockStatus', op: 'is', value: 'Expiring' }], label: 'Locks expiring ≤7d' } },
   { icon: 'zap',        value: '5', label: 'New leads',            sub: 'Assigned overnight',
     intent: { filters: [{ field: 'status', op: 'is', value: 'Application' }], label: 'New leads' } },
 ];
