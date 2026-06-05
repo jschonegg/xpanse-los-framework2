@@ -505,12 +505,16 @@ const COLUMN_DEFS = [
       </div>
     )},
   { id: 'property', label: 'Property', width: 240, editType: 'text',
-    render: (l) => <span style={{ color: 'var(--text-secondary)', fontSize: 13 }}>{l.property}</span> },
+    render: (l) => l.property
+      ? <span style={{ color: 'var(--text-secondary)', fontSize: 13 }}>{l.property}</span>
+      : <span style={{ color: 'var(--text-tertiary)', fontSize: 13 }}>—</span> },
   { id: 'amount', label: 'Amount', width: 110, align: 'right', editType: 'number', prefix: '$',
     render: (l) => <span style={{ fontSize: 13.5, fontWeight: 600 }}>${(l.amount/1000).toFixed(0)}K</span> },
   { id: 'product', label: 'Product', width: 120, editType: 'select',
     options: ['Conv 30yr','FHA 30yr','VA 30yr','Jumbo 30yr','USDA 30yr'],
-    render: (l) => <span style={{ fontSize: 13, color: 'var(--text-secondary)' }}>{l.product}</span> },
+    render: (l) => l.product
+      ? <span style={{ fontSize: 13, color: 'var(--text-secondary)' }}>{l.product}</span>
+      : <span style={{ fontSize: 13, color: 'var(--text-tertiary)' }}>—</span> },
   { id: 'rate', label: 'Rate', width: 80, align: 'right', editType: 'number', step: 0.125, suffix: '%',
     render: (l) => <span style={{ fontFamily: 'DM Mono', fontSize: 12.5 }}>{l.rate.toFixed(3)}%</span> },
   { id: 'status', label: 'Status', width: 150, editType: 'select',
@@ -519,12 +523,16 @@ const COLUMN_DEFS = [
   { id: 'milestone', label: 'Milestone', width: 170, editType: 'text',
     render: (l) => <span style={{ color: 'var(--text-secondary)', fontSize: 13 }}>{l.milestone}</span> },
   { id: 'days', label: 'Days', width: 70, align: 'center', editType: 'number',
-    render: (l) => (
-      <span style={{
-        background: 'var(--bg-muted)', color: 'var(--text-secondary)',
-        fontSize: 12, fontWeight: 500, padding: '3px 9px', borderRadius: 999,
-      }}>{l.days}d</span>
-    )},
+    render: (l) => {
+      const stale = l.days > 14;
+      return (
+        <span style={{
+          background: stale ? 'var(--status-red-bg)' : 'var(--bg-muted)',
+          color: stale ? 'var(--status-red)' : 'var(--text-secondary)',
+          fontSize: 12, fontWeight: stale ? 600 : 500, padding: '3px 9px', borderRadius: 999,
+        }}>{l.days}d</span>
+      );
+    }},
   { id: 'dti', label: 'DTI', width: 70, align: 'right', editType: 'number', suffix: '%',
     render: (l) => <span style={{ fontFamily: 'DM Mono', fontSize: 12.5 }}>{l.dti}%</span> },
   { id: 'ltv', label: 'LTV', width: 70, align: 'right', editType: 'number', suffix: '%',
@@ -827,7 +835,7 @@ export function PipelineView({ onOpenLoan, persona = 'LO', intent }) {
 
   const [loans, setLoans] = React.useState(INITIAL_PIPELINE_LOANS);
   const [viewMode, setViewMode] = React.useState('pipeline'); // 'pipeline' | 'tasks' | 'hybrid'
-  const [scope, setScope] = React.useState('my');
+  const [scope, setScope] = React.useState('all');
   const [view, setView] = React.useState(() => (intent && intent.view) || 'all');
   const [query, setQuery] = React.useState('');
   const [columnOrder, setColumnOrder] = React.useState(initialCols);
@@ -1386,17 +1394,9 @@ function LoanRow({ loan, columns, onOpen, cellPad, rowHeight, editingCell, setEd
         <input type="checkbox" checked={isSelected} onChange={toggleSelect} aria-label={`Select loan ${loan.id} — ${loan.borrower}`} style={{ accentColor: '#0E1014' }}/>
       </td>
       {columns.map(col => {
-        const isEditing = editingCell && editingCell.rowId === loan.id && editingCell.colId === col.id;
-        const editable = col.editType && !col.locked;
         return (
-          <td key={col.id} style={{ padding: isEditing ? 0 : cellPad, verticalAlign: 'middle', textAlign: col.align || 'left', position: 'relative', cursor: editable ? 'text' : 'default', outline: isEditing ? '2px solid var(--ai-primary)' : 'none', outlineOffset: -2 }}
-            onClick={e => {
-              if (e.target.closest('input,select,button')) { e.stopPropagation(); return; }
-              if (editable) { e.stopPropagation(); setEditingCell({ rowId: loan.id, colId: col.id }); }
-            }}>
-            {isEditing ? (
-              <CellEditor col={col} value={loan[col.id]} onCommit={(v) => { updateCell(loan.id, col.id, v); setEditingCell(null); }} onCancel={() => setEditingCell(null)} cellPad={cellPad}/>
-            ) : col.render(loan)}
+          <td key={col.id} style={{ padding: cellPad, verticalAlign: 'middle', textAlign: col.align || 'left', position: 'relative', cursor: 'pointer' }}>
+            {col.render(loan)}
           </td>
         );
       })}
