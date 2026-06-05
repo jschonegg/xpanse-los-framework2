@@ -2,6 +2,7 @@ import React from 'react';
 import { Icon } from '../components/Icon';
 import { Avatar, StatusPill } from '../components/Shell';
 import { LOANS as SHARED_LOANS } from '../data/loans';
+import { TasksView, TasksSidebar } from './Tasks';
 
 const TODAY = new Date('2026-05-27');
 function daysUntil(dateStr) {
@@ -245,24 +246,262 @@ function DailyFocus({ loans, onOpenLoan }) {
 
 const INITIAL_PIPELINE_LOANS = SHARED_LOANS.map(l => ({ ...l }));
 
-const COLUMN_DEFS = [
-  { id: 'id', label: 'Loan ID', width: 130, locked: true, editable: false, render: (l) => (
-    <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-      <span style={{ fontFamily: 'DM Mono', fontSize: 12.5, fontWeight: 500 }}>{l.id}</span>
-      {l.flag && (
-        <span style={{
-          background: 'var(--card-red-bg)', color: 'var(--status-red)',
-          fontSize: 10.5, fontWeight: 600, width: 18, height: 18, borderRadius: 999,
-          display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
-        }}>{l.flag}</span>
-      )}
+// ── KPI summary cards ─────────────────────────────────────────────────────
+function computeKpis(loans) {
+  const activeStages = new Set(['Application','Processing','Underwriting','Approval','Closing']);
+  const active = loans.filter(l => activeStages.has(l.status));
+
+  // Total volume across all loans in pipeline
+  const totalVolume = loans.reduce((sum, l) => sum + (l.amount || 0), 0);
+
+  // Pipeline velocity: total days currently sitting across all in-process loans
+  const totalDays = active.reduce((sum, l) => sum + (l.days || 0), 0);
+
+  // Alerts: loans needing attention (low health, expiring lock, overdue closing, many open conditions)
+  const alerts = loans.filter(l => {
+    const d = daysUntil(l.closingDate);
+    const { score } = computeHealth(l);
+    return score < 65
+      || l.lockStatus === 'Expiring'
+      || (d !== null && d < 0)
+      || (l.conditionsOpen || 0) > 4
+      || l.flag;
+  });
+
+  return {
+    totalPipeline: { value: loans.length,        detail: 'All stages' },
+    totalVolume:   { value: `$${(totalVolume/1_000_000).toFixed(1)}M`, detail: 'Loan amount' },
+    activeLoans:   { value: active.length,       detail: 'In process' },
+    avgDays:       { value: totalDays,           detail: 'Pipeline velocity' },
+    totalAlerts:   { value: alerts.length,       detail: 'Needs attention' },
+  };
+}
+
+function KpiCard({ icon, iconColor, label, value, detail }) {
+  return (
+    <div style={{
+      flex: 1, minWidth: 0, background: 'var(--bg-surface)',
+      border: '1px solid var(--border-subtle)', borderRadius: 10,
+      padding: '12px 16px 14px', display: 'flex', flexDirection: 'column', gap: 4,
+    }}>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 7 }}>
+        <span style={{ fontSize: 11.5, fontWeight: 500, color: 'var(--text-tertiary)' }}>{label}</span>
+        <Icon name={icon} size={14} color={iconColor}/>
+      </div>
+      <div style={{ fontSize: 26, fontWeight: 600, color: 'var(--text-primary)', lineHeight: 1.1, letterSpacing: '-0.02em' }}>{value}</div>
+      <div style={{ fontSize: 12, color: 'var(--text-tertiary)' }}>{detail}</div>
     </div>
-  )},
-  { id: 'borrower', label: 'Borrower', width: 180, editType: 'text',
+  );
+}
+
+function KpiRow({ loans }) {
+  const k = React.useMemo(() => computeKpis(loans), [loans]);
+  return (
+    <div style={{ display: 'flex', gap: 12, marginBottom: 14 }}>
+      <KpiCard icon="doc"         iconColor="var(--text-secondary)" label="Total Pipeline"  value={k.totalPipeline.value} detail={k.totalPipeline.detail}/>
+      <KpiCard icon="dollar"      iconColor="#3A6BAD"               label="Total Volume"    value={k.totalVolume.value}   detail={k.totalVolume.detail}/>
+      <KpiCard icon="trendingUp"  iconColor="#3DB371"               label="Active Loans"    value={k.activeLoans.value}   detail={k.activeLoans.detail}/>
+      <KpiCard icon="clock"       iconColor="var(--text-secondary)" label="Avg Days/Stage"  value={k.avgDays.value}       detail={k.avgDays.detail}/>
+      <KpiCard icon="alertCircle" iconColor="var(--status-red)"     label="Total Alerts"    value={k.totalAlerts.value}   detail={k.totalAlerts.detail}/>
+    </div>
+  );
+}
+
+// ── Single-line AI insights banner (replaces the bulkier multi-row DailyFocus) ─
+function AIInsightsBanner({ loans, onOpenLoan }) {
+  const [dismissedIds, setDismissedIds] = React.useState(new Set());
+  const [cursor, setCursor] = React.useState(0);
+  const [animDir, setAnimDir] = React.useState(0); // -1 prev, +1 next, 0 idle
+
+  const items = React.useMemo(() => loans
+    .filter(l => {
+      if (dismissedIds.has(l.id)) return false;
+      const d = daysUntil(l.closingDate);
+      const { score } = computeHealth(l);
+      return score < 60
+        || l.lockStatus === 'Expiring'
+        || (l.lockStatus === 'Locked' && l.lockDays != null && l.lockDays <= 7)
+        || (d !== null && d <= 10 && d >= 0);
+    })
+    .map(l => ({ loan: l, action: getLoanAction(l) }))
+    .sort((a, b) => (a.action.severity === 'red' ? -1 : 1) - (b.action.severity === 'red' ? -1 : 1)),
+    [loans, dismissedIds]);
+
+  // Reset animation flag shortly after each move so subsequent renders don't replay it
+  React.useEffect(() => {
+    if (animDir === 0) return;
+    const t = setTimeout(() => setAnimDir(0), 260);
+    return () => clearTimeout(t);
+  }, [animDir, cursor]);
+
+  if (items.length === 0) return null;
+  const idx = ((cursor % items.length) + items.length) % items.length;
+  const { loan: l, action: a } = items[idx];
+  const isRed = a.severity === 'red';
+
+  const goPrev = () => { setAnimDir(-1); setCursor(c => c - 1); };
+  const goNext = () => { setAnimDir(1);  setCursor(c => c + 1); };
+
+  // Subtle slide-in for the changing content area
+  const slideKeyframes = animDir === 1 ? 'aiSlideInRight' : animDir === -1 ? 'aiSlideInLeft' : null;
+
+  return (
+    <div style={{
+      display: 'flex', alignItems: 'stretch', gap: 0,
+      background: 'var(--bg-surface)',
+      border: '1px solid var(--ai-border, #E4DEFA)',
+      borderRadius: 10, padding: 0, overflow: 'hidden',
+      marginBottom: 14, fontSize: 13,
+    }}>
+      <style>{`
+        @keyframes aiSlideInRight { from { opacity: 0; transform: translateX(8px); } to { opacity: 1; transform: translateX(0); } }
+        @keyframes aiSlideInLeft  { from { opacity: 0; transform: translateX(-8px); } to { opacity: 1; transform: translateX(0); } }
+      `}</style>
+
+      {/* ── Section 1: AI insights label (tinted background) ── */}
+      <div style={{
+        display: 'flex', alignItems: 'center', gap: 9,
+        padding: '10px 14px',
+        background: 'rgba(110, 89, 232, 0.07)',
+        borderRight: '1px solid var(--ai-border, #E4DEFA)',
+        flexShrink: 0,
+      }}>
+        <Icon name="sparkle" size={15} color="var(--ai-primary, #6E59E8)"/>
+        <div style={{ display: 'flex', flexDirection: 'column', lineHeight: 1.2 }}>
+          <span style={{ fontSize: 12.5, fontWeight: 600, color: 'var(--ai-ink, #3F2FBF)' }}>AI insights</span>
+          <span style={{ fontSize: 10.5, color: 'var(--text-tertiary)' }}>Updated just now</span>
+        </div>
+      </div>
+
+      {/* ── Section 2: insight content (animated on flip) ── */}
+      <div
+        key={`${idx}-${l.id}`}
+        style={{
+          display: 'flex', alignItems: 'center', gap: 10,
+          padding: '10px 14px',
+          flex: 1, minWidth: 0,
+          animation: slideKeyframes ? `${slideKeyframes} 0.22s ease-out` : undefined,
+        }}
+      >
+        <span style={{
+          display: 'inline-flex', alignItems: 'center', gap: 5, flexShrink: 0,
+          padding: '3px 9px', borderRadius: 999,
+          background: isRed ? 'var(--status-red-bg)' : 'var(--status-amber-bg)',
+          color: isRed ? 'var(--status-red)' : 'var(--status-amber)',
+        }}>
+          <Icon name="alertOctagon" size={11} color={isRed ? 'var(--status-red)' : 'var(--status-amber)'}/>
+          <span style={{ fontSize: 10.5, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em' }}>Heads up</span>
+        </span>
+        <span style={{ fontWeight: 600, color: 'var(--text-primary)', whiteSpace: 'nowrap' }}>{l.borrower}</span>
+        <span style={{ color: 'var(--text-secondary)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', minWidth: 0 }}>— {a.detail}</span>
+      </div>
+
+      {/* ── Section 3: CTA ── */}
+      <div style={{
+        display: 'flex', alignItems: 'center',
+        padding: '10px 12px',
+        flexShrink: 0,
+      }}>
+        <button
+          onClick={() => onOpenLoan(l.id, a.ctaTab)}
+          style={{
+            height: 30, padding: '0 13px', borderRadius: 7, fontFamily: 'inherit', cursor: 'pointer',
+            border: `1px solid ${isRed ? 'var(--card-red-border, #F2C4BE)' : 'var(--card-amber-border, #F0D9A8)'}`,
+            background: isRed ? 'var(--status-red-bg)' : 'var(--status-amber-bg)',
+            color: isRed ? 'var(--status-red)' : 'var(--status-amber)',
+            fontSize: 12, fontWeight: 600, display: 'inline-flex', alignItems: 'center', gap: 6, whiteSpace: 'nowrap',
+            transition: 'filter 0.12s',
+          }}
+          onMouseEnter={e => e.currentTarget.style.filter = 'brightness(0.95)'}
+          onMouseLeave={e => e.currentTarget.style.filter = 'none'}
+        >
+          {a.ctaLabel} <Icon name="arrowRight" size={12} strokeWidth={2.2}/>
+        </button>
+      </div>
+
+      {/* ── Section 4: carousel controls ── */}
+      <div style={{
+        display: 'flex', alignItems: 'center', gap: 4,
+        padding: '10px 10px',
+        flexShrink: 0,
+      }}>
+        <CarouselBtn onClick={goPrev} disabled={items.length <= 1} dir="prev" aria-label="Previous insight"/>
+        <span style={{ fontFamily: 'DM Mono', fontSize: 11.5, minWidth: 36, textAlign: 'center', color: 'var(--text-secondary)' }}>
+          {idx + 1} / {items.length}
+        </span>
+        <CarouselBtn onClick={goNext} disabled={items.length <= 1} dir="next" aria-label="Next insight"/>
+      </div>
+
+      {/* ── Section 5: dismiss ── */}
+      <div style={{
+        display: 'flex', alignItems: 'center',
+        padding: '10px 12px 10px 6px',
+        flexShrink: 0,
+      }}>
+        <button
+          onClick={() => { setDismissedIds(prev => new Set([...prev, l.id])); setCursor(0); }}
+          aria-label="Dismiss insight"
+          style={{
+            width: 26, height: 26, border: 'none', background: 'transparent',
+            cursor: 'pointer', borderRadius: 6, color: 'var(--text-tertiary)',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            transition: 'background 0.12s, color 0.12s',
+          }}
+          onMouseEnter={e => { e.currentTarget.style.background = 'rgba(0,0,0,0.05)'; e.currentTarget.style.color = 'var(--text-primary)'; }}
+          onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = 'var(--text-tertiary)'; }}
+        >
+          <Icon name="x" size={13}/>
+        </button>
+      </div>
+    </div>
+  );
+}
+
+function CarouselBtn({ onClick, disabled, dir, ...rest }) {
+  return (
+    <button
+      onClick={onClick}
+      disabled={disabled}
+      style={{
+        width: 26, height: 26, borderRadius: 6,
+        border: '1px solid var(--ai-border, #E4DEFA)',
+        background: 'var(--bg-surface)',
+        cursor: disabled ? 'not-allowed' : 'pointer',
+        color: disabled ? 'var(--text-tertiary)' : 'var(--text-secondary)',
+        opacity: disabled ? 0.4 : 1,
+        display: 'flex', alignItems: 'center', justifyContent: 'center',
+        transition: 'background 0.12s, color 0.12s, border-color 0.12s',
+      }}
+      onMouseEnter={e => { if (!disabled) { e.currentTarget.style.background = 'rgba(110, 89, 232, 0.08)'; e.currentTarget.style.color = 'var(--ai-primary, #6E59E8)'; e.currentTarget.style.borderColor = 'var(--ai-primary, #6E59E8)'; } }}
+      onMouseLeave={e => { e.currentTarget.style.background = 'var(--bg-surface)'; e.currentTarget.style.color = disabled ? 'var(--text-tertiary)' : 'var(--text-secondary)'; e.currentTarget.style.borderColor = 'var(--ai-border, #E4DEFA)'; }}
+      {...rest}
+    >
+      <Icon name="chevronRight" size={13} strokeWidth={2.2} style={{ transform: dir === 'prev' ? 'rotate(180deg)' : 'none' }}/>
+    </button>
+  );
+}
+
+
+const COLUMN_DEFS = [
+  { id: 'borrower', label: 'Borrower', width: 220, editType: 'text',
     render: (l) => (
       <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-        <Avatar initials={l.initials} size={28} color={l.avatarColor}/>
-        <span style={{ fontSize: 13.5, fontWeight: 500 }}>{l.borrower}</span>
+        <div style={{ position: 'relative', flexShrink: 0 }}>
+          <Avatar initials={l.initials} size={32} color={l.avatarColor}/>
+          {l.flag && (
+            <span style={{
+              position: 'absolute', top: -3, right: -3,
+              background: 'var(--status-red)', color: '#fff',
+              fontSize: 10, fontWeight: 700, width: 15, height: 15, borderRadius: 999,
+              display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+              border: '1.5px solid var(--bg-surface)',
+            }}>{l.flag}</span>
+          )}
+        </div>
+        <div style={{ display: 'flex', flexDirection: 'column', minWidth: 0, lineHeight: 1.25 }}>
+          <span style={{ fontSize: 13.5, fontWeight: 500, color: 'var(--text-primary)' }}>{l.borrower}</span>
+          <span style={{ fontFamily: 'DM Mono', fontSize: 11, color: 'var(--text-tertiary)' }}>{l.id}</span>
+        </div>
       </div>
     )},
   { id: 'property', label: 'Property', width: 240, editType: 'text',
@@ -515,8 +754,8 @@ function initialsFor(name) {
 }
 
 // LO default: borrower-first, closing urgency, risk signals — no noise columns
-const DEFAULT_COLUMN_ORDER = ['id','borrower','property','amount','product','status','milestone','days','assignee','aiStatus','health'];
-const PROCESSOR_COLUMN_ORDER = ['id','borrower','status','conditions','lock','closingDate','milestone','nextAction','disclosures','aus','days','health'];
+const DEFAULT_COLUMN_ORDER = ['borrower','property','amount','product','status','milestone','days','assignee','aiStatus'];
+const PROCESSOR_COLUMN_ORDER = ['borrower','status','conditions','lock','closingDate','milestone','nextAction','disclosures','aus','days','health'];
 const ALL_COLUMN_IDS = COLUMN_DEFS.map(c => c.id);
 
 // Processor next-action text per loan
@@ -534,7 +773,7 @@ const NEXT_ACTIONS = {
 const WATCHING_IDS = new Set(['LN-2024-0211', 'LN-2024-0245', 'LN-2024-0289']);
 
 const SAVED_VIEWS = [
-  { id: 'all',     label: 'All' },
+  { id: 'all',     label: 'All Loans' },
   { id: 'mine',    label: 'My Queue' },
   { id: 'urgent',  label: 'Need Attention' },
   { id: 'stuck',   label: 'Stuck' },
@@ -586,10 +825,10 @@ export function PipelineView({ onOpenLoan, persona = 'LO' }) {
   const initialCols = isProcessor ? PROCESSOR_COLUMN_ORDER : DEFAULT_COLUMN_ORDER;
 
   const [loans, setLoans] = React.useState(INITIAL_PIPELINE_LOANS);
+  const [viewMode, setViewMode] = React.useState('pipeline'); // 'pipeline' | 'tasks' | 'hybrid'
   const [scope, setScope] = React.useState('my');
   const [view, setView] = React.useState('all');
   const [query, setQuery] = React.useState('');
-  const [density, setDensity] = React.useState('comfortable');
   const [columnOrder, setColumnOrder] = React.useState(initialCols);
   const [columnsVisible, setColumnsVisible] = React.useState(new Set(initialCols));
   const [sort, setSort] = React.useState({ col: null, dir: 'asc' });
@@ -731,47 +970,80 @@ export function PipelineView({ onOpenLoan, persona = 'LO' }) {
     setSort(prev => prev.col === colId ? { col: colId, dir: prev.dir === 'asc' ? 'desc' : 'asc' } : { col: colId, dir: 'asc' });
   };
 
-  const rowHeight = density === 'compact' ? 40 : 56;
-  const cellPad = density === 'compact' ? '8px 14px' : '14px 16px';
+  const rowHeight = 40;
+  const cellPad = '8px 14px';
 
   return (
     <div style={{ padding: '16px 32px 60px', maxWidth: 1440, margin: '0 auto' }}>
 
-      {/* ── Header row: title + scope (subordinate) + primary actions ── */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 0 }}>
-        <h1 style={{ margin: 0, fontSize: 18, fontWeight: 600, letterSpacing: '-0.02em', whiteSpace: 'nowrap' }}>Pipeline</h1>
+      {/* ── Header row: title + view-mode toggle + primary actions ── */}
+      <div style={{ display: 'flex', alignItems: 'flex-start', gap: 12, marginBottom: 16 }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+          <h1 style={{ margin: 0, fontSize: 22, fontWeight: 600, letterSpacing: '-0.02em', whiteSpace: 'nowrap' }}>
+            {viewMode === 'tasks' ? 'Tasks' : 'Pipeline'}
+          </h1>
+          {viewMode === 'tasks' && (
+            <span style={{ fontSize: 12.5, color: 'var(--text-tertiary)' }}>Your action queue, prioritized for the day</span>
+          )}
+        </div>
 
-        {/* Scope — small pill, context modifier not navigation */}
-        <div style={{ display: 'flex', background: 'var(--bg-muted)', borderRadius: 6, padding: 2, gap: 1 }}>
-          {SCOPE_OPTIONS.map(s => {
-            const active = scope === s.id;
-            const count = s.id === 'my'
-              ? (isProcessor ? loans.length : loans.filter(l => l.assignee === CURRENT_USER_LO).length)
-              : s.id === 'team' ? loans.filter(l => TEAM_ASSIGNEES.includes(l.assignee)).length
-              : loans.length;
+        {/* Subtle view-mode toggle */}
+        <div role="tablist" aria-label="Pipeline view mode" style={{
+          display: 'inline-flex', background: 'var(--bg-muted)',
+          borderRadius: 7, padding: 2, gap: 1, marginTop: 4,
+        }}>
+          {[
+            { id: 'pipeline', label: 'Pipeline' },
+            { id: 'tasks',    label: 'Tasks' },
+            { id: 'hybrid',   label: 'Hybrid' },
+          ].map(m => {
+            const active = viewMode === m.id;
             return (
-              <button key={s.id} onClick={() => setScope(s.id)} style={{
-                display: 'flex', alignItems: 'center', gap: 4, padding: '3px 9px',
-                border: 'none', cursor: 'pointer', fontFamily: 'inherit', fontSize: 12,
-                fontWeight: active ? 600 : 400, borderRadius: 4,
-                background: active ? 'var(--bg-surface)' : 'transparent',
-                color: active ? 'var(--text-primary)' : 'var(--text-tertiary)',
-                boxShadow: active ? '0 1px 2px rgba(0,0,0,0.07)' : 'none',
-                transition: 'all 0.12s',
-              }}>
-                {s.label}
-                <span style={{ fontSize: 10.5, fontWeight: 600, color: active ? 'var(--ai-primary)' : 'var(--text-tertiary)' }}>{count}</span>
+              <button key={m.id} role="tab" aria-selected={active}
+                onClick={() => setViewMode(m.id)}
+                style={{
+                  padding: '4px 11px', border: 'none', cursor: 'pointer',
+                  fontFamily: 'inherit', fontSize: 12,
+                  fontWeight: active ? 600 : 500, borderRadius: 5,
+                  background: active ? 'var(--bg-surface)' : 'transparent',
+                  color: active ? 'var(--text-primary)' : 'var(--text-tertiary)',
+                  boxShadow: active ? '0 1px 2px rgba(0,0,0,0.06)' : 'none',
+                  transition: 'all 0.12s',
+                }}>
+                {m.label}
               </button>
             );
           })}
         </div>
 
-        {/* Processor badge hidden for stakeholder demo */}
-
         <div style={{ flex: 1 }}/>
-        <button className="btn btn-ghost" style={{ height: 32, color: 'var(--text-tertiary)', fontSize: 12.5 }}><Icon name="download" size={13}/>Export</button>
-        <button className="btn btn-primary" onClick={addLoan} style={{ height: 36 }}><Icon name="plus" size={13} strokeWidth={2.2}/>New Loan</button>
+        {viewMode === 'tasks' ? (
+          <>
+            <button className="btn btn-ghost" style={{ height: 34, color: 'var(--text-secondary)', fontSize: 12.5, border: '1px solid var(--border-subtle)', background: 'var(--bg-surface)' }}><Icon name="filter" size={13}/>Filters</button>
+            <button className="btn btn-primary" style={{ height: 36 }}><Icon name="plus" size={13} strokeWidth={2.2}/>New task</button>
+          </>
+        ) : (
+          <>
+            <button className="btn btn-ghost" style={{ height: 34, color: 'var(--text-secondary)', fontSize: 12.5, border: '1px solid var(--border-subtle)', background: 'var(--bg-surface)' }}><Icon name="download" size={13}/>Export</button>
+            <button className="btn btn-primary" onClick={addLoan} style={{ height: 36 }}><Icon name="plus" size={13} strokeWidth={2.2}/>New Loan</button>
+          </>
+        )}
       </div>
+
+      {viewMode === 'tasks' ? (
+        <TasksView onOpenLoan={onOpenLoan}/>
+      ) : (
+      <>
+      {/* ── KPI summary cards ── */}
+      <KpiRow loans={scopedLoans}/>
+
+      {/* ── AI insights banner ── */}
+      {!isProcessor && <AIInsightsBanner loans={scopedLoans} onOpenLoan={onOpenLoan}/>}
+
+      <div style={viewMode === 'hybrid'
+        ? { display: 'grid', gridTemplateColumns: 'minmax(0, 3fr) minmax(280px, 1fr)', gap: 16, alignItems: 'flex-start' }
+        : undefined}>
+      <div style={{ minWidth: 0 }}>
 
       {/* ── View tabs (primary) + utility controls (secondary) ── */}
       <div style={{ display: 'flex', alignItems: 'center', gap: 0, borderBottom: '1px solid var(--border-subtle)', marginTop: 10, marginBottom: 12 }}>
@@ -903,7 +1175,7 @@ export function PipelineView({ onOpenLoan, persona = 'LO' }) {
             onBlurCapture={e => e.currentTarget.style.borderColor = 'transparent'}
           >
             <Icon name="search" size={12} color="var(--text-tertiary)"/>
-            <input value={query} onChange={e => setQuery(e.target.value)} placeholder="Search…"
+            <input value={query} onChange={e => setQuery(e.target.value)} placeholder="Search loans…"
               aria-label="Search loans"
               style={{ flex: 1, height: '100%', border: 'none', outline: 'none', fontSize: 12, background: 'transparent', fontFamily: 'inherit', color: 'var(--text-primary)' }}
             />
@@ -935,16 +1207,11 @@ export function PipelineView({ onOpenLoan, persona = 'LO' }) {
             onFocus={e => e.currentTarget.style.background = 'var(--bg-muted)'}
             onBlur={e => e.currentTarget.style.background = 'transparent'}
           >
-            <option value="">Group by…</option>
+            <option value="">No grouping</option>
             <option value="status">Status</option>
             <option value="assignee">Assignee</option>
             <option value="product">Product</option>
           </select>
-
-          <SegmentedToggle value={density} onChange={setDensity} options={[
-            { value: 'comfortable', icon: 'pipeline', label: 'Comfortable' },
-            { value: 'compact', icon: 'listCheck', label: 'Compact' },
-          ]}/>
 
           {(filters.length > 0 || sort.col || groupBy) && (
             <button className="btn btn-ghost" style={{ height: 28, fontSize: 12, color: 'var(--text-tertiary)' }} onClick={resetCustomizations}>
@@ -979,8 +1246,6 @@ export function PipelineView({ onOpenLoan, persona = 'LO' }) {
           <button onClick={() => setFilters([])} style={{ background: 'transparent', border: 'none', cursor: 'pointer', fontFamily: 'inherit', fontSize: 12.5, color: 'var(--text-tertiary)', padding: '0 6px' }}>Clear all</button>
         </div>
       )}
-
-      {!isProcessor && <DailyFocus loans={scopedLoans} onOpenLoan={onOpenLoan}/>}
 
       <div className="card" style={{ overflow: 'hidden' }}>
         <div style={{ overflow: 'auto' }}>
@@ -1040,6 +1305,12 @@ export function PipelineView({ onOpenLoan, persona = 'LO' }) {
           </table>
         </div>
       </div>
+
+      </div>{/* end pipeline column */}
+      {viewMode === 'hybrid' && <TasksSidebar onOpenLoan={onOpenLoan}/>}
+      </div>{/* end hybrid grid */}
+      </>
+      )}
     </div>
   );
 }
@@ -1238,21 +1509,6 @@ function FilterBuilder({ filters, onChange, onClose }) {
       <button onClick={addFilter} style={{ marginTop: 10, background: 'transparent', border: '1px dashed var(--border-default)', color: 'var(--text-secondary)', borderRadius: 7, height: 32, width: '100%', cursor: 'pointer', fontFamily: 'inherit', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 7, fontSize: 12.5, fontWeight: 500 }}>
         <Icon name="plus" size={13} strokeWidth={2.2}/>Add filter
       </button>
-    </div>
-  );
-}
-
-function SegmentedToggle({ value, onChange, options }) {
-  return (
-    <div style={{ display: 'inline-flex', background: 'var(--bg-muted)', borderRadius: 8, padding: 3, height: 36 }}>
-      {options.map(opt => {
-        const active = value === opt.value;
-        return (
-          <button key={opt.value} onClick={() => onChange(opt.value)} style={{ display: 'inline-flex', alignItems: 'center', gap: 6, height: 30, padding: '0 12px', border: 'none', borderRadius: 6, background: active ? 'var(--bg-surface)' : 'transparent', boxShadow: active ? 'var(--shadow-sm)' : 'none', color: 'var(--text-primary)', fontSize: 12.5, fontWeight: 500, cursor: 'pointer', fontFamily: 'inherit' }} title={opt.label}>
-            <Icon name={opt.icon} size={13} strokeWidth={1.85}/>
-          </button>
-        );
-      })}
     </div>
   );
 }
