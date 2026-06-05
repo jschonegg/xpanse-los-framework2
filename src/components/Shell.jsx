@@ -388,8 +388,9 @@ export function StatusBar({ activeCount = 0, attentionCount = 0 }) {
       fontSize: 12,
       color: 'var(--text-secondary)',
       gap: 18,
-      /* Stick to viewport bottom so it's always reachable */
-      position: 'fixed', bottom: 0, left: 0, right: 0, zIndex: 40,
+      /* Stick to viewport bottom so it's always reachable.
+         left: 44 clears the LeftNav so the avatar doesn't overlap. */
+      position: 'fixed', bottom: 0, left: 44, right: 0, zIndex: 40,
     }}>
       <span style={{ display: 'flex', alignItems: 'center', gap: 6, color: 'var(--ai-ink)', fontWeight: 500 }}>
         <Icon name="sparkle" size={13} color="var(--ai-primary)" strokeWidth={1.5}/>
