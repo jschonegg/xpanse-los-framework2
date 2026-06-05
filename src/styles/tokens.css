@@ -1,0 +1,199 @@
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600;9..40,700&family=DM+Mono:wght@400;500&display=swap');
+
+:root {
+  /* Surfaces */
+  --bg-app: #FAFAF9;
+  --bg-surface: #FFFFFF;
+  --bg-muted: #F6F6F4;
+  --bg-elev: #FFFFFF;
+
+  /* Text */
+  --text-primary: #0E1014;
+  --text-secondary: #5F6368;
+  --text-tertiary: #8B8F95;
+  --text-on-dark: #FFFFFF;
+
+  /* Borders */
+  --border-subtle: #ECECEA;
+  --border-default: #E2E2DF;
+  --border-strong: #C9C9C5;
+
+  /* AI / brand purple */
+  --ai-primary: #6D5BF6;
+  --ai-primary-hover: #5C49E8;
+  --ai-ink: #4A39C9;
+  --ai-bg: #F2EFFD;
+  --ai-bg-strong: #E8E3FC;
+  --ai-border: #DFD7FB;
+  --ai-tint: #B7A8FE;
+
+  /* Status */
+  --status-blue: #1B5BB8;
+  --status-blue-bg: #DCE9FB;
+  --status-green: #1F7A45;
+  --status-green-bg: #DFF1E5;
+  --status-amber: #9C6A1A;
+  --status-amber-bg: #FBEFD2;
+  --status-red: #C2362A;
+  --status-red-bg: #FBE3DF;
+
+  /* Card accent bgs */
+  --card-red-bg: #FDF3F1;
+  --card-red-border: #F2D4CE;
+  --card-green-bg: #F1F8F2;
+  --card-green-border: #D7E8DA;
+  --card-amber-bg: #FBF6E9;
+  --card-amber-border: #EFE2BC;
+
+  /* Shadows */
+  --shadow-sm: 0 1px 2px rgba(15, 17, 21, 0.04);
+  --shadow-md: 0 2px 6px rgba(15, 17, 21, 0.05), 0 1px 2px rgba(15, 17, 21, 0.04);
+  --shadow-lg: 0 12px 32px -8px rgba(15, 17, 21, 0.12), 0 4px 12px rgba(15, 17, 21, 0.05);
+  --shadow-fab: 0 12px 28px -6px rgba(74, 57, 201, 0.45), 0 4px 12px rgba(74, 57, 201, 0.2);
+
+  /* Radii */
+  --r-xs: 6px;
+  --r-sm: 8px;
+  --r-md: 10px;
+  --r-lg: 12px;
+  --r-xl: 16px;
+  --r-2xl: 20px;
+  --r-pill: 999px;
+}
+
+* { box-sizing: border-box; }
+
+/* ── Focus visibility — global keyboard navigation ring ──────────────────── */
+:focus-visible {
+  outline: 2px solid var(--ai-primary);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+/* Suppress outline for pointer clicks; only show for keyboard */
+:focus:not(:focus-visible) { outline: none; }
+/* Slightly tighter radius for button shapes */
+button:focus-visible, [role="tab"]:focus-visible {
+  outline: 2px solid var(--ai-primary);
+  outline-offset: 3px;
+  border-radius: 6px;
+}
+
+/* ── Pulse animation (used on expiring lock badge) ───────────────────────── */
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50%       { opacity: 0.35; }
+}
+
+html, body {
+  margin: 0;
+  padding: 0;
+  font-family: 'DM Sans', system-ui, -apple-system, sans-serif;
+  color: var(--text-primary);
+  background: var(--bg-app);
+  -webkit-font-smoothing: antialiased;
+  font-feature-settings: "ss01", "cv11";
+}
+
+body {
+  min-height: 100vh;
+  min-width: 1280px;
+  display: flex;
+  flex-direction: column;
+}
+
+button { font-family: inherit; cursor: pointer; }
+input, select, textarea { font-family: inherit; }
+
+/* Buttons */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  height: 36px;
+  padding: 0 14px;
+  border-radius: var(--r-md);
+  font-size: 13.5px;
+  font-weight: 500;
+  border: 1px solid transparent;
+  transition: background 0.12s, border-color 0.12s, transform 0.04s;
+  line-height: 1;
+  white-space: nowrap;
+}
+.btn:active { transform: translateY(0.5px); }
+.btn-primary { background: var(--text-primary); color: #fff; border-color: var(--text-primary); }
+.btn-primary:hover { background: #22252B; }
+.btn-ai { background: var(--ai-primary); color: #fff; border-color: var(--ai-primary); }
+.btn-ai:hover { background: var(--ai-primary-hover); }
+.btn-success { background: #2A8C53; color: #fff; border-color: #2A8C53; }
+.btn-success:hover { background: #237845; }
+.btn-outline { background: var(--bg-surface); color: var(--text-primary); border-color: var(--border-default); }
+.btn-outline:hover { background: var(--bg-muted); border-color: var(--border-strong); }
+.btn-ghost { background: transparent; color: var(--text-secondary); border-color: transparent; }
+.btn-ghost:hover { background: var(--bg-muted); color: var(--text-primary); }
+.btn-sm { height: 30px; padding: 0 11px; font-size: 12.5px; gap: 6px; }
+.btn-lg { height: 40px; padding: 0 16px; font-size: 14px; }
+.btn-icon { width: 36px; padding: 0; justify-content: center; }
+
+/* Card */
+.card {
+  background: var(--bg-surface);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--r-lg);
+}
+
+/* Pill */
+.pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 10px;
+  height: 22px;
+  border-radius: var(--r-pill);
+  font-size: 11.5px;
+  font-weight: 500;
+  line-height: 1;
+  white-space: nowrap;
+}
+
+/* Inputs */
+.input {
+  height: 36px;
+  padding: 0 12px;
+  border-radius: var(--r-md);
+  border: 1px solid var(--border-default);
+  background: var(--bg-surface);
+  color: var(--text-primary);
+  font-size: 13.5px;
+  width: 100%;
+  outline: none;
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+.input:focus {
+  border-color: var(--ai-tint);
+  box-shadow: 0 0 0 3px rgba(109, 91, 246, 0.12);
+}
+
+/* Scrollbars */
+*::-webkit-scrollbar { width: 10px; height: 10px; }
+*::-webkit-scrollbar-track { background: transparent; }
+*::-webkit-scrollbar-thumb { background: #DCDCD9; border-radius: 8px; border: 2px solid var(--bg-app); }
+*::-webkit-scrollbar-thumb:hover { background: #BFBFBA; }
+
+/* Layout helpers */
+.row { display: flex; }
+.col { display: flex; flex-direction: column; }
+.gap-2 { gap: 8px; }
+.gap-3 { gap: 12px; }
+.gap-4 { gap: 16px; }
+.gap-6 { gap: 24px; }
+.grow { flex: 1; }
+
+/* AI card gradient background */
+.ai-card-bg {
+  background:
+    radial-gradient(120% 100% at 0% 0%, rgba(183, 168, 254, 0.22) 0%, transparent 55%),
+    radial-gradient(100% 100% at 100% 100%, rgba(109, 91, 246, 0.1) 0%, transparent 60%),
+    var(--ai-bg);
+}
+
+#root { flex: 1; display: flex; flex-direction: column; min-height: 100vh; }
