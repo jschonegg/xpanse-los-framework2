@@ -5,11 +5,18 @@ import { Icon } from '../components/Icon';
 // Each entry describes a widget: metadata + its render component.
 // `defaultWidth` is the preferred width when first added.
 
-const STORAGE_KEY = 'los-widget-layout-v3';
+// Bump the storage key when DEFAULT_LAYOUT changes meaningfully so existing
+// users see the new default the next time they load the home.
+const STORAGE_KEY = 'los-widget-layout-v4';
 
 const DEFAULT_LAYOUT = [
-  { id: 'leaderboard',  width: 'full' },
-  { id: 'company-feed', width: 'full' },
+  { id: 'ai-coach-brief',      width: 'full' },
+  { id: 'files-at-risk',       width: 'half' },
+  { id: 'ready-for-uw',        width: 'half' },
+  { id: 'lock-clock',          width: 'half' },
+  { id: 'waiting-on-borrower', width: 'half' },
+  { id: 'leaderboard',         width: 'full' },
+  { id: 'company-feed',        width: 'full' },
 ];
 
 function loadLayout() {
@@ -203,6 +210,268 @@ export function RecentActivityWidget() {
 }
 
 // ─── Widget registry ──────────────────────────────────────────────────────────
+// ── Files at Risk ──────────────────────────────────────────────────────────
+// Ported from old prototype: surfaces files with data inconsistencies,
+// ceiling breaches, or value gaps. Mid-LOs' primary triage view.
+export function FilesAtRiskWidget({ onOpenLoan }) {
+  const rows = [
+    { borrower: 'Sarah Anderson', loanId: 'LN-2024-0234', tone: 'risk',
+      risk: 'VOE shows $98k, app says $112k — reconcile before UW.' },
+    { borrower: 'David Chen', loanId: 'LN-2024-0189', tone: 'risk',
+      risk: 'Appraisal came in 4% under contract — confirm value or restructure.' },
+    { borrower: 'Priya Patel', loanId: 'LN-2024-0241', tone: 'deadline',
+      risk: 'DTI at 44.8% — within 0.2 pts of ceiling. Any change pushes over.' },
+  ];
+  const toneColor = { risk: '#EF4444', deadline: '#D97706' };
+  return (
+    <div>
+      <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', marginBottom: 12 }}>
+        <div>
+          <div style={{ fontSize: 22, fontWeight: 800, letterSpacing: '-0.015em', lineHeight: 1.1 }}>5 files</div>
+          <div style={{ fontSize: 12, color: '#6B7280', marginTop: 2 }}>Need a decision · inconsistencies, ceiling breaches, value gaps</div>
+        </div>
+        <button style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 12, fontWeight: 700, color: '#4338CA', padding: 0 }}>See all 5 →</button>
+      </div>
+      <div style={{ display: 'flex', flexDirection: 'column' }}>
+        {rows.map((r, i) => (
+          <div key={r.loanId} style={{
+            display: 'flex', alignItems: 'flex-start', gap: 10,
+            padding: '10px 0', borderTop: i === 0 ? 'none' : '1px solid #F3F4F6',
+          }}>
+            <span style={{ width: 8, height: 8, borderRadius: 999, background: toneColor[r.tone], marginTop: 6, flexShrink: 0 }}/>
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <div style={{ display: 'flex', alignItems: 'baseline', gap: 6 }}>
+                <span style={{ fontSize: 13, fontWeight: 700, color: '#111827' }}>{r.borrower}</span>
+                <span style={{ fontSize: 11, color: '#9CA3AF', fontFamily: 'DM Mono' }}>{r.loanId}</span>
+              </div>
+              <div style={{ fontSize: 12, color: '#4B5563', marginTop: 2, lineHeight: 1.4 }}>{r.risk}</div>
+            </div>
+            <button onClick={() => onOpenLoan && onOpenLoan(r.loanId)} style={{
+              background: 'none', border: 'none', cursor: 'pointer',
+              fontSize: 12, fontWeight: 700, color: '#4338CA', flexShrink: 0, padding: '2px 0',
+            }}>Review →</button>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+// ── Ready for UW ───────────────────────────────────────────────────────────
+// Ported from old prototype: files where all PTD conditions are cleared
+// and a one-click submit to underwriting is available.
+export function ReadyForUWWidget({ onOpenLoan }) {
+  const rows = [
+    { borrower: 'Jennifer Wang', loanId: 'LN-2024-0211',
+      note: 'All 6 PTD conditions cleared. Income, assets, appraisal verified.' },
+    { borrower: 'Marco Garcia', loanId: 'LN-2024-0198',
+      note: 'Conv 30yr · DTI 38% · LTV 78%. Clean file.' },
+    { borrower: 'Linda Thompson', loanId: 'LN-2024-0223',
+      note: 'FHA 30yr. Manual review on gift letter complete.' },
+  ];
+  return (
+    <div>
+      <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', marginBottom: 12 }}>
+        <div>
+          <div style={{ fontSize: 22, fontWeight: 800, letterSpacing: '-0.015em', lineHeight: 1.1 }}>3 files</div>
+          <div style={{ fontSize: 12, color: '#6B7280', marginTop: 2 }}>Cleared for UW · all PTD conditions met</div>
+        </div>
+        <span style={{
+          fontSize: 10, fontWeight: 700, letterSpacing: '0.06em',
+          background: '#EDE9FE', color: '#5B21B6',
+          padding: '3px 8px', borderRadius: 999, textTransform: 'uppercase',
+        }}>AI VERIFIED</span>
+      </div>
+      <div style={{ display: 'flex', flexDirection: 'column' }}>
+        {rows.map((r, i) => (
+          <div key={r.loanId} style={{
+            display: 'flex', alignItems: 'flex-start', gap: 10,
+            padding: '10px 0', borderTop: i === 0 ? 'none' : '1px solid #F3F4F6',
+          }}>
+            <div style={{ color: '#059669', flexShrink: 0, marginTop: 1 }}>
+              <Icon name="checkCircle" size={16}/>
+            </div>
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <div style={{ display: 'flex', alignItems: 'baseline', gap: 6 }}>
+                <span style={{ fontSize: 13, fontWeight: 700, color: '#111827' }}>{r.borrower}</span>
+                <span style={{ fontSize: 11, color: '#9CA3AF', fontFamily: 'DM Mono' }}>{r.loanId}</span>
+              </div>
+              <div style={{ fontSize: 12, color: '#4B5563', marginTop: 2, lineHeight: 1.4 }}>{r.note}</div>
+            </div>
+            <button onClick={() => onOpenLoan && onOpenLoan(r.loanId)} style={{
+              background: '#7E68FA', color: '#fff', border: 'none', borderRadius: 6,
+              cursor: 'pointer', padding: '5px 10px',
+              fontSize: 12, fontWeight: 700, flexShrink: 0,
+            }}>Submit →</button>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+// ── Lock Clock ─────────────────────────────────────────────────────────────
+// Ported from old prototype: top 3 at-risk locks with day/hour countdown.
+// Severity tint: <=72h red, <=120h amber, else neutral.
+export function LockClockWidget({ onOpenLoan }) {
+  const rows = [
+    { borrower: 'Rodriguez', loanId: 'LN-2024-0218', rate: '6.875', days: 2, hours: 14 },
+    { borrower: 'Chen',      loanId: 'LN-2024-0189', rate: '6.50',  days: 4, hours: 6  },
+    { borrower: 'Garcia',    loanId: 'LN-2024-0198', rate: '7.125', days: 6, hours: 22 },
+  ];
+  const sevFor = (d, h) => {
+    const total = d * 24 + h;
+    if (total <= 72)  return { bg: '#FEF2F2', fg: '#EF4444' };
+    if (total <= 120) return { bg: '#FFFBEB', fg: '#D97706' };
+    return { bg: '#F9FAFB', fg: '#6B7280' };
+  };
+  return (
+    <div>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+          <Icon name="clock" size={13} color="#D97706"/>
+          <span style={{ fontSize: 12, color: '#6B7280' }}>Top 3 expirations</span>
+        </div>
+        <span style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.04em', background: '#FEF2F2', color: '#EF4444', padding: '2px 7px', borderRadius: 999 }}>1 CRITICAL</span>
+      </div>
+      {rows.map((r, i) => {
+        const sev = sevFor(r.days, r.hours);
+        return (
+          <div key={r.loanId} style={{
+            display: 'flex', alignItems: 'center', gap: 10,
+            padding: '8px 0', borderTop: i === 0 ? 'none' : '1px solid #F3F4F6',
+          }}>
+            <div style={{ background: sev.bg, color: sev.fg, borderRadius: 7, padding: '5px 9px', textAlign: 'center', minWidth: 58, flexShrink: 0 }}>
+              <div style={{ fontSize: 13, fontWeight: 800, lineHeight: 1, fontFamily: 'DM Mono' }}>{r.days}d {r.hours}h</div>
+              <div style={{ fontSize: 9, fontWeight: 700, letterSpacing: '0.06em', marginTop: 2 }}>LEFT</div>
+            </div>
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <div style={{ display: 'flex', alignItems: 'baseline', gap: 6 }}>
+                <span style={{ fontSize: 13, fontWeight: 700, color: '#111827' }}>{r.borrower}</span>
+                <span style={{ fontSize: 11, color: '#9CA3AF', fontFamily: 'DM Mono' }}>{r.loanId}</span>
+              </div>
+              <div style={{ fontSize: 12, color: '#4B5563', marginTop: 2 }}>Locked at {r.rate}%</div>
+            </div>
+            <button onClick={() => onOpenLoan && onOpenLoan(r.loanId)} style={{
+              background: '#fff', border: '1px solid #E5E7EB', borderRadius: 6,
+              cursor: 'pointer', padding: '4px 10px',
+              fontSize: 12, fontWeight: 700, color: '#111827', flexShrink: 0,
+            }}>Extend</button>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
+// ── Waiting on Borrower ────────────────────────────────────────────────────
+// Ported from old prototype: outstanding doc requests by borrower. Days since
+// asked surfaced prominently. Overdue (>=3d) highlighted red.
+export function WaitingOnBorrowerWidget({ onOpenLoan }) {
+  const rows = [
+    { borrower: 'Anderson', loanId: 'LN-2024-0234', requested: '2023 W-2 and final pay stub', daysOpen: 4 },
+    { borrower: 'Martinez', loanId: 'LN-2024-0207', requested: 'Two months of bank statements', daysOpen: 3 },
+    { borrower: 'Chen',     loanId: 'LN-2024-0189', requested: 'Homeowners insurance binder', daysOpen: 2 },
+  ];
+  return (
+    <div>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+          <Icon name="mail" size={13} color="#4338CA"/>
+          <span style={{ fontSize: 12, color: '#6B7280' }}>Doc requests outstanding</span>
+        </div>
+        <span style={{ fontSize: 11, fontWeight: 700, background: '#F3F4F6', color: '#374151', padding: '2px 7px', borderRadius: 999 }}>5</span>
+      </div>
+      {rows.map((r, i) => {
+        const overdue = r.daysOpen >= 3;
+        return (
+          <div key={r.loanId} style={{
+            display: 'flex', alignItems: 'flex-start', gap: 10,
+            padding: '10px 0', borderTop: i === 0 ? 'none' : '1px solid #F3F4F6',
+          }}>
+            <div style={{
+              width: 28, height: 28, borderRadius: 999,
+              background: overdue ? '#FEF2F2' : '#F9FAFB',
+              color: overdue ? '#EF4444' : '#9CA3AF',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              flexShrink: 0, marginTop: 1,
+            }}>
+              <Icon name="mail" size={13}/>
+            </div>
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <div style={{ display: 'flex', alignItems: 'baseline', gap: 6 }}>
+                <span style={{ fontSize: 13, fontWeight: 700, color: '#111827' }}>{r.borrower}</span>
+                <span style={{ fontSize: 11, color: '#9CA3AF', fontFamily: 'DM Mono' }}>{r.loanId}</span>
+              </div>
+              <div style={{ fontSize: 12, color: '#4B5563', marginTop: 2 }}>{r.requested}</div>
+              <div style={{ fontSize: 11, marginTop: 3, color: overdue ? '#EF4444' : '#9CA3AF', fontWeight: overdue ? 700 : 500 }}>
+                {r.daysOpen}d since request
+              </div>
+            </div>
+            <button style={{
+              background: 'none', border: 'none', cursor: 'pointer',
+              fontSize: 12, fontWeight: 700, color: '#4338CA', flexShrink: 0, padding: '2px 0',
+            }}>Remind →</button>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
+// ── AI Coach Brief ─────────────────────────────────────────────────────────
+// Ported from old prototype: single-row brief with 3 inline file-named insights.
+// Designed to live full-width at the top of the home, complementing the
+// floating AI panel rather than replacing it.
+export function AICoachBriefWidget() {
+  const insights = [
+    { tone: '#D97706', icon: 'alertCircle', label: 'REVIEW',
+      text: 'Anderson — VOE shows $98k, app says $112k. Reconcile before UW.' },
+    { tone: '#4338CA', icon: 'zap', label: 'NUDGE',
+      text: '3 loans waiting on bank statements >48h — chase drafts ready.' },
+    { tone: '#D97706', icon: 'clock', label: 'HEADS UP',
+      text: 'Rodriguez lock expires in 3 days — extend or expedite CD.' },
+  ];
+  return (
+    <div style={{ display: 'flex', alignItems: 'stretch' }}>
+      <div style={{
+        display: 'flex', alignItems: 'center', gap: 10,
+        padding: '4px 16px 4px 4px',
+        flexShrink: 0,
+        borderRight: '1px solid #F3F4F6',
+      }}>
+        <div style={{
+          width: 30, height: 30, borderRadius: 8,
+          background: '#EDE9FE', color: '#5B21B6',
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+        }}>
+          <Icon name="sparkle" size={16}/>
+        </div>
+        <div style={{ lineHeight: 1.2 }}>
+          <div style={{ fontSize: 13, fontWeight: 800, color: '#5B21B6' }}>Today's brief</div>
+          <div style={{ fontSize: 11, color: '#9CA3AF' }}>Updated 4 min ago</div>
+        </div>
+      </div>
+      {insights.map((ins, idx) => (
+        <button key={idx} style={{
+          flex: 1, minWidth: 0,
+          display: 'flex', alignItems: 'center', gap: 10,
+          padding: '6px 14px',
+          background: 'transparent', border: 'none',
+          borderRight: idx < insights.length - 1 ? '1px solid #F3F4F6' : 'none',
+          cursor: 'pointer', fontFamily: 'inherit', textAlign: 'left',
+        }}>
+          <Icon name={ins.icon} size={15} color={ins.tone}/>
+          <div style={{ minWidth: 0, flex: 1 }}>
+            <div style={{ fontSize: 10, fontWeight: 800, letterSpacing: '0.1em', color: ins.tone, marginBottom: 2 }}>{ins.label}</div>
+            <div style={{ fontSize: 12, color: '#111827', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{ins.text}</div>
+          </div>
+        </button>
+      ))}
+    </div>
+  );
+}
+
 export const WIDGET_REGISTRY = [
   {
     id: 'leaderboard',
@@ -284,6 +553,52 @@ export const WIDGET_REGISTRY = [
     color: '#374151',
     defaultWidth: 'half',
     category: 'Tools',
+  },
+  // ── Ported from old prototype ──────────────────────────────────────────
+  {
+    id: 'ai-coach-brief',
+    label: 'AI Coach Brief',
+    desc: 'Three file-named insights — Doing Well / Nudge / Heads Up.',
+    icon: 'sparkle',
+    color: '#5B21B6',
+    defaultWidth: 'full',
+    category: 'AI',
+  },
+  {
+    id: 'files-at-risk',
+    label: 'Files at Risk',
+    desc: 'Inconsistencies, ceiling breaches, and value gaps that need a decision.',
+    icon: 'alertCircle',
+    color: '#EF4444',
+    defaultWidth: 'half',
+    category: 'Pipeline',
+  },
+  {
+    id: 'ready-for-uw',
+    label: 'Ready for UW',
+    desc: 'Files with all prior-to-doc conditions cleared. One-click submit.',
+    icon: 'checkCircle',
+    color: '#059669',
+    defaultWidth: 'half',
+    category: 'Pipeline',
+  },
+  {
+    id: 'lock-clock',
+    label: 'Lock Clock',
+    desc: 'Top expiring rate locks with day/hour countdowns.',
+    icon: 'clock',
+    color: '#D97706',
+    defaultWidth: 'half',
+    category: 'Pipeline',
+  },
+  {
+    id: 'waiting-on-borrower',
+    label: 'Waiting on Borrower',
+    desc: 'Outstanding doc requests with days-since-asked. Overdue highlighted.',
+    icon: 'mail',
+    color: '#4338CA',
+    defaultWidth: 'half',
+    category: 'Pipeline',
   },
 ];
 

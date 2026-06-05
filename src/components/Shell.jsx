@@ -27,6 +27,104 @@ export function Avatar({ initials, size = 32, color = '#5246C7', textColor = '#f
   );
 }
 
+// ─── Left nav (ported from old prototype, original design by Melissa) ────────
+// Slim icon-only sidebar. Sits left of everything; the existing TopNav stays
+// on top for actions (persona toggle, search, feed badge, prefs).
+
+function LeftNavItem({ icon, label, active, onClick, disabled, iconSize = 19, strokeWidth = 1.8 }) {
+  return (
+    <button
+      data-tooltip={label}
+      aria-label={label}
+      onClick={disabled ? undefined : onClick}
+      style={{
+        width: 38, height: 38,
+        borderRadius: 9,
+        border: 'none',
+        background: active ? 'rgba(255,255,255,0.10)' : 'transparent',
+        color: active ? '#fff' : 'rgba(225,228,245,0.62)',
+        display: 'flex', alignItems: 'center', justifyContent: 'center',
+        cursor: disabled ? 'default' : 'pointer',
+        position: 'relative',
+        transition: 'background 0.12s, color 0.12s',
+        opacity: disabled ? 0.55 : 1,
+        padding: 0,
+      }}
+      onMouseEnter={e => { if (!disabled && !active) { e.currentTarget.style.background = 'rgba(255,255,255,0.06)'; e.currentTarget.style.color = '#fff'; } }}
+      onMouseLeave={e => { if (!disabled && !active) { e.currentTarget.style.background = 'transparent';            e.currentTarget.style.color = 'rgba(225,228,245,0.62)'; } }}
+    >
+      <Icon name={icon} size={iconSize} strokeWidth={strokeWidth} />
+    </button>
+  );
+}
+
+export function LeftNav({ route, onNavigate, onOpenCmd, onOpenPrefs }) {
+  const topItems = [
+    { id: 'home',     icon: 'home',     label: 'Home',     kind: 'route' },
+    { id: 'pipeline', icon: 'pipeline', label: 'Pipeline', kind: 'route' },
+    { id: 'feed',     icon: 'bell',     label: 'Feed',     kind: 'route' },
+    { id: 'search',   icon: 'search',   label: 'Search (⌘K)', kind: 'action' },
+  ];
+  const bottomItems = [
+    { id: 'settings', icon: 'settings', label: 'Settings', kind: 'action' },
+  ];
+
+  const handle = (item) => {
+    if (item.kind === 'route' && onNavigate) onNavigate(item.id);
+    else if (item.kind === 'action' && item.id === 'search' && onOpenCmd) onOpenCmd();
+    else if (item.kind === 'action' && item.id === 'settings' && onOpenPrefs) onOpenPrefs();
+  };
+
+  return (
+    <aside style={{
+      width: 44,
+      background: 'linear-gradient(180deg, #0C0E2A 0%, #131638 60%, #1A1A45 100%)',
+      borderRight: '1px solid rgba(255,255,255,0.04)',
+      display: 'flex', flexDirection: 'column', alignItems: 'center',
+      padding: '14px 0 14px',
+      gap: 4,
+      position: 'fixed', top: 0, left: 0, bottom: 0,
+      zIndex: 60,
+      flexShrink: 0,
+    }}>
+      {/* Logo */}
+      <div style={{ height: 32, display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 6 }}>
+        <LogoMark size={22}/>
+      </div>
+
+      {/* Top items */}
+      {topItems.map(item => (
+        <LeftNavItem
+          key={item.id}
+          icon={item.icon}
+          label={item.label}
+          active={item.kind === 'route' && route === item.id}
+          onClick={() => handle(item)}
+        />
+      ))}
+
+      <div style={{ flex: 1 }} />
+
+      {/* Bottom items */}
+      {bottomItems.map(item => (
+        <LeftNavItem
+          key={item.id}
+          icon={item.icon}
+          label={item.label}
+          active={false}
+          disabled={item.kind === 'disabled'}
+          onClick={() => handle(item)}
+        />
+      ))}
+
+      {/* Avatar */}
+      <div style={{ marginTop: 8, padding: '12px 0 0', borderTop: '1px solid rgba(255,255,255,0.06)', width: 28, display: 'flex', justifyContent: 'center' }}>
+        <Avatar initials="J" size={30} color="#3D49E6" />
+      </div>
+    </aside>
+  );
+}
+
 export function StatusPill({ tone = 'blue', children, dot, style }) {
   const tones = {
     blue:    { bg: 'var(--status-blue-bg)',  fg: 'var(--status-blue)' },

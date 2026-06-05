@@ -1,7 +1,8 @@
 import React from 'react';
 import ReactDOM from 'react-dom';
 import { Icon } from '../components/Icon';
-import { WidgetGrid, PipelineSnapshotWidget, ClosingCountdownWidget, RateWatchWidget, ConditionsTrackerWidget, QuickActionsWidget, RecentActivityWidget } from './WidgetGrid';
+import { WidgetGrid, PipelineSnapshotWidget, ClosingCountdownWidget, RateWatchWidget, ConditionsTrackerWidget, QuickActionsWidget, RecentActivityWidget,
+         AICoachBriefWidget, FilesAtRiskWidget, ReadyForUWWidget, LockClockWidget, WaitingOnBorrowerWidget } from './WidgetGrid';
 
 // ─── Data ─────────────────────────────────────────────────────────────────────
 
@@ -1120,6 +1121,12 @@ export function HomeView({ onNavigate, onOpenLoan }) {
             if (id === 'conditions-tracker')return <ConditionsTrackerWidget/>;
             if (id === 'quick-actions')     return <QuickActionsWidget/>;
             if (id === 'recent-activity')   return <RecentActivityWidget/>;
+            // Ported from old prototype
+            if (id === 'ai-coach-brief')      return <AICoachBriefWidget/>;
+            if (id === 'files-at-risk')       return <FilesAtRiskWidget       onOpenLoan={onOpenLoan}/>;
+            if (id === 'ready-for-uw')        return <ReadyForUWWidget        onOpenLoan={onOpenLoan}/>;
+            if (id === 'lock-clock')          return <LockClockWidget         onOpenLoan={onOpenLoan}/>;
+            if (id === 'waiting-on-borrower') return <WaitingOnBorrowerWidget onOpenLoan={onOpenLoan}/>;
             return null;
           }}/>
         </div>
