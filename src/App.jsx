@@ -79,7 +79,11 @@ export default function App() {
   const [cmdOpen, setCmdOpen] = React.useState(false);
   const [prefsOpen, setPrefsOpen] = React.useState(false);
 
-  const navigate = (r) => { setRoute(r); localStorage.setItem('los-route', r); };
+  const [pipelineIntent, setPipelineIntent] = React.useState(null);
+  const navigate = (r, intent) => {
+    setRoute(r); localStorage.setItem('los-route', r);
+    if (r === 'pipeline') setPipelineIntent(intent || null);
+  };
   const openLoan = (id, tab) => {
     setCurrentLoan(id); localStorage.setItem('los-loan', id);
     if (tab) { setLoanTab(tab); localStorage.setItem('los-loan-tab', tab); }
@@ -124,7 +128,7 @@ export default function App() {
           <>
             {route === 'home' && persona === 'Processor' && <ProcessorHomeView onNavigate={navigate} onOpenLoan={openLoan} onOpenAi={openAiWith} onOpenDepositReview={() => navigate('deposit-review')}/>}
             {route === 'home' && persona === 'LO' && <HomeView onNavigate={navigate} onOpenLoan={openLoan} onOpenAi={openAiWith}/>}
-            {route === 'pipeline' && <PipelineView onOpenLoan={openLoan} persona={persona}/>}
+            {route === 'pipeline' && <PipelineView onOpenLoan={openLoan} persona={persona} intent={pipelineIntent}/>}
             {route === 'feed' && <AIFeedView onOpenLoan={openLoan}/>}
             {route === 'loan' && <LoanDetailView loanId={currentLoan} tab={loanTab} onTab={changeLoanTab} persona={persona}/>}
             {route === 'urla' && <URLAView borrowerName={urlaBorrower} loanId={urlaLoanId} onClose={() => navigate('home')} onSubmit={() => { navigate('pipeline'); }}/>}
