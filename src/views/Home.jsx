@@ -357,12 +357,28 @@ const WEATHER = { temp: 68, condition: 'Mostly Cloudy', icon: '🌥️', city: '
 const BRANCH  = { name: 'Camp Hill Branch', code: 'CHL-04' };
 const LENDER  = { name: 'Lakeside Mortgage', tagline: 'Lending built on trust since 1987', mark: 'L' };
 
-// Hero KPI tiles — sourced from pipeline state in production.
+// Personal scorecard — surfaced as a strip right under the hero so the LO
+// always knows where they stand. In production these would come from a
+// real performance service.
+const SCORECARD = {
+  pct: 72,
+  units: { current: 10, total: 14, deltaLabel: '+3 vs Apr' },
+  volume:       { value: '$4.62M', deltaLabel: '+12.4%' },
+  pullThrough:  { value: '78%',    deltaLabel: '+6 pts' },
+  appToClose:   { value: '31d',    deltaLabel: '-2 days' },
+};
+
+// Hero KPI tiles — each carries an `intent` that pre-filters the pipeline
+// so clicks land on a curated view rather than the full list.
 const HERO_TILES = [
-  { icon: 'calculator',  value: '7', label: 'Due today',           sub: '2 high priority',    route: 'pipeline' },
-  { icon: 'fileSearch',  value: '3', label: 'Awaiting your review', sub: 'Clear to close',     route: 'pipeline' },
-  { icon: 'clock',       value: '2', label: 'Locks expiring ≤7d',  sub: 'Action required',    route: 'pipeline' },
-  { icon: 'zap',         value: '5', label: 'New leads',            sub: 'Assigned overnight', route: 'pipeline' },
+  { icon: 'calculator', value: '7', label: 'Due today',           sub: '2 high priority',
+    intent: { view: 'urgent', label: 'Due today' } },
+  { icon: 'fileSearch', value: '3', label: 'Awaiting your review', sub: 'Clear to close',
+    intent: { filters: [{ field: 'aiStatus', op: 'is', value: 'Needs Review' }], label: 'Awaiting your review' } },
+  { icon: 'clock',      value: '2', label: 'Locks expiring ≤7d',  sub: 'Action required',
+    intent: { view: 'urgent', label: 'Locks expiring ≤7d' } },
+  { icon: 'zap',        value: '5', label: 'New leads',            sub: 'Assigned overnight',
+    intent: { filters: [{ field: 'status', op: 'is', value: 'Application' }], label: 'New leads' } },
 ];
 
 function greeting() {
@@ -1025,6 +1041,66 @@ function AIActionsWidget({ actions, onOpen, onDismiss }) {
 
 // ─── Home View ────────────────────────────────────────────────────────────────
 
+// Compact donut for the scorecard strip
+function MiniDonut({ pct, size = 56, stroke = 6 }) {
+  const r = (size - stroke) / 2;
+  const c = 2 * Math.PI * r;
+  const offset = c * (1 - pct / 100);
+  return (
+    <div style={{ position: 'relative', width: size, height: size, flexShrink: 0 }}>
+      <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`}>
+        <circle cx={size/2} cy={size/2} r={r} stroke="#E5E7EB" strokeWidth={stroke} fill="none"/>
+        <circle cx={size/2} cy={size/2} r={r} stroke="#7E68FA" strokeWidth={stroke} fill="none"
+          strokeLinecap="round" strokeDasharray={c} strokeDashoffset={offset}
+          transform={`rotate(-90 ${size/2} ${size/2})`}/>
+      </svg>
+      <div style={{
+        position: 'absolute', inset: 0, display: 'flex',
+        alignItems: 'center', justifyContent: 'center',
+        fontSize: 14, fontWeight: 800, color: '#111827',
+        fontFamily: 'DM Mono',
+      }}>{pct}%</div>
+    </div>
+  );
+}
+
+function ScorecardStrip() {
+  const Stat = ({ label, value, delta }) => (
+    <div style={{ minWidth: 0 }}>
+      <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase', color: '#9CA3AF', marginBottom: 4 }}>{label}</div>
+      <div style={{ display: 'flex', alignItems: 'baseline', gap: 8 }}>
+        <span style={{ fontSize: 17, fontWeight: 800, color: '#111827', letterSpacing: '-0.015em', fontFamily: 'DM Mono' }}>{value}</span>
+        <span style={{ fontSize: 11, fontWeight: 700, color: '#059669', background: '#E6F5EF', padding: '2px 6px', borderRadius: 999 }}>{delta}</span>
+      </div>
+    </div>
+  );
+  return (
+    <div style={{
+      background: '#fff',
+      border: '1px solid #E5E7EB',
+      borderRadius: 12,
+      padding: '14px 18px',
+      marginBottom: 18,
+      display: 'flex', alignItems: 'center', gap: 22,
+    }}>
+      <MiniDonut pct={SCORECARD.pct}/>
+      <div style={{ minWidth: 0 }}>
+        <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase', color: '#9CA3AF', marginBottom: 2 }}>This month</div>
+        <div style={{ fontSize: 14, fontWeight: 700, color: '#111827', letterSpacing: '-0.01em' }}>
+          {SCORECARD.units.current} of {SCORECARD.units.total} units
+        </div>
+        <div style={{ fontSize: 11.5, color: '#6B7280', marginTop: 1 }}>On pace for 13.8 · {SCORECARD.units.deltaLabel}</div>
+      </div>
+      <div style={{ flex: 1 }}/>
+      <div style={{ display: 'flex', gap: 24, flexShrink: 0 }}>
+        <Stat label="Volume"       value={SCORECARD.volume.value}      delta={SCORECARD.volume.deltaLabel}/>
+        <Stat label="Pull-through" value={SCORECARD.pullThrough.value} delta={SCORECARD.pullThrough.deltaLabel}/>
+        <Stat label="App-to-close" value={SCORECARD.appToClose.value}  delta={SCORECARD.appToClose.deltaLabel}/>
+      </div>
+    </div>
+  );
+}
+
 export function HomeView({ onNavigate, onOpenLoan }) {
   const [doneTasks, setDoneTasks] = React.useState(new Set());
   const [doneAI, setDoneAI]       = React.useState(new Set());
@@ -1145,7 +1221,7 @@ export function HomeView({ onNavigate, onOpenLoan }) {
           {/* Right — 2x2 KPI tile grid */}
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, alignSelf: 'center' }}>
             {HERO_TILES.map((t, i) => (
-              <button key={i} onClick={() => onNavigate(t.route)} style={{
+              <button key={i} onClick={() => onNavigate('pipeline', t.intent)} style={{
                 background: 'rgba(255,255,255,0.06)',
                 border: '1px solid rgba(255,255,255,0.12)',
                 borderRadius: 12,
@@ -1186,6 +1262,7 @@ export function HomeView({ onNavigate, onOpenLoan }) {
 
         {/* ── Center ── */}
         <div style={{ flex: 1, overflowY: 'auto', padding: '24px 28px 48px', minWidth: 0 }}>
+          <ScorecardStrip/>
           <WidgetGrid renderWidget={(id) => {
             if (id === 'leaderboard')       return <Leaderboard/>;
             if (id === 'company-feed')      return <CompanyFeedWidget feed={FEED}/>;
@@ -1197,7 +1274,7 @@ export function HomeView({ onNavigate, onOpenLoan }) {
             if (id === 'quick-actions')     return <QuickActionsWidget/>;
             if (id === 'recent-activity')   return <RecentActivityWidget/>;
             // Ported from old prototype
-            if (id === 'ai-coach-brief')      return <AICoachBriefWidget/>;
+            if (id === 'ai-coach-brief')      return <AICoachBriefWidget    onOpenLoan={onOpenLoan}/>;
             if (id === 'files-at-risk')       return <FilesAtRiskWidget       onOpenLoan={onOpenLoan}/>;
             if (id === 'ready-for-uw')        return <ReadyForUWWidget        onOpenLoan={onOpenLoan}/>;
             if (id === 'lock-clock')          return <LockClockWidget         onOpenLoan={onOpenLoan}/>;
