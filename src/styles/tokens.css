@@ -197,3 +197,53 @@ input, select, textarea { font-family: inherit; }
 }
 
 #root { flex: 1; display: flex; flex-direction: column; min-height: 100vh; }
+
+/* Keyboard focus ring — applies to anything focusable that doesn't already
+   define its own outline. Uses :focus-visible so mouse clicks don't show
+   the ring unless the user is keyboard-navigating. */
+button:focus-visible,
+a:focus-visible,
+[role="button"]:focus-visible,
+input:focus-visible,
+textarea:focus-visible,
+select:focus-visible {
+  outline: 2px solid var(--ai-primary);
+  outline-offset: 2px;
+  border-radius: 6px;
+}
+
+/* LeftNav tooltip — hover or focus reveals the data-tooltip text. */
+[data-tooltip] {
+  position: relative;
+}
+[data-tooltip]:hover::after,
+[data-tooltip]:focus-visible::after {
+  content: attr(data-tooltip);
+  position: absolute;
+  left: calc(100% + 10px);
+  top: 50%;
+  transform: translateY(-50%);
+  background: #1a1d3a;
+  color: #fff;
+  font-size: 12px;
+  font-weight: 500;
+  letter-spacing: -0.01em;
+  padding: 6px 10px;
+  border-radius: 6px;
+  white-space: nowrap;
+  pointer-events: none;
+  z-index: 200;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.18);
+}
+[data-tooltip]:hover::before,
+[data-tooltip]:focus-visible::before {
+  content: '';
+  position: absolute;
+  left: calc(100% + 4px);
+  top: 50%;
+  transform: translateY(-50%) rotate(45deg);
+  width: 8px; height: 8px;
+  background: #1a1d3a;
+  pointer-events: none;
+  z-index: 200;
+}

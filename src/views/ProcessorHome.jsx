@@ -102,7 +102,7 @@ function greeting() {
   return h < 12 ? 'Good morning' : h < 17 ? 'Good afternoon' : 'Good evening';
 }
 
-const WEATHER = { temp: 68, condition: 'Mostly Cloudy', icon: '🌥️', city: 'Greenwood, IN' };
+const WEATHER = { temp: 68, condition: 'Mostly Cloudy', icon: '🌥️', city: 'Camp Hill, PA' };
 
 const statusTones = {
   green:   { bg: 'var(--status-green-bg)',  fg: 'var(--status-green)'  },
@@ -172,7 +172,7 @@ export function ProcessorHomeView({ onNavigate, onOpenLoan, onOpenAi, onOpenDepo
               Processor Mode
             </span>
             <span style={{ fontSize: 12, color: 'rgba(255,255,255,0.4)' }}>
-              {WEATHER.icon} {WEATHER.temp}° {WEATHER.condition} · {WEATHER.city} · 📍 Greenwood Branch
+              {WEATHER.icon} {WEATHER.temp}° {WEATHER.condition} · {WEATHER.city} · 📍 Camp Hill Branch
             </span>
           </div>
 

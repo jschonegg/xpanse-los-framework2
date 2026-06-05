@@ -807,7 +807,8 @@ const FILTER_FIELDS = [
   { id: 'product', label: 'Product', type: 'select', options: ['Conv 30yr','FHA 30yr','Jumbo 30yr','VA 30yr'] },
   { id: 'amount', label: 'Amount', type: 'number-range' },
   { id: 'days', label: 'Days in Stage', type: 'number-range' },
-  { id: 'aiStatus', label: 'AI Status', type: 'select', options: ['On Track','Needs Review','Running','Scanning'] },
+  { id: 'aiStatus',   label: 'AI Status',   type: 'select', options: ['On Track','Needs Review','Running','Scanning'] },
+  { id: 'lockStatus', label: 'Lock Status', type: 'select', options: ['Locked','Expiring','Floating'] },
 ];
 
 const CURRENT_USER = 'Jordan Schonegg'; // processor user
@@ -833,7 +834,14 @@ export function PipelineView({ onOpenLoan, persona = 'LO', intent }) {
   const [columnsVisible, setColumnsVisible] = React.useState(new Set(initialCols));
   const [sort, setSort] = React.useState({ col: null, dir: 'asc' });
   const [filters, setFilters] = React.useState(() => (intent && intent.filters) || []);
-  const intentLabel = intent && intent.label;
+  const [intentChip, setIntentChip] = React.useState(() => (intent && intent.label) || null);
+  // Reset when intent changes (e.g., user clicks a different hero tile)
+  React.useEffect(() => { setIntentChip((intent && intent.label) || null); }, [intent && intent.label]);
+  const clearIntent = () => {
+    setIntentChip(null);
+    setView('all');
+    setFilters([]);
+  };
   const [colsMenuOpen, setColsMenuOpen] = React.useState(false);
   const [filterBuilderOpen, setFilterBuilderOpen] = React.useState(false);
   const [groupBy, setGroupBy] = React.useState(null);
@@ -917,6 +925,7 @@ export function PipelineView({ onOpenLoan, persona = 'LO', intent }) {
       if (f.field === 'assignee') rows = rows.filter(l => l.assignee === f.value);
       if (f.field === 'product')  rows = rows.filter(l => l.product === f.value);
       if (f.field === 'aiStatus') rows = rows.filter(l => l.aiStatus === f.value);
+      if (f.field === 'lockStatus') rows = rows.filter(l => l.lockStatus === f.value);
       if (f.field === 'amount' || f.field === 'days') {
         const val = parseFloat(f.value);
         if (!isNaN(val)) {
@@ -1045,6 +1054,30 @@ export function PipelineView({ onOpenLoan, persona = 'LO', intent }) {
         ? { display: 'grid', gridTemplateColumns: 'minmax(0, 3fr) minmax(280px, 1fr)', gap: 16, alignItems: 'flex-start' }
         : undefined}>
       <div style={{ minWidth: 0 }}>
+
+      {intentChip && (
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 14, marginBottom: 4 }}>
+          <span style={{
+            display: 'inline-flex', alignItems: 'center', gap: 8,
+            background: 'var(--ai-bg)', color: 'var(--ai-ink)',
+            border: '1px solid var(--ai-border)',
+            borderRadius: 999, padding: '5px 6px 5px 12px',
+            fontSize: 12.5, fontWeight: 600,
+          }}>
+            <Icon name="arrowLeft" size={12} strokeWidth={2}/>
+            Filtered from: {intentChip}
+            <button onClick={clearIntent} aria-label="Clear filter" style={{
+              width: 18, height: 18, borderRadius: 999, border: 'none',
+              background: 'rgba(45,58,178,0.12)', color: 'var(--ai-ink)',
+              cursor: 'pointer', fontFamily: 'inherit',
+              display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+              padding: 0, marginLeft: 2,
+            }}>
+              <Icon name="x" size={11} strokeWidth={2.4}/>
+            </button>
+          </span>
+        </div>
+      )}
 
       {/* ── View tabs (primary) + utility controls (secondary) ── */}
       <div style={{ display: 'flex', alignItems: 'center', gap: 0, borderBottom: '1px solid var(--border-subtle)', marginTop: 10, marginBottom: 12 }}>
