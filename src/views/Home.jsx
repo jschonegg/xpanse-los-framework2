@@ -352,8 +352,9 @@ const CELEBRATIONS = [
   { emoji: '🎊', name: 'Priya Shah',  sub: '3-year workiversary',  color: '#2A8C53', initials: 'PS', today: false },
 ];
 
-// Mock weather (would be live via API in production)
+// Mock weather + branch (would be live via API + auth context in production)
 const WEATHER = { temp: 68, condition: 'Mostly Cloudy', icon: '🌥️', city: 'Greenwood, IN' };
+const BRANCH  = { name: 'Greenwood Branch', code: 'GRW-04' };
 
 function greeting() {
   const h = new Date().getHours();
@@ -1056,10 +1057,13 @@ export function HomeView({ onNavigate, onOpenLoan }) {
 
           {/* Left — greeting block */}
           <div style={{ flex: 1, minWidth: 0 }}>
-            {/* Weather line */}
+            {/* Weather + branch line */}
             <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 12.5, color: 'rgba(255,255,255,0.38)', marginBottom: 14 }}>
               <span>{WEATHER.icon}</span>
               <span>{WEATHER.temp}° · {WEATHER.condition} · {WEATHER.city}</span>
+              <span style={{ width: 3, height: 3, borderRadius: 999, background: 'rgba(255,255,255,0.3)', margin: '0 4px' }}/>
+              <Icon name="pin" size={11} strokeWidth={1.8}/>
+              <span style={{ color: 'rgba(255,255,255,0.62)' }}>{BRANCH.name}</span>
             </div>
 
             {/* Greeting */}
