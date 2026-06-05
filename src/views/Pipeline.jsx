@@ -991,47 +991,117 @@ export function PipelineView({ onOpenLoan, persona = 'LO', intent }) {
   const rowHeight = 40;
   const cellPad = '8px 14px';
 
+  // Search / Filter / Columns / Group / Reset — rendered inside the tabs row,
+  // or on its own row below in Hybrid mode.
+  const utilityControls = (
+    <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+      {/* Search */}
+      <div style={{
+        display: 'flex', alignItems: 'center', gap: 6, height: 28, padding: '0 9px',
+        background: 'var(--bg-muted)', border: '1px solid transparent', borderRadius: 6,
+        width: 180, transition: 'border-color 0.15s',
+      }}
+        onFocusCapture={e => e.currentTarget.style.borderColor = 'var(--border-default)'}
+        onBlurCapture={e => e.currentTarget.style.borderColor = 'transparent'}
+      >
+        <Icon name="search" size={12} color="var(--text-tertiary)"/>
+        <input value={query} onChange={e => setQuery(e.target.value)} placeholder="Search loans…"
+          aria-label="Search loans"
+          style={{ flex: 1, height: '100%', border: 'none', outline: 'none', fontSize: 12, background: 'transparent', fontFamily: 'inherit', color: 'var(--text-primary)' }}
+        />
+        {query && <button onClick={() => setQuery('')} aria-label="Clear search" style={{ border: 'none', background: 'transparent', cursor: 'pointer', color: 'var(--text-tertiary)', display: 'flex', padding: 0 }}><Icon name="x" size={11}/></button>}
+      </div>
+
+      <div style={{ width: 1, height: 16, background: 'var(--border-subtle)', margin: '0 2px' }}/>
+
+      {/* Filter */}
+      <div style={{ position: 'relative' }}>
+        <button className="btn btn-ghost" style={{ height: 28, fontSize: 12, gap: 5, color: filters.length > 0 ? 'var(--text-primary)' : 'var(--text-tertiary)' }} onClick={() => setFilterBuilderOpen(v => !v)}>
+          <Icon name="filter" size={12}/>Filter
+          {filters.length > 0 && <span style={{ background: 'var(--text-primary)', color: '#fff', fontSize: 10, fontWeight: 700, padding: '0 5px', borderRadius: 999, lineHeight: '16px' }}>{filters.length}</span>}
+        </button>
+        {filterBuilderOpen && <FilterBuilder filters={filters} onChange={setFilters} onClose={() => setFilterBuilderOpen(false)}/>}
+      </div>
+
+      {/* Columns */}
+      <div style={{ position: 'relative' }}>
+        <button className="btn btn-ghost" style={{ height: 28, fontSize: 12, gap: 5, color: 'var(--text-tertiary)' }} onClick={() => setColsMenuOpen(v => !v)}>
+          <Icon name="listCheck" size={12}/>Columns
+        </button>
+        {colsMenuOpen && <ColumnsMenu columnOrder={columnOrder} columnsVisible={columnsVisible} setColumnOrder={setColumnOrder} onToggle={toggleColumn} onClose={() => setColsMenuOpen(false)}/>}
+      </div>
+
+      {/* Group */}
+      <select value={groupBy || ''} onChange={e => setGroupBy(e.target.value || null)}
+        style={{ height: 28, padding: '0 8px', border: 'none', background: 'transparent', cursor: 'pointer', fontFamily: 'inherit', fontSize: 12, color: groupBy ? 'var(--text-primary)' : 'var(--text-tertiary)', outline: 'none', borderRadius: 6 }}
+        onFocus={e => e.currentTarget.style.background = 'var(--bg-muted)'}
+        onBlur={e => e.currentTarget.style.background = 'transparent'}
+      >
+        <option value="">No grouping</option>
+        <option value="status">Status</option>
+        <option value="assignee">Assignee</option>
+        <option value="product">Product</option>
+      </select>
+
+      {(filters.length > 0 || sort.col || groupBy) && (
+        <button className="btn btn-ghost" style={{ height: 28, fontSize: 12, color: 'var(--text-tertiary)' }} onClick={resetCustomizations}>
+          <Icon name="x" size={11}/>Reset
+        </button>
+      )}
+    </div>
+  );
+
+  // Pipeline & Hybrid match the Home page edge-to-edge layout;
+  // Tasks stays contained at a comfortable reading width.
+  const wrapperStyle = viewMode === 'tasks'
+    ? { padding: '20px 36px 32px', maxWidth: 1440, margin: '0 auto' }
+    : { padding: '20px 36px 32px' };
+
   return (
-    <div style={{ padding: '16px 32px 60px', maxWidth: 1440, margin: '0 auto' }}>
+    <div style={wrapperStyle}>
 
       {/* ── Header row: title + view-mode toggle + primary actions ── */}
       <div style={{ display: 'flex', alignItems: 'flex-start', gap: 12, marginBottom: 16 }}>
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-          <h1 style={{ margin: 0, fontSize: 22, fontWeight: 600, letterSpacing: '-0.02em', whiteSpace: 'nowrap' }}>
-            {viewMode === 'tasks' ? 'Tasks' : 'Pipeline'}
-          </h1>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 2, minWidth: 0 }}>
+          {/* Title row — anchors the toggle next to the heading at all times */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+            <h1 style={{ margin: 0, fontSize: 22, fontWeight: 600, letterSpacing: '-0.02em', whiteSpace: 'nowrap' }}>
+              {viewMode === 'tasks' ? 'Tasks' : 'Pipeline'}
+            </h1>
+
+            {/* Subtle view-mode toggle — sibling of the heading */}
+            <div role="tablist" aria-label="Pipeline view mode" style={{
+              display: 'inline-flex', background: 'var(--bg-muted)',
+              borderRadius: 7, padding: 2, gap: 1,
+            }}>
+              {[
+                { id: 'pipeline', label: 'Pipeline' },
+                { id: 'tasks',    label: 'Tasks' },
+                { id: 'hybrid',   label: 'Hybrid' },
+              ].map(m => {
+                const active = viewMode === m.id;
+                return (
+                  <button key={m.id} role="tab" aria-selected={active}
+                    onClick={() => setViewMode(m.id)}
+                    style={{
+                      padding: '4px 11px', border: 'none', cursor: 'pointer',
+                      fontFamily: 'inherit', fontSize: 12,
+                      fontWeight: active ? 600 : 500, borderRadius: 5,
+                      background: active ? 'var(--bg-surface)' : 'transparent',
+                      color: active ? 'var(--text-primary)' : 'var(--text-tertiary)',
+                      boxShadow: active ? '0 1px 2px rgba(0,0,0,0.06)' : 'none',
+                      transition: 'all 0.12s',
+                    }}>
+                    {m.label}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
           {viewMode === 'tasks' && (
             <span style={{ fontSize: 12.5, color: 'var(--text-tertiary)' }}>Your action queue, prioritized for the day</span>
           )}
-        </div>
-
-        {/* Subtle view-mode toggle */}
-        <div role="tablist" aria-label="Pipeline view mode" style={{
-          display: 'inline-flex', background: 'var(--bg-muted)',
-          borderRadius: 7, padding: 2, gap: 1, marginTop: 4,
-        }}>
-          {[
-            { id: 'pipeline', label: 'Pipeline' },
-            { id: 'tasks',    label: 'Tasks' },
-            { id: 'hybrid',   label: 'Hybrid' },
-          ].map(m => {
-            const active = viewMode === m.id;
-            return (
-              <button key={m.id} role="tab" aria-selected={active}
-                onClick={() => setViewMode(m.id)}
-                style={{
-                  padding: '4px 11px', border: 'none', cursor: 'pointer',
-                  fontFamily: 'inherit', fontSize: 12,
-                  fontWeight: active ? 600 : 500, borderRadius: 5,
-                  background: active ? 'var(--bg-surface)' : 'transparent',
-                  color: active ? 'var(--text-primary)' : 'var(--text-tertiary)',
-                  boxShadow: active ? '0 1px 2px rgba(0,0,0,0.06)' : 'none',
-                  transition: 'all 0.12s',
-                }}>
-                {m.label}
-              </button>
-            );
-          })}
         </div>
 
         <div style={{ flex: 1 }}/>
@@ -1059,7 +1129,7 @@ export function PipelineView({ onOpenLoan, persona = 'LO', intent }) {
       {!isProcessor && <AIInsightsBanner loans={scopedLoans} onOpenLoan={onOpenLoan}/>}
 
       <div style={viewMode === 'hybrid'
-        ? { display: 'grid', gridTemplateColumns: 'minmax(0, 3fr) minmax(280px, 1fr)', gap: 16, alignItems: 'flex-start' }
+        ? { display: 'grid', gridTemplateColumns: 'minmax(0, 1fr) 340px', gap: 16, alignItems: 'flex-start' }
         : undefined}>
       <div style={{ minWidth: 0 }}>
 
@@ -1205,63 +1275,18 @@ export function PipelineView({ onOpenLoan, persona = 'LO', intent }) {
 
         <div style={{ flex: 1 }}/>
 
-        {/* Utility controls — ghost/muted, visually secondary */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: 4, paddingBottom: 6 }}>
-          {/* Search */}
-          <div style={{
-            display: 'flex', alignItems: 'center', gap: 6, height: 28, padding: '0 9px',
-            background: 'var(--bg-muted)', border: '1px solid transparent', borderRadius: 6,
-            width: 180, transition: 'border-color 0.15s',
-          }}
-            onFocusCapture={e => e.currentTarget.style.borderColor = 'var(--border-default)'}
-            onBlurCapture={e => e.currentTarget.style.borderColor = 'transparent'}
-          >
-            <Icon name="search" size={12} color="var(--text-tertiary)"/>
-            <input value={query} onChange={e => setQuery(e.target.value)} placeholder="Search loans…"
-              aria-label="Search loans"
-              style={{ flex: 1, height: '100%', border: 'none', outline: 'none', fontSize: 12, background: 'transparent', fontFamily: 'inherit', color: 'var(--text-primary)' }}
-            />
-            {query && <button onClick={() => setQuery('')} aria-label="Clear search" style={{ border: 'none', background: 'transparent', cursor: 'pointer', color: 'var(--text-tertiary)', display: 'flex', padding: 0 }}><Icon name="x" size={11}/></button>}
-          </div>
-
-          <div style={{ width: 1, height: 16, background: 'var(--border-subtle)', margin: '0 2px' }}/>
-
-          {/* Filter */}
-          <div style={{ position: 'relative' }}>
-            <button className="btn btn-ghost" style={{ height: 28, fontSize: 12, gap: 5, color: filters.length > 0 ? 'var(--text-primary)' : 'var(--text-tertiary)' }} onClick={() => setFilterBuilderOpen(v => !v)}>
-              <Icon name="filter" size={12}/>Filter
-              {filters.length > 0 && <span style={{ background: 'var(--text-primary)', color: '#fff', fontSize: 10, fontWeight: 700, padding: '0 5px', borderRadius: 999, lineHeight: '16px' }}>{filters.length}</span>}
-            </button>
-            {filterBuilderOpen && <FilterBuilder filters={filters} onChange={setFilters} onClose={() => setFilterBuilderOpen(false)}/>}
-          </div>
-
-          {/* Columns */}
-          <div style={{ position: 'relative' }}>
-            <button className="btn btn-ghost" style={{ height: 28, fontSize: 12, gap: 5, color: 'var(--text-tertiary)' }} onClick={() => setColsMenuOpen(v => !v)}>
-              <Icon name="listCheck" size={12}/>Columns
-            </button>
-            {colsMenuOpen && <ColumnsMenu columnOrder={columnOrder} columnsVisible={columnsVisible} setColumnOrder={setColumnOrder} onToggle={toggleColumn} onClose={() => setColsMenuOpen(false)}/>}
-          </div>
-
-          {/* Group */}
-          <select value={groupBy || ''} onChange={e => setGroupBy(e.target.value || null)}
-            style={{ height: 28, padding: '0 8px', border: 'none', background: 'transparent', cursor: 'pointer', fontFamily: 'inherit', fontSize: 12, color: groupBy ? 'var(--text-primary)' : 'var(--text-tertiary)', outline: 'none', borderRadius: 6 }}
-            onFocus={e => e.currentTarget.style.background = 'var(--bg-muted)'}
-            onBlur={e => e.currentTarget.style.background = 'transparent'}
-          >
-            <option value="">No grouping</option>
-            <option value="status">Status</option>
-            <option value="assignee">Assignee</option>
-            <option value="product">Product</option>
-          </select>
-
-          {(filters.length > 0 || sort.col || groupBy) && (
-            <button className="btn btn-ghost" style={{ height: 28, fontSize: 12, color: 'var(--text-tertiary)' }} onClick={resetCustomizations}>
-              <Icon name="x" size={11}/>Reset
-            </button>
-          )}
-        </div>
+        {/* In Pipeline mode the controls sit at the right of the tabs row;
+            in Hybrid mode they drop to their own row below (see next block). */}
+        {viewMode !== 'hybrid' && (
+          <div style={{ paddingBottom: 6 }}>{utilityControls}</div>
+        )}
       </div>
+
+      {viewMode === 'hybrid' && (
+        <div style={{ display: 'flex', alignItems: 'center', marginBottom: 12 }}>
+          {utilityControls}
+        </div>
+      )}
 
       {selected.size > 0 ? (
         <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 12, padding: '8px 14px', borderRadius: 9, background: 'var(--text-primary)', color: '#fff' }}>
