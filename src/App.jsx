@@ -1,5 +1,5 @@
 import React from 'react';
-import { TopNav, StatusBar, AIFab, LeftNav } from './components/Shell';
+import { StatusBar, AIFab, LeftNav } from './components/Shell';
 import { ProcessorHomeView } from './views/ProcessorHome';
 import { LOANS } from './data/loans';
 import { AIAssistantPanel } from './components/AIAssistant';
@@ -117,9 +117,8 @@ export default function App() {
 
   return (
     <>
-      <LeftNav route={route} onNavigate={navigate} onOpenCmd={() => setCmdOpen(true)}/>
-      <TopNav route={route} onNavigate={navigate} currentLoan={currentLoan} urlaLoanId={urlaLoanId} urlaBorrower={urlaBorrower} onOpenCmd={() => setCmdOpen(true)} feedCount={8} persona={persona} onPersonaChange={changePersona} onOpenPrefs={() => setPrefsOpen(true)}/>
-      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', minHeight: 0, paddingTop: 52, paddingBottom: 36, paddingLeft: 44 }}>
+      <LeftNav route={route} onNavigate={navigate} onOpenCmd={() => setCmdOpen(true)} onOpenPrefs={() => setPrefsOpen(true)}/>
+      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', minHeight: 0, paddingBottom: 36, paddingLeft: 44 }}>
         {route === 'deposit-review' && <LargeDepositReviewView onBack={() => navigate('home')}/>}
         {route !== 'deposit-review' && (
           <>

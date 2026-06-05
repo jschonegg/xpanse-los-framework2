@@ -58,20 +58,21 @@ function LeftNavItem({ icon, label, active, onClick, disabled, iconSize = 19, st
   );
 }
 
-export function LeftNav({ route, onNavigate, onOpenCmd }) {
+export function LeftNav({ route, onNavigate, onOpenCmd, onOpenPrefs }) {
   const topItems = [
     { id: 'home',     icon: 'home',     label: 'Home',     kind: 'route' },
     { id: 'pipeline', icon: 'pipeline', label: 'Pipeline', kind: 'route' },
     { id: 'feed',     icon: 'bell',     label: 'Feed',     kind: 'route' },
-    { id: 'search',   icon: 'search',   label: 'Search',   kind: 'action' },
+    { id: 'search',   icon: 'search',   label: 'Search (⌘K)', kind: 'action' },
   ];
   const bottomItems = [
-    { id: 'settings', icon: 'settings', label: 'Settings', kind: 'disabled' },
+    { id: 'settings', icon: 'settings', label: 'Settings', kind: 'action' },
   ];
 
   const handle = (item) => {
     if (item.kind === 'route' && onNavigate) onNavigate(item.id);
     else if (item.kind === 'action' && item.id === 'search' && onOpenCmd) onOpenCmd();
+    else if (item.kind === 'action' && item.id === 'settings' && onOpenPrefs) onOpenPrefs();
   };
 
   return (
