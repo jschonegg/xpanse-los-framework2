@@ -5,11 +5,18 @@ import { Icon } from '../components/Icon';
 // Each entry describes a widget: metadata + its render component.
 // `defaultWidth` is the preferred width when first added.
 
-const STORAGE_KEY = 'los-widget-layout-v3';
+// Bump the storage key when DEFAULT_LAYOUT changes meaningfully so existing
+// users see the new default the next time they load the home.
+const STORAGE_KEY = 'los-widget-layout-v4';
 
 const DEFAULT_LAYOUT = [
-  { id: 'leaderboard',  width: 'full' },
-  { id: 'company-feed', width: 'full' },
+  { id: 'ai-coach-brief',      width: 'full' },
+  { id: 'files-at-risk',       width: 'half' },
+  { id: 'ready-for-uw',        width: 'half' },
+  { id: 'lock-clock',          width: 'half' },
+  { id: 'waiting-on-borrower', width: 'half' },
+  { id: 'leaderboard',         width: 'full' },
+  { id: 'company-feed',        width: 'full' },
 ];
 
 function loadLayout() {
