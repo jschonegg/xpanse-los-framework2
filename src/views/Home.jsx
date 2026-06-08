@@ -2,7 +2,9 @@ import React from 'react';
 import ReactDOM from 'react-dom';
 import { Icon } from '../components/Icon';
 import { WidgetGrid, PipelineSnapshotWidget, ClosingCountdownWidget, RateWatchWidget, ConditionsTrackerWidget, QuickActionsWidget, RecentActivityWidget,
-         AICoachBriefWidget, FilesAtRiskWidget, ReadyForUWWidget, LockClockWidget, WaitingOnBorrowerWidget } from './WidgetGrid';
+         FilesAtRiskWidget, ReadyForUWWidget, LockClockWidget, WaitingOnBorrowerWidget } from './WidgetGrid';
+import { AIInsightsBanner } from './Pipeline';
+import { LOANS } from '../data/loans';
 
 // ─── Data ─────────────────────────────────────────────────────────────────────
 
@@ -1274,7 +1276,7 @@ export function HomeView({ onNavigate, onOpenLoan }) {
             if (id === 'quick-actions')     return <QuickActionsWidget/>;
             if (id === 'recent-activity')   return <RecentActivityWidget/>;
             // Ported from old prototype
-            if (id === 'ai-coach-brief')      return <AICoachBriefWidget    onOpenLoan={onOpenLoan}/>;
+            if (id === 'ai-coach-brief')      return <AIInsightsBanner      loans={LOANS} onOpenLoan={onOpenLoan}/>;
             if (id === 'files-at-risk')       return <FilesAtRiskWidget       onOpenLoan={onOpenLoan}/>;
             if (id === 'ready-for-uw')        return <ReadyForUWWidget        onOpenLoan={onOpenLoan}/>;
             if (id === 'lock-clock')          return <LockClockWidget         onOpenLoan={onOpenLoan}/>;
