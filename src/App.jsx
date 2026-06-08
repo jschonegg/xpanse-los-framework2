@@ -1,5 +1,6 @@
 import React from 'react';
 import { StatusBar, AIFab, LeftNav } from './components/Shell';
+import { LoginView } from './views/Login';
 import { ProcessorHomeView } from './views/ProcessorHome';
 import { LOANS } from './data/loans';
 import { AIAssistantPanel } from './components/AIAssistant';
@@ -12,7 +13,6 @@ import { LoanEstimateView } from './views/LoanEstimateView';
 import { AIFeedView } from './views/AIFeed';
 import { LargeDepositReviewView } from './views/LargeDepositReview';
 import { PreferencesModal } from './components/PreferencesModal';
-import { LoginScreen } from './components/LoginScreen';
 
 // ── Standalone URLA window (opened via window.open) ──────────────────────────
 function StandaloneURLA() {
@@ -68,14 +68,10 @@ export default function App() {
   if (window.location.search.includes('view=urla')) return <StandaloneURLA/>;
   if (window.location.search.includes('view=le'))   return <StandaloneLoanEstimate/>;
 
-  const [loggedIn, setLoggedIn] = React.useState(() => sessionStorage.getItem('xpanse-auth') === '1');
-  const handleLogin = () => {
-    sessionStorage.setItem('xpanse-auth', '1');
-    localStorage.setItem('los-route', 'home');
-    setLoggedIn(true);
-  };
-
-  if (!loggedIn) return <LoginScreen onLogin={handleLogin}/>;
+  // Auth gate — login is shown until the user authenticates (or until they've
+  // authenticated once on this device). Pass ?login to force-show login again.
+  const forceLogin = window.location.search.includes('login');
+  const [authed, setAuthed] = React.useState(() => !forceLogin && localStorage.getItem('los-authed') === '1');
 
   const [route, setRoute] = React.useState(() => localStorage.getItem('los-route') || 'home');
   const [currentLoan, setCurrentLoan] = React.useState(() => localStorage.getItem('los-loan') || 'LN-2024-0234');
@@ -128,6 +124,15 @@ export default function App() {
 
   const activeCount = LOANS.filter(l => l.status !== 'Funded').length;
   const attentionCount = LOANS.filter(l => l.flag || l.lockStatus === 'Expiring' || (l.conditionsOpen / (l.conditionsTotal || 1)) > 0.5).length;
+
+  // If unauthenticated, render the smart Login screen instead of the shell
+  if (!authed) {
+    return <LoginView onAuthenticated={() => {
+      localStorage.setItem('los-authed', '1');
+      if (forceLogin) window.history.replaceState({}, '', window.location.pathname);
+      setAuthed(true);
+    }}/>;
+  }
 
   return (
     <>
