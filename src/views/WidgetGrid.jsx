@@ -7,7 +7,7 @@ import { Icon } from '../components/Icon';
 
 // Bump the storage key when DEFAULT_LAYOUT changes meaningfully so existing
 // users see the new default the next time they load the home.
-const STORAGE_KEY = 'los-widget-layout-v4';
+const STORAGE_KEY = 'los-widget-layout-v6';
 
 const DEFAULT_LAYOUT = [
   { id: 'ai-coach-brief',      width: 'full' },
