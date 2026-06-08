@@ -1103,6 +1103,278 @@ function ScorecardStrip() {
   );
 }
 
+// ── Around You ────────────────────────────────────────────────────────────
+// Section that contextualizes the LO inside their branch + region. Merges
+// Melissa's "Your team & branch" design with our existing leaderboard data
+// so we don't have two leaderboards on the page.
+
+const BRANCH_INFO = {
+  region: 'East Region',
+  state: 'Pennsylvania',
+  name: 'Camp Hill Branch',
+  loanOfficers: 34,
+  manager: 'Sarah Park',
+  rankInRegion: '#1 branch in region · May',
+};
+
+const BRANCH_STATS = {
+  volumeMTD:     { value: '$28.4M', delta: '+9% vs Apr' },
+  activeLoans:   { value: '186',    sub: '14 closing this week' },
+  avgCycleTime:  { value: '28 days',sub: 'best in region' },
+  nps:           { value: '71',     sub: '34 responses' },
+};
+
+const BRANCH_LB = [
+  { rank: 1, name: 'Sarah Park',       city: 'Camp Hill',  loans: 14, vol: '$5.84M', medal: 'gold' },
+  { rank: 2, name: 'Devon Mitchell',   city: 'Lancaster',  loans: 12, vol: '$5.21M', medal: 'silver' },
+  { rank: 3, name: 'Aisha Khan',       city: 'York',       loans: 11, vol: '$4.97M', medal: 'bronze' },
+  { rank: 4, name: 'Jordan Schonegg',  city: 'Camp Hill',  loans: 10, vol: '$4.62M', you: true },
+  { rank: 5, name: 'Tom Reyes',        city: 'Harrisburg', loans:  9, vol: '$4.10M' },
+];
+
+function BranchIdentityCard() {
+  return (
+    <div style={{
+      background: '#fff',
+      border: '1px solid #E5E7EB',
+      borderRadius: 14,
+      padding: '20px 24px',
+      display: 'flex', alignItems: 'center', gap: 18,
+      marginBottom: 16,
+    }}>
+      <div style={{
+        width: 56, height: 56, borderRadius: 12,
+        background: 'linear-gradient(135deg, #7E68FA 0%, #5B21B6 100%)',
+        color: '#fff', flexShrink: 0,
+        display: 'flex', alignItems: 'center', justifyContent: 'center',
+        boxShadow: '0 2px 8px rgba(91,33,182,0.20)',
+        position: 'relative',
+      }}>
+        <Icon name="building" size={24} strokeWidth={1.8}/>
+        <span style={{
+          position: 'absolute', right: -4, bottom: -4,
+          width: 22, height: 22, borderRadius: 999,
+          background: '#FFB800', color: '#fff',
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          fontSize: 11, border: '2px solid #fff',
+        }}>🏆</span>
+      </div>
+
+      <div style={{ flex: 1, minWidth: 0 }}>
+        <div style={{
+          fontSize: 11, fontWeight: 800, letterSpacing: '0.14em',
+          textTransform: 'uppercase', color: '#5B21B6',
+        }}>{BRANCH_INFO.region} · {BRANCH_INFO.state}</div>
+        <div style={{ fontSize: 22, fontWeight: 800, color: '#111827', letterSpacing: '-0.02em', marginTop: 2 }}>
+          {BRANCH_INFO.name}
+        </div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 14, marginTop: 6, fontSize: 12.5, color: '#6B7280' }}>
+          <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5 }}>
+            <Icon name="building" size={12} strokeWidth={1.8}/>
+            {BRANCH_INFO.loanOfficers} loan officers
+          </span>
+          <span style={{ width: 3, height: 3, borderRadius: 999, background: '#D1D5DB' }}/>
+          <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5 }}>
+            <Icon name="pin" size={12} strokeWidth={1.8}/>
+            {BRANCH_INFO.manager}, Branch Manager
+          </span>
+          <span style={{ width: 3, height: 3, borderRadius: 999, background: '#D1D5DB' }}/>
+          <span style={{
+            display: 'inline-flex', alignItems: 'center', gap: 5,
+            background: '#EDE9FE', color: '#5B21B6',
+            padding: '3px 9px', borderRadius: 999,
+            fontSize: 11.5, fontWeight: 600,
+          }}>
+            🏆 {BRANCH_INFO.rankInRegion}
+          </span>
+        </div>
+      </div>
+
+      <div style={{ display: 'flex', gap: 8, flexShrink: 0 }}>
+        <button style={{
+          display: 'inline-flex', alignItems: 'center', gap: 6,
+          background: '#fff', color: '#111827',
+          border: '1px solid #E5E7EB', borderRadius: 9,
+          padding: '8px 14px',
+          fontSize: 13, fontWeight: 700,
+          cursor: 'pointer', fontFamily: 'inherit',
+        }}>
+          <Icon name="building" size={13} strokeWidth={1.9}/>
+          View team
+        </button>
+        <button style={{
+          display: 'inline-flex', alignItems: 'center', gap: 6,
+          background: '#111827', color: '#fff',
+          border: 'none', borderRadius: 9,
+          padding: '8px 14px',
+          fontSize: 13, fontWeight: 700,
+          cursor: 'pointer', fontFamily: 'inherit',
+        }}>
+          <Icon name="target" size={13} strokeWidth={1.9}/>
+          Branch hub
+        </button>
+      </div>
+    </div>
+  );
+}
+
+function MedalDot({ rank, medal }) {
+  const tones = {
+    gold:   { bg: '#FFB800', fg: '#fff' },
+    silver: { bg: '#94A3B8', fg: '#fff' },
+    bronze: { bg: '#C2723F', fg: '#fff' },
+  };
+  const t = tones[medal] || { bg: '#F3F4F6', fg: '#6B7280' };
+  return (
+    <div style={{
+      width: 24, height: 24, borderRadius: 999,
+      background: t.bg, color: t.fg,
+      display: 'flex', alignItems: 'center', justifyContent: 'center',
+      fontSize: 12, fontWeight: 800, flexShrink: 0,
+    }}>{rank}</div>
+  );
+}
+
+function BranchLeaderboardCard() {
+  return (
+    <div style={{
+      background: '#fff',
+      border: '1px solid #E5E7EB',
+      borderRadius: 14,
+      padding: '22px 24px',
+    }}>
+      <div style={{
+        fontSize: 11, fontWeight: 800, letterSpacing: '0.14em',
+        textTransform: 'uppercase', color: '#9CA3AF',
+      }}>East Region · May</div>
+      <div style={{ fontSize: 20, fontWeight: 800, color: '#111827', letterSpacing: '-0.02em', marginTop: 4 }}>
+        Sales leaderboard
+      </div>
+      <div style={{ fontSize: 12.5, color: '#6B7280', marginTop: 2, marginBottom: 16 }}>By funded volume this month</div>
+
+      {BRANCH_LB.map((row, i) => (
+        <div key={row.rank} style={{
+          display: 'flex', alignItems: 'center', gap: 14,
+          padding: '10px 12px',
+          margin: '0 -12px',
+          borderRadius: 10,
+          borderLeft: row.you ? '3px solid #7E68FA' : '3px solid transparent',
+          background: row.you ? '#F2EEFF' : 'transparent',
+          borderTop: i === 0 ? 'none' : '1px solid #F3F4F6',
+        }}>
+          <MedalDot rank={row.rank} medal={row.medal}/>
+          <div style={{ flex: 1, minWidth: 0, display: 'flex', alignItems: 'center', gap: 8 }}>
+            <span style={{ fontSize: 14, fontWeight: row.you ? 800 : 600, color: '#111827' }}>{row.name}</span>
+            {row.you && (
+              <span style={{
+                background: '#7E68FA', color: '#fff',
+                fontSize: 10, fontWeight: 800, letterSpacing: '0.06em',
+                padding: '2px 7px', borderRadius: 999,
+              }}>YOU</span>
+            )}
+            <span style={{ fontSize: 12.5, color: '#9CA3AF' }}>· {row.city}</span>
+          </div>
+          <span style={{ fontSize: 12.5, color: '#6B7280', fontVariantNumeric: 'tabular-nums' }}>{row.loans} loans</span>
+          <span style={{ fontSize: 14, fontWeight: 700, color: '#111827', minWidth: 70, textAlign: 'right', fontFamily: 'DM Mono' }}>{row.vol}</span>
+        </div>
+      ))}
+
+      <div style={{
+        display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+        marginTop: 16, paddingTop: 14, borderTop: '1px solid #F3F4F6',
+      }}>
+        <span style={{ fontSize: 12, color: '#9CA3AF' }}>Top 5 of 28 · Full board updated nightly</span>
+        <button style={{
+          background: 'none', border: 'none', cursor: 'pointer',
+          fontFamily: 'inherit', fontSize: 13, fontWeight: 700, color: '#5B21B6',
+          display: 'inline-flex', alignItems: 'center', gap: 4,
+        }}>View full board <Icon name="arrowRight" size={12} strokeWidth={2.2}/></button>
+      </div>
+    </div>
+  );
+}
+
+function BranchStatsCard() {
+  const StatBlock = ({ label, value, sub, accent }) => (
+    <div>
+      <div style={{ fontSize: 10, fontWeight: 800, letterSpacing: '0.12em', textTransform: 'uppercase', color: '#9CA3AF' }}>{label}</div>
+      <div style={{ fontSize: 22, fontWeight: 800, color: '#111827', letterSpacing: '-0.015em', marginTop: 4, fontFamily: 'DM Mono' }}>{value}</div>
+      <div style={{ fontSize: 11.5, color: accent || '#6B7280', marginTop: 2, fontWeight: accent ? 700 : 500 }}>{sub}</div>
+    </div>
+  );
+  return (
+    <div style={{
+      background: '#fff',
+      border: '1px solid #E5E7EB',
+      borderRadius: 14,
+      padding: '22px 24px',
+    }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 18 }}>
+        <div style={{
+          width: 28, height: 28, borderRadius: 8,
+          background: 'linear-gradient(135deg, #7E68FA 0%, #5B21B6 100%)',
+          color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center',
+        }}>
+          <Icon name="building" size={14} strokeWidth={1.9}/>
+        </div>
+        <span style={{ fontSize: 14, fontWeight: 800, color: '#111827' }}>{BRANCH_INFO.name}</span>
+      </div>
+
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 20, rowGap: 22 }}>
+        <StatBlock label="Branch Volume MTD" value={BRANCH_STATS.volumeMTD.value} sub={BRANCH_STATS.volumeMTD.delta} accent="#059669"/>
+        <StatBlock label="Active Loans"      value={BRANCH_STATS.activeLoans.value} sub={BRANCH_STATS.activeLoans.sub}/>
+        <StatBlock label="Avg Cycle Time"    value={BRANCH_STATS.avgCycleTime.value} sub={BRANCH_STATS.avgCycleTime.sub} accent="#059669"/>
+        <StatBlock label="NPS · Last 30 days" value={BRANCH_STATS.nps.value}        sub={BRANCH_STATS.nps.sub}/>
+      </div>
+    </div>
+  );
+}
+
+function AroundYouSection() {
+  return (
+    <section style={{ marginTop: 32 }}>
+      {/* Section header */}
+      <div style={{
+        display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between',
+        gap: 16, marginBottom: 18,
+      }}>
+        <div>
+          <div style={{
+            fontSize: 11, fontWeight: 800, letterSpacing: '0.18em',
+            textTransform: 'uppercase', color: '#5B21B6',
+            marginBottom: 8,
+          }}>02 · Around You</div>
+          <h2 style={{
+            fontSize: 24, fontWeight: 800, letterSpacing: '-0.02em',
+            margin: '0 0 6px', lineHeight: 1.2, color: '#111827',
+          }}>Your team &amp; branch</h2>
+          <p style={{ fontSize: 13.5, color: '#6B7280', margin: 0, maxWidth: 640 }}>
+            What's happening at {BRANCH_INFO.name.replace(' Branch', '')}, across the region, and from Lakeside HQ.
+          </p>
+        </div>
+        <span style={{
+          display: 'inline-flex', alignItems: 'center', gap: 6,
+          background: '#fff', border: '1px solid #E5E7EB',
+          borderRadius: 999, padding: '4px 10px',
+          fontSize: 12, color: '#6B7280',
+        }}>
+          <Icon name="building" size={12} strokeWidth={1.9}/>
+          Branch-level metrics
+        </span>
+      </div>
+
+      {/* Branch identity card (full width) */}
+      <BranchIdentityCard/>
+
+      {/* Leaderboard (left, 2fr) + Branch stats (right, 1fr) */}
+      <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: 16 }}>
+        <BranchLeaderboardCard/>
+        <BranchStatsCard/>
+      </div>
+    </section>
+  );
+}
+
 export function HomeView({ onNavigate, onOpenLoan }) {
   const [doneTasks, setDoneTasks] = React.useState(new Set());
   const [doneAI, setDoneAI]       = React.useState(new Set());
@@ -1283,6 +1555,7 @@ export function HomeView({ onNavigate, onOpenLoan }) {
             if (id === 'waiting-on-borrower') return <WaitingOnBorrowerWidget onOpenLoan={onOpenLoan}/>;
             return null;
           }}/>
+          <AroundYouSection/>
         </div>
 
         {/* ── Right Rail ── */}
