@@ -1,6 +1,7 @@
 import React from 'react';
 import { Icon } from '../components/Icon';
 import { StatusPill } from '../components/Shell';
+import { ClosingTimelineCard } from '../components/WorkspaceCards';
 
 function ActionCard({ tone = 'neutral', icon, iconBg, header, children, footer }) {
   const tones = {
@@ -129,7 +130,7 @@ function StageProgress({ completed }) {
   );
 }
 
-export function NowTabClosing({ borrowerName = 'Jennifer Wang', loanId = 'LN-2024-0211' }) {
+export function NowTabClosing({ borrowerName = 'Jennifer Wang', loanId = 'LN-2024-0211', loan }) {
   const [completed, setCompleted] = React.useState(new Set());
   const [funded, setFunded] = React.useState(false);
 
@@ -158,19 +159,20 @@ export function NowTabClosing({ borrowerName = 'Jennifer Wang', loanId = 'LN-202
 
   return (
     <>
-      <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 6 }}>
+      <ClosingTimelineCard loan={loan}/>
+
+      <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 12 }}>
         <div>
-          <h2 style={{ margin: 0, fontSize: 18, fontWeight: 600, letterSpacing: '-0.01em' }}>Closing Checklist</h2>
-          <div style={{ fontSize: 13, color: 'var(--text-tertiary)', marginTop: 4, marginBottom: 18 }}>
-            Closing May 22 · {remaining} of {STEPS.length} steps remaining
+          <h2 style={{ margin: 0, fontSize: 16, fontWeight: 600, letterSpacing: '-0.01em' }}>Closing Checklist</h2>
+          <div style={{ fontSize: 13, color: 'var(--text-tertiary)', marginTop: 3 }}>
+            {remaining} of {STEPS.length} steps remaining
           </div>
         </div>
-        <StatusPill tone="green">Closing</StatusPill>
       </div>
 
       <StageProgress completed={completed}/>
 
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 14, maxWidth: 760 }}>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
 
         {/* 1. CLOSING DISCLOSURE */}
         <ActionCard

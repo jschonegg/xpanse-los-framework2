@@ -3,6 +3,7 @@ import ReactDOM from 'react-dom';
 import { Icon } from '../components/Icon';
 import { StatusPill } from '../components/Shell';
 import { W2Viewer } from '../components/W2Viewer';
+import { ClosingTimelineCard } from '../components/WorkspaceCards';
 import { URLAView } from './URLAView';
 
 function URLAWindow({ onClose, onSubmit, borrowerName, loanId }) {
@@ -238,7 +239,7 @@ function PreApprovalCard({ borrowerName }) {
   );
 }
 
-export function NowTabApplication({ borrowerName = 'Marcus Johnson', loanId, onOpenURLA }) {
+export function NowTabApplication({ borrowerName = 'Marcus Johnson', loanId, loan, onOpenURLA }) {
   const [completed, setCompleted] = React.useState(new Set());
   const [dismissed, setDismissed] = React.useState(new Set());
   const [w2Open, setW2Open]       = React.useState(false);
@@ -255,23 +256,18 @@ export function NowTabApplication({ borrowerName = 'Marcus Johnson', loanId, onO
 
   return (
     <>
-      <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 6 }}>
+      <ClosingTimelineCard loan={loan}/>
+
+      <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 12 }}>
         <div>
-          <h2 style={{ margin: 0, fontSize: 18, fontWeight: 600, letterSpacing: '-0.01em' }}>Application Intake</h2>
-          <div style={{ fontSize: 13, color: 'var(--text-tertiary)', marginTop: 4, marginBottom: 18 }}>
+          <h2 style={{ margin: 0, fontSize: 16, fontWeight: 600, letterSpacing: '-0.01em' }}>Application Intake</h2>
+          <div style={{ fontSize: 13, color: 'var(--text-tertiary)', marginTop: 3 }}>
             AI-guided path to submit
           </div>
         </div>
-        <StatusPill tone="neutral">Application</StatusPill>
       </div>
 
-      {/* Progress bar */}
-      <div style={{ marginBottom: 16 }}>
-        <div style={{ height: 5, background: 'var(--bg-muted)', borderRadius: 999, overflow: 'hidden' }}>
-          <div style={{ height: '100%', width: pct + '%', borderRadius: 999, background: pct === 100 ? '#0E9F6E' : 'linear-gradient(90deg, #0A1F44, #0DBFA8)', transition: 'width 0.4s ease' }}/>
-        </div>
-      </div>
-
+      {/* Stage sub-step progress */}
       <StageProgress completed={completed}/>
 
       {/* Tabs */}
@@ -293,7 +289,7 @@ export function NowTabApplication({ borrowerName = 'Marcus Johnson', loanId, onO
 
       <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
 
-      <div style={{ display: taskTab === 'done' ? 'none' : 'flex', flexDirection: 'column', gap: 14, maxWidth: 760 }}>
+      <div style={{ display: taskTab === 'done' ? 'none' : 'flex', flexDirection: 'column', gap: 14 }}>
 
         {/* 0. COMPLETE URLA */}
         <ActionCard
@@ -644,7 +640,7 @@ export function NowTabApplication({ borrowerName = 'Marcus Johnson', loanId, onO
 
       {/* Done tab panel */}
       {taskTab === 'done' && (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 8, maxWidth: 760 }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
           {doneCount === 0 ? (
             <div style={{ padding: '32px 0', textAlign: 'center', color: 'var(--text-tertiary)', fontSize: 13 }}>No steps completed yet.</div>
           ) : (

@@ -436,6 +436,7 @@ function LoanHeader({ meta, loanId, onNavigatePipeline, onOpenComms }) {
         </div>
       </div>
 
+      <HeaderStat label="Purpose" value={meta?.purpose || '—'}/>
       <HeaderStat label="Loan Amount" value={meta?.amount || '$425,000'}/>
 
       {/* DTI and LTV — hidden during Application stage (income/property
@@ -1179,6 +1180,19 @@ const RAIL_TOOLS = [
   { icon: 'upload',     label: 'Request Docs', color: '#2453D6' },
 ];
 
+// Demo notes — would come from a notes store in production.
+const DEMO_NOTES = [
+  { id: 1, author: 'Alex Martinez', initials: 'AM', avatarColor: '#4A39C9',
+    timestamp: 'Yesterday, 3:42 PM',
+    body: 'Borrower confirmed via email — fine with the 15-day lock extension. Watching rate movement before locking the float-down.' },
+  { id: 2, author: 'Jamie Lee', initials: 'JL', avatarColor: '#A8541C',
+    timestamp: 'May 22, 11:18 AM',
+    body: 'Pulled updated paystub. DTI now at 38% — tight but within guidelines. Income calc note: includes seasonal OT.' },
+  { id: 3, author: 'AI Assistant', initials: 'AI', avatarColor: '#6E59E8', ai: true,
+    timestamp: 'May 20, 9:04 AM',
+    body: 'Detected large deposit ($8,500) on 4/15 — letter of explanation may be needed. Flagged as auto-clearable on next upload.' },
+];
+
 function RailTooltip({ label, visible }) {
   return (
     <div style={{
@@ -1207,150 +1221,305 @@ function RailTooltip({ label, visible }) {
   );
 }
 
-function ToolsPanel({ onOpenURLA, onOpenComms, onOpenDocs, onOpenIncome }) {
-  const [expanded, setExpanded] = React.useState(false);
+function ToolsPanel({ onOpenURLA, onOpenComms, onOpenDocs, onOpenIncome, onOpenNotes }) {
+  const [view, setView] = React.useState(null); // null = drawer closed; 'tools' | 'notes' when open
   const [toolTab, setToolTab] = React.useState('mine');
   const [hoveredTool, setHoveredTool] = React.useState(null);
 
-  // Condensed icon rail
-  if (!expanded) {
-    return (
-      <aside style={{
-        width: 48, flexShrink: 0,
-        borderLeft: '1px solid var(--border-subtle)',
-        background: 'var(--bg-surface)',
-        display: 'flex', flexDirection: 'column', alignItems: 'center',
-        paddingTop: 6,
-        transition: 'width 0.22s ease',
-      }}>
-        {/* Expand toggle */}
-        <div style={{ position: 'relative' }}>
+  // Click a view button: toggle if same, switch if different
+  const toggleView = (id) => setView(v => v === id ? null : id);
+
+  // Selected-state style for the two view-switching buttons in the rail
+  const railNavButton = (isActive) => ({
+    width: 32, height: 32, borderRadius: 8, border: 'none',
+    background: isActive ? 'var(--text-primary)' : 'var(--bg-muted)',
+    color:      isActive ? '#fff' : 'var(--text-secondary)',
+    cursor: 'pointer', marginBottom: 6,
+    display: 'flex', alignItems: 'center', justifyContent: 'center',
+    transition: 'background 0.15s, color 0.15s',
+  });
+
+  const rail = (
+    <aside style={{
+      width: 48, flexShrink: 0,
+      borderLeft: '1px solid var(--border-subtle)',
+      background: 'var(--bg-surface)',
+      display: 'flex', flexDirection: 'column', alignItems: 'center',
+      paddingTop: 6,
+    }}>
+      {/* Open Tools — view: 'tools' */}
+      <div style={{ position: 'relative' }}>
+        <button
+          onClick={() => toggleView('tools')}
+          aria-label="Open tools panel"
+          aria-pressed={view === 'tools'}
+          title="Open tools panel"
+          style={railNavButton(view === 'tools')}
+          onMouseEnter={e => {
+            if (view !== 'tools') e.currentTarget.style.background = 'var(--border-subtle)';
+            setHoveredTool('__expand');
+          }}
+          onMouseLeave={e => {
+            if (view !== 'tools') e.currentTarget.style.background = 'var(--bg-muted)';
+            setHoveredTool(null);
+          }}
+        >
+          <Icon name="command" size={14} color={view === 'tools' ? '#fff' : 'var(--text-secondary)'} aria-hidden="true"/>
+        </button>
+        <RailTooltip label="Open Tools" visible={hoveredTool === '__expand'}/>
+      </div>
+
+      {/* Notes — view: 'notes' (sits above the divider, alongside Open Tools) */}
+      <div style={{ position: 'relative' }}>
+        <button
+          onClick={() => toggleView('notes')}
+          aria-label="Notes"
+          aria-pressed={view === 'notes'}
+          title="Notes"
+          style={railNavButton(view === 'notes')}
+          onMouseEnter={e => {
+            if (view !== 'notes') e.currentTarget.style.background = 'var(--border-subtle)';
+            setHoveredTool('__notes');
+          }}
+          onMouseLeave={e => {
+            if (view !== 'notes') e.currentTarget.style.background = 'var(--bg-muted)';
+            setHoveredTool(null);
+          }}
+        >
+          <Icon name="doc" size={14} color={view === 'notes' ? '#fff' : 'var(--text-secondary)'} aria-hidden="true"/>
+        </button>
+        <RailTooltip label="Notes" visible={hoveredTool === '__notes'}/>
+      </div>
+
+      <div style={{ width: 28, height: 1, background: 'var(--border-subtle)', margin: '2px 0 6px' }}/>
+
+      {/* Popup-launching tools (below divider) */}
+      {RAIL_TOOLS.map(tool => (
+        <div key={tool.label} style={{ position: 'relative' }}>
           <button
-            onClick={() => setExpanded(true)}
-            aria-label="Open tools panel"
-            title="Open tools panel"
-            style={{
-              width: 32, height: 32, borderRadius: 8, border: 'none',
-              background: 'var(--bg-muted)', cursor: 'pointer',
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
-              marginBottom: 8,
+            onClick={() => {
+              if (tool.label === 'Comms') { onOpenComms && onOpenComms(); }
+              else if (tool.label === 'Request Docs') { onOpenDocs && onOpenDocs(); }
+              else if (tool.label === 'Income Calc') { onOpenIncome && onOpenIncome(); }
             }}
-            onMouseEnter={e => { e.currentTarget.style.background = 'var(--border-subtle)'; setHoveredTool('__expand'); }}
-            onMouseLeave={e => { e.currentTarget.style.background = 'var(--bg-muted)'; setHoveredTool(null); }}
+            aria-label={tool.label}
+            title={tool.label}
+            style={{
+              width: 32, height: 36, borderRadius: 8, border: 'none',
+              background: 'transparent', cursor: 'pointer', marginBottom: 2,
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+            }}
+            onMouseEnter={e => { e.currentTarget.style.background = 'var(--bg-muted)'; setHoveredTool(tool.label); }}
+            onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; setHoveredTool(null); }}
           >
-            <Icon name="command" size={14} color="var(--text-secondary)" aria-hidden="true"/>
+            <Icon name={tool.icon} size={15} color={tool.color} strokeWidth={1.7} aria-hidden="true"/>
           </button>
-          <RailTooltip label="Open Tools" visible={hoveredTool === '__expand'}/>
+          <RailTooltip label={tool.label} visible={hoveredTool === tool.label}/>
         </div>
+      ))}
 
-        <div style={{ width: 28, height: 1, background: 'var(--border-subtle)', marginBottom: 6 }}/>
+      {/* AI suggested dot */}
+      <div style={{ marginTop: 6, width: 6, height: 6, borderRadius: '50%', background: 'var(--ai-primary)' }} title="AI suggestions available"/>
+    </aside>
+  );
 
-        {/* Tool icons */}
-        {RAIL_TOOLS.map(tool => (
-          <div key={tool.label} style={{ position: 'relative' }}>
-            <button
-              onClick={() => {
-                if (tool.label === 'Comms') { onOpenComms && onOpenComms(); }
-                else if (tool.label === 'Request Docs') { onOpenDocs && onOpenDocs(); }
-                else if (tool.label === 'Income Calc') { onOpenIncome && onOpenIncome(); }
-                else { setExpanded(true); }
-              }}
-              aria-label={tool.label}
-              title={tool.label}
-              style={{
-                width: 32, height: 36, borderRadius: 8, border: 'none',
-                background: 'transparent', cursor: 'pointer', marginBottom: 2,
-                display: 'flex', alignItems: 'center', justifyContent: 'center',
-              }}
-              onMouseEnter={e => { e.currentTarget.style.background = 'var(--bg-muted)'; setHoveredTool(tool.label); }}
-              onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; setHoveredTool(null); }}
-            >
-              <Icon name={tool.icon} size={15} color={tool.color} strokeWidth={1.7} aria-hidden="true"/>
-            </button>
-            <RailTooltip label={tool.label} visible={hoveredTool === tool.label}/>
-          </div>
-        ))}
+  // Drawer (rendered to the LEFT of the rail when a view is selected)
+  if (view === null) return rail;
 
-        {/* AI suggested dot */}
-        <div style={{ marginTop: 6, width: 6, height: 6, borderRadius: '50%', background: 'var(--ai-primary)' }} title="AI suggestions available"/>
-      </aside>
-    );
-  }
-
-  // Expanded full panel
+  const isNotes = view === 'notes';
   return (
+    <>
     <aside style={{
       width: 280, flexShrink: 0,
       borderLeft: '1px solid var(--border-subtle)',
       background: 'var(--bg-surface)',
       display: 'flex', flexDirection: 'column',
-      transition: 'width 0.22s ease',
+      minHeight: 0, overflowY: 'auto',
     }}>
       {/* Header */}
       <div style={{
         padding: '14px 16px',
         borderBottom: '1px solid var(--border-subtle)',
         display: 'flex', alignItems: 'center', gap: 8,
+        flexShrink: 0,
       }}>
-        <Icon name="command" size={15} color="var(--text-secondary)"/>
-        <span style={{ fontSize: 14, fontWeight: 600, flex: 1 }}>Tools</span>
-        {/* Collapse button */}
-        <button
-          onClick={() => setExpanded(false)}
-          title="Collapse"
-          style={{ width: 24, height: 24, borderRadius: 6, border: 'none', background: 'transparent', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
-          onMouseEnter={e => e.currentTarget.style.background = 'var(--bg-muted)'}
-          onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
-        >
-          <Icon name="chevronRight" size={14} color="var(--text-tertiary)"/>
-        </button>
+        <Icon name={isNotes ? 'doc' : 'command'} size={15} color="var(--text-secondary)"/>
+        <span style={{ fontSize: 14, fontWeight: 600, flex: 1 }}>{isNotes ? 'Notes' : 'Tools'}</span>
+        {/* Header action: pop out to its own window for Notes, collapse for Tools */}
+        {isNotes ? (
+          <button
+            onClick={() => { onOpenNotes && onOpenNotes(); setView(null); }}
+            title="Pop out into window"
+            aria-label="Pop out notes into a new window"
+            style={{ width: 24, height: 24, borderRadius: 6, border: 'none', background: 'transparent', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+            onMouseEnter={e => e.currentTarget.style.background = 'var(--bg-muted)'}
+            onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
+          >
+            <Icon name="externalLink" size={13} color="var(--text-tertiary)"/>
+          </button>
+        ) : (
+          <button
+            onClick={() => setView(null)}
+            title="Collapse"
+            style={{ width: 24, height: 24, borderRadius: 6, border: 'none', background: 'transparent', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+            onMouseEnter={e => e.currentTarget.style.background = 'var(--bg-muted)'}
+            onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
+          >
+            <Icon name="chevronRight" size={14} color="var(--text-tertiary)"/>
+          </button>
+        )}
       </div>
 
-      {/* Tabs */}
-      <div style={{ padding: '12px 14px 0' }}>
-        <div style={{ display: 'flex', background: 'var(--bg-muted)', borderRadius: 8, padding: 3 }}>
-          {[{ id: 'mine', label: 'My Tools' }, { id: 'all', label: 'All' }].map(t => (
-            <button key={t.id} onClick={() => setToolTab(t.id)} style={{
-              flex: 1, height: 28, border: 'none', borderRadius: 6,
-              background: toolTab === t.id ? 'var(--bg-surface)' : 'transparent',
-              boxShadow: toolTab === t.id ? 'var(--shadow-sm)' : 'none',
-              color: 'var(--text-primary)', fontSize: 12.5, fontWeight: 500,
-              cursor: 'pointer', fontFamily: 'inherit',
-            }}>{t.label}</button>
-          ))}
-        </div>
-      </div>
+      {isNotes ? (
+        <NotesDrawerBody/>
+      ) : (
+        <>
+          {/* Tabs */}
+          <div style={{ padding: '12px 14px 0' }}>
+            <div style={{ display: 'flex', background: 'var(--bg-muted)', borderRadius: 8, padding: 3 }}>
+              {[{ id: 'mine', label: 'My Tools' }, { id: 'all', label: 'All' }].map(t => (
+                <button key={t.id} onClick={() => setToolTab(t.id)} style={{
+                  flex: 1, height: 28, border: 'none', borderRadius: 6,
+                  background: toolTab === t.id ? 'var(--bg-surface)' : 'transparent',
+                  boxShadow: toolTab === t.id ? 'var(--shadow-sm)' : 'none',
+                  color: 'var(--text-primary)', fontSize: 12.5, fontWeight: 500,
+                  cursor: 'pointer', fontFamily: 'inherit',
+                }}>{t.label}</button>
+              ))}
+            </div>
+          </div>
 
-      {/* Stage indicator */}
-      <div style={{ padding: '14px 14px 10px' }}>
-        <div style={{
-          padding: '8px 12px', borderRadius: 8, background: 'var(--bg-muted)',
-          fontSize: 12.5, color: 'var(--text-secondary)',
-          display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-        }}>
-          <span>Stage: <strong style={{ color: 'var(--text-primary)', fontWeight: 600 }}>Underwriting</strong></span>
-          <Icon name="chevronDown" size={12} color="var(--text-tertiary)"/>
-        </div>
-      </div>
+          {/* Stage indicator */}
+          <div style={{ padding: '14px 14px 10px' }}>
+            <div style={{
+              padding: '8px 12px', borderRadius: 8, background: 'var(--bg-muted)',
+              fontSize: 12.5, color: 'var(--text-secondary)',
+              display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+            }}>
+              <span>Stage: <strong style={{ color: 'var(--text-primary)', fontWeight: 600 }}>Underwriting</strong></span>
+              <Icon name="chevronDown" size={12} color="var(--text-tertiary)"/>
+            </div>
+          </div>
 
-      {/* AI Suggested */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '10px 16px', borderTop: '1px solid var(--border-subtle)' }}>
-        <Icon name="sparkle" size={13} color="var(--ai-primary)" strokeWidth={1.5}/>
-        <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--ai-ink)', flex: 1 }}>AI Suggested</span>
-        <Icon name="chevronDown" size={13} color="var(--text-tertiary)"/>
-      </div>
+          {/* AI Suggested */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '10px 16px', borderTop: '1px solid var(--border-subtle)' }}>
+            <Icon name="sparkle" size={13} color="var(--ai-primary)" strokeWidth={1.5}/>
+            <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--ai-ink)', flex: 1 }}>AI Suggested</span>
+            <Icon name="chevronDown" size={13} color="var(--text-tertiary)"/>
+          </div>
 
-      <AISuggestedTool icon="calculator" label="Income Calculator" onClick={onOpenIncome}/>
-      <AISuggestedTool icon="upload" label="Request Documents" onClick={onOpenDocs}/>
-      <AISuggestedTool icon="listCheck" label="Conditions Manager"/>
+          <AISuggestedTool icon="calculator" label="Income Calculator" onClick={onOpenIncome}/>
+          <AISuggestedTool icon="upload" label="Request Documents" onClick={onOpenDocs}/>
+          <AISuggestedTool icon="listCheck" label="Conditions Manager"/>
 
-      {/* Categories */}
-      <ToolRow icon="upload" label="Documents & Disclosures" onClick={onOpenDocs}/>
-      <ToolRow icon="mail" label="Communication" badge={2} onClick={onOpenComms}/>
-      <ToolRow icon="download" label="Reporting & Audit"/>
+          {/* Categories */}
+          <ToolRow icon="upload" label="Documents & Disclosures" onClick={onOpenDocs}/>
+          <ToolRow icon="mail" label="Communication" badge={2} onClick={onOpenComms}/>
+          <ToolRow icon="download" label="Reporting & Audit"/>
 
-      <div style={{ flex: 1 }}/>
+          <div style={{ flex: 1 }}/>
+        </>
+      )}
     </aside>
+    {rail}
+    </>
+  );
+}
+
+function NotesDrawerBody() {
+  const [notes, setNotes] = React.useState(DEMO_NOTES);
+  const [draft, setDraft] = React.useState('');
+
+  const post = () => {
+    const body = draft.trim();
+    if (!body) return;
+    setNotes(prev => [{
+      id: Date.now(),
+      author: 'You',
+      initials: 'YO',
+      avatarColor: '#0E1014',
+      timestamp: 'Just now',
+      body,
+    }, ...prev]);
+    setDraft('');
+  };
+
+  return (
+    <>
+      {/* Composer */}
+      <div style={{ padding: '12px 14px', borderBottom: '1px solid var(--border-subtle)', flexShrink: 0 }}>
+        <textarea
+          value={draft}
+          onChange={e => setDraft(e.target.value)}
+          placeholder="Add a note for the file…"
+          rows={3}
+          style={{
+            width: '100%', resize: 'vertical', minHeight: 60,
+            padding: '8px 10px', borderRadius: 7,
+            border: '1px solid var(--border-default)', background: 'var(--bg-surface)',
+            fontFamily: 'inherit', fontSize: 12.5, lineHeight: 1.45,
+            color: 'var(--text-primary)', outline: 'none',
+            boxSizing: 'border-box',
+          }}
+          onFocus={e => e.currentTarget.style.borderColor = 'var(--text-primary)'}
+          onBlur={e => e.currentTarget.style.borderColor = 'var(--border-default)'}
+        />
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: 6 }}>
+          <span style={{ fontSize: 11, color: 'var(--text-tertiary)' }}>
+            Visible to your team
+          </span>
+          <button
+            onClick={post}
+            disabled={!draft.trim()}
+            style={{
+              height: 26, padding: '0 10px', borderRadius: 6,
+              border: 'none', cursor: draft.trim() ? 'pointer' : 'not-allowed',
+              background: draft.trim() ? 'var(--text-primary)' : 'var(--bg-muted)',
+              color: draft.trim() ? '#fff' : 'var(--text-tertiary)',
+              fontFamily: 'inherit', fontSize: 12, fontWeight: 600,
+            }}
+          >
+            Post
+          </button>
+        </div>
+      </div>
+
+      {/* Notes list */}
+      <div style={{ padding: '4px 0', flex: 1 }}>
+        {notes.length === 0 ? (
+          <div style={{ padding: '24px 16px', textAlign: 'center', fontSize: 12.5, color: 'var(--text-tertiary)' }}>
+            No notes yet — add one above to start the thread.
+          </div>
+        ) : (
+          notes.map(n => (
+            <div key={n.id} style={{
+              padding: '12px 14px',
+              borderBottom: '1px solid var(--border-subtle)',
+              display: 'flex', gap: 10,
+            }}>
+              <Avatar initials={n.initials} size={28} color={n.avatarColor}/>
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 2 }}>
+                  <span style={{ fontSize: 12.5, fontWeight: 600, color: 'var(--text-primary)' }}>{n.author}</span>
+                  {n.ai && (
+                    <span style={{
+                      display: 'inline-flex', alignItems: 'center', gap: 3,
+                      fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em',
+                      padding: '1px 6px', borderRadius: 999,
+                      background: 'var(--ai-bg)', color: 'var(--ai-ink)',
+                    }}>
+                      <Icon name="sparkle" size={9} color="var(--ai-primary)" strokeWidth={1.8}/> AI
+                    </span>
+                  )}
+                </div>
+                <div style={{ fontSize: 11, color: 'var(--text-tertiary)', marginBottom: 5 }}>{n.timestamp}</div>
+                <div style={{ fontSize: 12.5, color: 'var(--text-secondary)', lineHeight: 1.5, wordBreak: 'break-word' }}>{n.body}</div>
+              </div>
+            </div>
+          ))
+        )}
+      </div>
+    </>
   );
 }
 
@@ -2294,6 +2463,7 @@ function resolveLoanMeta(loanId) {
     closing:    loan.closingDate || override?.closing,
     dti:        loan.dti,
     ltv:        loan.ltv,
+    purpose:    loan.loanPurpose,
   };
 }
 
@@ -2307,6 +2477,7 @@ function LoanDetailView({ loanId, tab, onTab, persona = 'LO' }) {
   const commsWindowRef = React.useRef(null);
   const docsWindowRef = React.useRef(null);
   const incomeWindowRef = React.useRef(null);
+  const notesWindowRef = React.useRef(null);
   const [dataSubTab, setDataSubTab] = React.useState('overview');
 
   const openCommsWindow = () => {
@@ -2426,6 +2597,43 @@ function LoanDetailView({ loanId, tab, onTab, persona = 'LO' }) {
     win.addEventListener('beforeunload', () => { root.unmount(); });
   };
 
+  const openNotesWindow = () => {
+    if (notesWindowRef.current && !notesWindowRef.current.closed) {
+      notesWindowRef.current.focus();
+      return;
+    }
+    const borrower = meta?.borrower || 'Borrower';
+    const win = window.open('', `notes-${loanId}`, 'width=480,height=720,resizable=yes,scrollbars=no');
+    if (!win) return;
+    notesWindowRef.current = win;
+
+    win.document.title = `Notes — ${borrower} · ${loanId}`;
+    win.document.head.innerHTML = `<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">`;
+    Array.from(document.styleSheets).forEach(sheet => {
+      try {
+        if (sheet.href) {
+          const link = win.document.createElement('link');
+          link.rel = 'stylesheet'; link.href = sheet.href;
+          win.document.head.appendChild(link);
+        } else if (sheet.cssRules) {
+          const style = win.document.createElement('style');
+          style.textContent = Array.from(sheet.cssRules).map(r => r.cssText).join('\n');
+          win.document.head.appendChild(style);
+        }
+      } catch (_) {}
+    });
+
+    win.document.body.style.cssText = 'margin:0;padding:0;height:100vh;display:flex;flex-direction:column;background:var(--bg-canvas,#F8F8F6);';
+    const mount = win.document.createElement('div');
+    mount.style.cssText = 'flex:1;display:flex;flex-direction:column;min-height:0;overflow:auto;';
+    win.document.body.appendChild(mount);
+
+    const root = createRoot(mount);
+    root.render(<NotesDrawerBody/>);
+
+    win.addEventListener('beforeunload', () => { root.unmount(); });
+  };
+
   const openURLA = () => setUrlaOpen(true);
   const closeURLA = () => setUrlaOpen(false);
 
@@ -2435,13 +2643,18 @@ function LoanDetailView({ loanId, tab, onTab, persona = 'LO' }) {
   };
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', flex: 1 }}>
-      <LoanHeader meta={meta} loanId={loanId || 'LN-2024-0234'} onOpenComms={openCommsWindow}/>
-      <LoanStatusBar meta={meta} loan={loan}/>
-      {/* <StageTrack meta={meta} loanId={loanId || 'LN-2024-0234'}/> */}
-      {loan.fema && <FEMABanner fema={loan.fema}/>}
+    <div style={{ display: 'flex', flexDirection: 'column', flex: 1, minHeight: 0, overflow: 'hidden' }}>
+      {/* Fixed top: loan summary + status bar + (optional) FEMA banner */}
+      <div style={{ flexShrink: 0 }}>
+        <LoanHeader meta={meta} loanId={loanId || 'LN-2024-0234'} onOpenComms={openCommsWindow}/>
+        <LoanStatusBar meta={meta} loan={loan}/>
+        {/* <StageTrack meta={meta} loanId={loanId || 'LN-2024-0234'}/> */}
+        {loan.fema && <FEMABanner fema={loan.fema}/>}
+      </div>
 
-      <div style={{ display: 'flex', flex: 1, minHeight: 0 }}>
+      {/* Scrollable region: LeftRail + Main + ToolsPanel.
+          Only <main> scrolls vertically; the rails handle their own overflow. */}
+      <div style={{ display: 'flex', flex: 1, minHeight: 0, overflow: 'hidden' }}>
         <LeftRail tab={localTab} onTab={handleTab} onOpenURLA={openURLA} dataSubTab={dataSubTab} onDataSubTab={setDataSubTab} onOpenDocs={openDocsWindow}/>
 
         {/* Main */}
@@ -2456,15 +2669,15 @@ function LoanDetailView({ loanId, tab, onTab, persona = 'LO' }) {
            : localTab === 'closing' ? <ClosingTab/>
            : localTab === 'audit' ? <AuditTab/>
            : localTab === 'services' ? <ServicesTab/>
-           : isApplication ? <NowTabApplication borrowerName={meta.borrower} loanId={loanId} onOpenURLA={openURLA}/>
-           : meta.status === 'Processing' ? <NowTabProcessing borrowerName={meta.borrower} loanId={loanId}/>
-           : meta.status === 'Underwriting' ? <NowTabUnderwriting borrowerName={meta.borrower} loanId={loanId} fema={loan.fema || null}/>
-           : meta.status === 'Closing' ? <NowTabClosing borrowerName={meta.borrower} loanId={loanId}/>
-           : meta.status === 'Approval' ? (persona === 'LO' ? <LOApprovalView loanId={loanId}/> : <NowTabApproval borrowerName={meta.borrower} loanId={loanId}/>)
+           : isApplication ? <NowTabApplication borrowerName={meta.borrower} loanId={loanId} loan={loan} onOpenURLA={openURLA}/>
+           : meta.status === 'Processing' ? <NowTabProcessing borrowerName={meta.borrower} loanId={loanId} loan={loan}/>
+           : meta.status === 'Underwriting' ? <NowTabUnderwriting borrowerName={meta.borrower} loanId={loanId} loan={loan} fema={loan.fema || null}/>
+           : meta.status === 'Closing' ? <NowTabClosing borrowerName={meta.borrower} loanId={loanId} loan={loan}/>
+           : meta.status === 'Approval' ? (persona === 'LO' ? <LOApprovalView loanId={loanId}/> : <NowTabApproval borrowerName={meta.borrower} loanId={loanId} loan={loan}/>)
            : <NowTab/>}
         </main>
 
-        <ToolsPanel onOpenURLA={openURLA} onOpenComms={openCommsWindow} onOpenDocs={openDocsWindow} onOpenIncome={openIncomeWindow}/>
+        <ToolsPanel onOpenURLA={openURLA} onOpenComms={openCommsWindow} onOpenDocs={openDocsWindow} onOpenIncome={openIncomeWindow} onOpenNotes={openNotesWindow}/>
       </div>
 
       {urlaOpen && ReactDOM.createPortal(

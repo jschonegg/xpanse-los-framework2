@@ -1,6 +1,7 @@
 import React from 'react';
 import { Icon } from '../components/Icon';
 import { StatusPill } from '../components/Shell';
+import { ClosingTimelineCard } from '../components/WorkspaceCards';
 
 function ActionCard({ tone = 'neutral', icon, iconBg, header, children, footer }) {
   const tones = {
@@ -81,7 +82,7 @@ const PTF_CONDITIONS = [
   { id: 'P-004', title: 'Final appraisal review sign-off', due: 'Jun 10', blocking: false },
 ];
 
-export function NowTabApproval({ borrowerName = 'Michael Oben', loanId = 'LN-2024-0245' }) {
+export function NowTabApproval({ borrowerName = 'Michael Oben', loanId = 'LN-2024-0245', loan }) {
   const [completed, setCompleted] = React.useState(new Set());
   const [clearedPTF, setClearedPTF] = React.useState(new Set());
   const [advanced, setAdvanced] = React.useState(false);
@@ -111,19 +112,20 @@ export function NowTabApproval({ borrowerName = 'Michael Oben', loanId = 'LN-202
 
   return (
     <>
-      <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 6 }}>
+      <ClosingTimelineCard loan={loan}/>
+
+      <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 12 }}>
         <div>
-          <h2 style={{ margin: 0, fontSize: 18, fontWeight: 600, letterSpacing: '-0.01em' }}>Approval Stage</h2>
-          <div style={{ fontSize: 13, color: 'var(--text-tertiary)', marginTop: 4, marginBottom: 18 }}>
+          <h2 style={{ margin: 0, fontSize: 16, fontWeight: 600, letterSpacing: '-0.01em' }}>Approval Stage</h2>
+          <div style={{ fontSize: 13, color: 'var(--text-tertiary)', marginTop: 3 }}>
             Path to Clear to Close — {remaining} of {STEPS.length} steps remaining
           </div>
         </div>
-        <StatusPill tone="green">Approval</StatusPill>
       </div>
 
       <StageProgress completed={completed}/>
 
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 14, maxWidth: 760 }}>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
 
         {/* 1. REVIEW CONDITIONAL APPROVAL */}
         <ActionCard

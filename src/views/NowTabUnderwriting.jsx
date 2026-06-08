@@ -1,6 +1,7 @@
 import React from 'react';
 import { Icon } from '../components/Icon';
 import { StatusPill } from '../components/Shell';
+import { ClosingTimelineCard } from '../components/WorkspaceCards';
 
 function ActionCard({ tone = 'neutral', icon, iconBg, header, children, footer, isActive, isWaiting }) {
   const tones = {
@@ -214,7 +215,7 @@ function FEMADisasterCard({ fema, borrowerName }) {
   );
 }
 
-export function NowTabUnderwriting({ borrowerName = 'Sarah Anderson', loanId = 'LN-2024-0234', fema = null }) {
+export function NowTabUnderwriting({ borrowerName = 'Sarah Anderson', loanId = 'LN-2024-0234', loan, fema = null }) {
   const [completed, setCompleted] = React.useState(new Set());
   const [clearedConditions, setClearedConditions] = React.useState(new Set());
   const [advanced, setAdvanced] = React.useState(false);
@@ -254,19 +255,20 @@ export function NowTabUnderwriting({ borrowerName = 'Sarah Anderson', loanId = '
 
   return (
     <>
-      <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 6 }}>
+      <ClosingTimelineCard loan={loan}/>
+
+      <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 12 }}>
         <div>
-          <h2 style={{ margin: 0, fontSize: 18, fontWeight: 600, letterSpacing: '-0.01em' }}>Underwriting Review</h2>
-          <div style={{ fontSize: 13, marginTop: 4, marginBottom: 18, color: remaining === STEPS.length ? 'var(--status-amber)' : 'var(--text-tertiary)', fontWeight: remaining === STEPS.length ? 500 : 400 }}>
+          <h2 style={{ margin: 0, fontSize: 16, fontWeight: 600, letterSpacing: '-0.01em' }}>Underwriting Review</h2>
+          <div style={{ fontSize: 13, marginTop: 3, color: remaining === STEPS.length ? 'var(--status-amber)' : 'var(--text-tertiary)', fontWeight: remaining === STEPS.length ? 500 : 400 }}>
             {subtitle}
           </div>
         </div>
-        {/* Status badge removed — shown in header already */}
       </div>
 
       <StageProgress completed={completed}/>
 
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 14, maxWidth: 760 }}>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
 
         {/* FEMA DISASTER REVIEW — shown first if applicable */}
         {fema && <FEMADisasterCard fema={fema} borrowerName={borrowerName}/>}
