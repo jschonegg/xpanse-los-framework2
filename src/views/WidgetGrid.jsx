@@ -7,10 +7,7 @@ import { Icon } from '../components/Icon';
 
 // Bump the storage key when DEFAULT_LAYOUT changes meaningfully so existing
 // users see the new default the next time they load the home.
-// v5: leaderboard removed from default — the 'Around You' section below the
-// widget grid now owns the branch leaderboard. Widget still available in the
-// catalog if a user wants to re-add it.
-const STORAGE_KEY = 'los-widget-layout-v5';
+const STORAGE_KEY = 'los-widget-layout-v4';
 
 const DEFAULT_LAYOUT = [
   { id: 'ai-coach-brief',      width: 'full' },
@@ -18,6 +15,7 @@ const DEFAULT_LAYOUT = [
   { id: 'ready-for-uw',        width: 'half' },
   { id: 'lock-clock',          width: 'half' },
   { id: 'waiting-on-borrower', width: 'half' },
+  { id: 'leaderboard',         width: 'full' },
   { id: 'company-feed',        width: 'full' },
 ];
 
