@@ -518,6 +518,7 @@ export const WIDGET_REGISTRY = [
     color: '#5B21B6',
     defaultWidth: 'full',
     category: 'AI',
+    chromeless: true, // banner carries its own border + label, skip the shell title
   },
   {
     id: 'files-at-risk',
@@ -559,6 +560,40 @@ export const WIDGET_REGISTRY = [
 
 // ─── Widget shell (title bar + content wrapper) ───────────────────────────────
 function WidgetShell({ meta, width, onRemove, onToggleWidth, editMode, dragHandleProps, isDragging, children }) {
+  // 'chromeless' widgets bring their own visual chrome (border, title, etc.)
+  // and don't need the outer shell. Only the edit-mode controls appear.
+  const chromeless = !!meta.chromeless;
+  if (chromeless) {
+    return (
+      <div style={{
+        position: 'relative',
+        opacity: isDragging ? 0.55 : 1,
+        transition: 'opacity 0.15s',
+      }}>
+        {editMode && (
+          <div {...dragHandleProps} style={{
+            display: 'flex', alignItems: 'center', gap: 6, marginBottom: 6,
+            cursor: 'grab',
+          }}>
+            <Icon name="grip" size={13} color="#9CA3AF"/>
+            <span style={{ fontSize: 11, color: '#6B7280', fontWeight: 600 }}>{meta.label}</span>
+            <div style={{ flex: 1 }}/>
+            <button onClick={onToggleWidth} style={{
+              display: 'flex', alignItems: 'center', gap: 3, padding: '3px 8px',
+              border: '1px solid #E5E7EB', borderRadius: 5, background: '#fff',
+              fontSize: 10.5, fontWeight: 600, color: '#6B7280', cursor: 'pointer', fontFamily: 'inherit',
+            }}>{width === 'full' ? '½' : '⬛ Full'}</button>
+            <button onClick={onRemove} style={{
+              width: 22, height: 22, display: 'flex', alignItems: 'center', justifyContent: 'center',
+              border: '1px solid #FECACA', borderRadius: 5, background: '#FFF5F5', cursor: 'pointer',
+            }}><Icon name="x" size={11} color="#EF4444"/></button>
+          </div>
+        )}
+        {children}
+      </div>
+    );
+  }
+
   return (
     <div
       style={{
