@@ -423,161 +423,9 @@ export function WaitingOnBorrowerWidget({ onOpenLoan }) {
 // Ported from old prototype: single-row brief with 3 inline file-named insights.
 // Designed to live full-width at the top of the home, complementing the
 // floating AI panel rather than replacing it.
-// ── Next Move ──────────────────────────────────────────────────────────────
-// Single "your next move is this" card. Rotates through a prioritized action
-// queue as items are completed or deferred. Each action carries everything
-// the LO needs to act in one click: file, problem, recommended action,
-// confidence, and a primary CTA that routes to the right place.
-
-const NEXT_MOVE_QUEUE = [
-  { id: 'm1', tone: 'risk',
-    loanId: 'LN-2024-0218', borrower: 'Rodriguez',
-    problem: 'Lock expires in 2d 14h, UW is light.',
-    recommendation: 'Most likely path: file a 7-day extension at 0.125, or expedite the CD today.',
-    confidence: 94, action: 'File 7-day extension', tab: 'pricing' },
-  { id: 'm2', tone: 'risk',
-    loanId: 'LN-2024-0234', borrower: 'Anderson',
-    problem: 'VOE shows $98k. Application says $112k. $14k delta will block UW.',
-    recommendation: 'Pull the latest pay stub and reconcile, or request a corrected VOE.',
-    confidence: 91, action: 'Open income tool', tab: 'conditions' },
-  { id: 'm3', tone: 'deadline',
-    loanId: 'LN-2024-0241', borrower: 'Patel',
-    problem: 'DTI at 44.8%, within 0.2 pts of ceiling. Any change in income pushes it over.',
-    recommendation: 'Lock the file before debt updates land — submit to UW today.',
-    confidence: 87, action: 'Submit to UW', tab: 'now' },
-  { id: 'm4', tone: 'deadline',
-    loanId: 'LN-2024-0189', borrower: 'Chen',
-    problem: 'Appraisal came in 4% under contract.',
-    recommendation: 'Draft a value rebuttal — comparable sales support a higher number.',
-    confidence: 78, action: 'Open appraisal review', tab: 'now' },
-];
-
-export function AICoachBriefWidget({ onOpenLoan }) {
-  const [idx, setIdx] = React.useState(() => {
-    const saved = parseInt(localStorage.getItem('los-next-move-idx') || '0', 10);
-    return isNaN(saved) ? 0 : saved % NEXT_MOVE_QUEUE.length;
-  });
-  const [dismissed, setDismissed] = React.useState(() => {
-    try { return new Set(JSON.parse(localStorage.getItem('los-next-move-dismissed') || '[]')); }
-    catch { return new Set(); }
-  });
-
-  const queue = NEXT_MOVE_QUEUE.filter(m => !dismissed.has(m.id));
-  const current = queue.length === 0 ? null : queue[idx % queue.length];
-
-  const advance = () => {
-    const next = (idx + 1) % Math.max(queue.length, 1);
-    setIdx(next);
-    localStorage.setItem('los-next-move-idx', String(next));
-  };
-
-  const doItNow = () => {
-    if (!current) return;
-    if (onOpenLoan) onOpenLoan(current.loanId, current.tab);
-    // Treat acting on it as resolving it for the demo
-    const nextSet = new Set([...dismissed, current.id]);
-    setDismissed(nextSet);
-    localStorage.setItem('los-next-move-dismissed', JSON.stringify([...nextSet]));
-  };
-
-  const later = () => advance();
-
-  const reset = () => {
-    setDismissed(new Set());
-    setIdx(0);
-    localStorage.removeItem('los-next-move-dismissed');
-    localStorage.removeItem('los-next-move-idx');
-  };
-
-  if (!current) {
-    return (
-      <div style={{
-        display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
-        padding: '24px 16px', textAlign: 'center', gap: 8,
-      }}>
-        <div style={{ fontSize: 28 }}>✓</div>
-        <div style={{ fontSize: 14, fontWeight: 700, color: '#059669' }}>You're caught up.</div>
-        <div style={{ fontSize: 12.5, color: '#6B7280' }}>No urgent files. Nice work.</div>
-        <button onClick={reset} style={{
-          marginTop: 6, background: 'none', border: 'none', cursor: 'pointer',
-          fontFamily: 'inherit', fontSize: 11.5, color: '#9CA3AF', textDecoration: 'underline',
-        }}>Reset demo queue</button>
-      </div>
-    );
-  }
-
-  const toneColor = current.tone === 'risk' ? '#EF4444' : '#D97706';
-  const toneBg    = current.tone === 'risk' ? '#FEF2F2' : '#FFFBEB';
-
-  return (
-    <div>
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-          <div style={{
-            width: 32, height: 32, borderRadius: 8,
-            background: '#EDE9FE', color: '#5B21B6',
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-          }}>
-            <Icon name="sparkle" size={17}/>
-          </div>
-          <div style={{ lineHeight: 1.2 }}>
-            <div style={{ fontSize: 13, fontWeight: 800, color: '#5B21B6' }}>Your next move</div>
-            <div style={{ fontSize: 11, color: '#9CA3AF' }}>{queue.length} in your queue · {current.confidence}% confidence</div>
-          </div>
-        </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
-          {queue.map((_, i) => (
-            <span key={i} style={{
-              width: i === (idx % queue.length) ? 18 : 6, height: 6, borderRadius: 999,
-              background: i === (idx % queue.length) ? '#5B21B6' : '#E5E7EB',
-              transition: 'width 0.2s',
-            }}/>
-          ))}
-        </div>
-      </div>
-
-      <div style={{
-        background: toneBg, border: `1px solid ${toneColor}30`, borderRadius: 10,
-        padding: '14px 16px',
-      }}>
-        <div style={{ display: 'flex', alignItems: 'baseline', gap: 8, marginBottom: 6 }}>
-          <span style={{ fontSize: 16, fontWeight: 800, color: '#111827', letterSpacing: '-0.015em' }}>{current.borrower}</span>
-          <span style={{ fontSize: 12, fontFamily: 'DM Mono', color: '#6B7280' }}>{current.loanId}</span>
-        </div>
-        <div style={{ fontSize: 13.5, color: '#111827', marginBottom: 6, lineHeight: 1.4 }}>
-          <strong>The problem.</strong> {current.problem}
-        </div>
-        <div style={{ fontSize: 13, color: '#374151', lineHeight: 1.45 }}>
-          <strong style={{ color: '#5B21B6' }}>What I'd do.</strong> {current.recommendation}
-        </div>
-      </div>
-
-      <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 12 }}>
-        <button onClick={doItNow} style={{
-          background: '#5B21B6', color: '#fff', border: 'none',
-          borderRadius: 8, padding: '8px 16px',
-          fontSize: 13, fontWeight: 700, cursor: 'pointer',
-          fontFamily: 'inherit',
-          display: 'inline-flex', alignItems: 'center', gap: 6,
-        }}>
-          {current.action} <Icon name="arrowRight" size={12} strokeWidth={2.4}/>
-        </button>
-        <button onClick={later} style={{
-          background: 'transparent', color: '#6B7280', border: '1px solid #E5E7EB',
-          borderRadius: 8, padding: '8px 14px',
-          fontSize: 13, fontWeight: 600, cursor: 'pointer',
-          fontFamily: 'inherit',
-        }}>Later</button>
-        <div style={{ flex: 1 }}/>
-        <button onClick={() => onOpenLoan && onOpenLoan(current.loanId, current.tab)} style={{
-          background: 'transparent', border: 'none', cursor: 'pointer',
-          fontFamily: 'inherit', fontSize: 12.5, fontWeight: 600, color: '#6B7280',
-          padding: 0,
-        }}>Open file →</button>
-      </div>
-    </div>
-  );
-}
+// The 'ai-coach-brief' widget id now renders <AIInsightsBanner/> from Pipeline.
+// The previous AICoachBriefWidget + NEXT_MOVE_QUEUE was removed when we adopted
+// Melissa's banner for cross-screen consistency.
 
 export const WIDGET_REGISTRY = [
   {
@@ -664,8 +512,8 @@ export const WIDGET_REGISTRY = [
   // ── Ported from old prototype ──────────────────────────────────────────
   {
     id: 'ai-coach-brief',
-    label: 'Your Next Move',
-    desc: "AI picks the one file most worth your time right now — with a one-click action.",
+    label: 'AI Insights',
+    desc: 'Heads-up alerts for at-risk loans — cycle through, act, or dismiss.',
     icon: 'sparkle',
     color: '#5B21B6',
     defaultWidth: 'full',

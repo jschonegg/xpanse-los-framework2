@@ -308,7 +308,8 @@ function KpiRow({ loans }) {
 }
 
 // ── Single-line AI insights banner (replaces the bulkier multi-row DailyFocus) ─
-function AIInsightsBanner({ loans, onOpenLoan }) {
+// Exported so Home.jsx can render it where 'Your Next Move' used to be.
+export function AIInsightsBanner({ loans, onOpenLoan }) {
   const [dismissedIds, setDismissedIds] = React.useState(new Set());
   const [cursor, setCursor] = React.useState(0);
   const [animDir, setAnimDir] = React.useState(0); // -1 prev, +1 next, 0 idle
