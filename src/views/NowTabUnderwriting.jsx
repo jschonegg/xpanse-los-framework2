@@ -1,42 +1,70 @@
 import React from 'react';
 import { Icon } from '../components/Icon';
 import { StatusPill } from '../components/Shell';
+import { StageTimelineStrip } from '../components/WorkspaceCards';
 
+// Gradient-header + white-body card, matching the LOApprovalView
+// "Conditional Approval" card. Tone drives the header bg only; body is white.
 function ActionCard({ tone = 'neutral', icon, iconBg, header, children, footer, isActive, isWaiting }) {
   const tones = {
-    red:     { bg: 'var(--card-red-bg)',   border: 'var(--card-red-border)' },
-    green:   { bg: 'var(--card-green-bg)', border: 'var(--card-green-border)' },
-    amber:   { bg: 'var(--card-amber-bg)', border: 'var(--card-amber-border)' },
-    neutral: { bg: 'var(--bg-surface)',    border: 'var(--border-subtle)' },
-    ai:      { bg: 'var(--ai-bg)',         border: 'var(--ai-border)' },
+    red:     { bg: 'linear-gradient(90deg, #FEE2E2, #FEF2F2)', border: '#FECACA' },
+    green:   { bg: 'linear-gradient(90deg, #E7F8F1, #F0FDF4)', border: '#A7F3D0' },
+    amber:   { bg: 'linear-gradient(90deg, #FEF6E7, #FFF8F0)', border: '#FDE9C2' },
+    blue:    { bg: 'linear-gradient(90deg, #EEF3FE, #F5F8FF)', border: '#C7D2FE' },
+    ai:      { bg: 'linear-gradient(90deg, #F4F1FE, #FAF8FF)', border: '#E4DEFA' },
+    neutral: { bg: 'var(--bg-muted)',                          border: 'var(--border-subtle)' },
   };
   const t = tones[tone] || tones.neutral;
 
   return (
     <div style={{
-      background: t.bg,
+      background: 'var(--bg-surface)',
       border: `1px solid ${isActive ? 'var(--ai-primary)' : t.border}`,
       borderLeft: isActive ? '3px solid var(--ai-primary)' : `1px solid ${t.border}`,
-      borderRadius: 12,
-      padding: 18,
-      display: 'flex',
-      gap: 14,
+      borderRadius: 14,
+      overflow: 'hidden',
       boxShadow: isActive ? '0 2px 12px rgba(99,102,241,0.10)' : 'none',
       opacity: isWaiting ? 0.5 : 1,
       transition: 'opacity 0.2s, box-shadow 0.2s',
     }}>
-      <div style={{ width: 36, height: 36, borderRadius: 9, background: iconBg || 'var(--bg-muted)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-        {icon}
-      </div>
-      <div style={{ flex: 1, minWidth: 0 }}>
-        {header}
-        {children}
-        {footer && (
-          <div style={{ marginTop: 16, paddingTop: 14, borderTop: isActive ? '1px solid var(--border-subtle)' : 'none', display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
-            {footer}
+      {/* Gradient header band */}
+      <div style={{
+        background: t.bg,
+        borderBottom: `1px solid ${t.border}`,
+        padding: '12px 16px',
+        display: 'flex', alignItems: 'center', gap: 12,
+      }}>
+        {icon && (
+          <div style={{
+            width: 30, height: 30, borderRadius: 8,
+            background: iconBg || 'rgba(255,255,255,0.65)',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            flexShrink: 0,
+          }}>
+            {icon}
           </div>
         )}
+        <div style={{ flex: 1, minWidth: 0 }}>
+          {header}
+        </div>
       </div>
+
+      {/* White body */}
+      {(children || footer) && (
+        <div style={{ padding: '14px 16px' }}>
+          {children}
+          {footer && (
+            <div style={{
+              marginTop: children ? 14 : 0,
+              paddingTop: children ? 12 : 0,
+              borderTop: children ? '1px solid var(--border-subtle)' : 'none',
+              display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap',
+            }}>
+              {footer}
+            </div>
+          )}
+        </div>
+      )}
     </div>
   );
 }
@@ -52,10 +80,16 @@ function AIInsight({ children }) {
 
 function CardHeader({ title, pill, pillTone = 'blue', eta }) {
   return (
-    <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap', marginBottom: 6 }}>
-      <span style={{ fontSize: 14.5, fontWeight: 600 }}>{title}</span>
+    <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+      <div style={{ flex: 1, minWidth: 0 }}>
+        <div style={{ fontSize: 14.5, fontWeight: 700, color: 'var(--text-primary)' }}>{title}</div>
+        {eta && (
+          <div style={{ display: 'inline-flex', alignItems: 'center', gap: 4, fontSize: 11.5, color: 'var(--text-tertiary)', marginTop: 2 }}>
+            <Icon name="clock" size={11}/>{eta}
+          </div>
+        )}
+      </div>
       {pill && <StatusPill tone={pillTone}>{pill}</StatusPill>}
-      {eta && <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4, fontSize: 12, color: 'var(--text-tertiary)' }}><Icon name="clock" size={12}/>{eta}</span>}
     </div>
   );
 }
@@ -67,57 +101,6 @@ const STEPS = [
   { id: 'decision',   label: 'UW Decision' },
   { id: 'approval',   label: 'Cond. Approval' },
 ];
-
-function StageProgress({ completed }) {
-  // First non-completed step is the active one
-  const activeIdx = STEPS.findIndex(s => !completed.has(s.id));
-
-  return (
-    <div style={{ display: 'flex', alignItems: 'center', marginBottom: 24, padding: '14px 20px', background: 'var(--bg-surface)', border: '1px solid var(--border-subtle)', borderRadius: 12 }}>
-      {STEPS.map((s, i) => {
-        const done = completed.has(s.id);
-        const isActive = i === activeIdx;
-        const isWaiting = !done && !isActive;
-        const isLast = i === STEPS.length - 1;
-        return (
-          <React.Fragment key={s.id}>
-            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 7, flex: 1 }}>
-              <div style={{
-                width: 26, height: 26, borderRadius: 999,
-                background: done ? 'var(--text-primary)' : isActive ? 'var(--ai-primary)' : 'var(--bg-muted)',
-                border: done ? 'none' : isActive ? 'none' : '1.5px solid var(--border-default)',
-                display: 'flex', alignItems: 'center', justifyContent: 'center',
-                boxShadow: isActive ? '0 0 0 3px rgba(99,102,241,0.18)' : 'none',
-                transition: 'all 0.2s',
-              }}>
-                {done
-                  ? <Icon name="check" size={12} color="#fff" strokeWidth={2.5}/>
-                  : isActive
-                    ? <span style={{ width: 7, height: 7, borderRadius: 999, background: '#fff' }}/>
-                    : <span style={{ width: 6, height: 6, borderRadius: 999, background: 'var(--border-strong)' }}/>
-                }
-              </div>
-              <span style={{
-                fontSize: 10.5,
-                fontWeight: done ? 600 : isActive ? 700 : 400,
-                color: done ? 'var(--text-primary)' : isActive ? 'var(--ai-primary)' : 'var(--text-tertiary)',
-                whiteSpace: 'nowrap',
-              }}>{s.label}</span>
-            </div>
-            {!isLast && (
-              <div style={{
-                height: 2, flex: 0.3,
-                background: done ? 'var(--text-primary)' : 'var(--border-default)',
-                marginBottom: 20, borderRadius: 1,
-                transition: 'background 0.2s',
-              }}/>
-            )}
-          </React.Fragment>
-        );
-      })}
-    </div>
-  );
-}
 
 // Open conditions for this loan
 const OPEN_CONDITIONS = [
@@ -214,7 +197,7 @@ function FEMADisasterCard({ fema, borrowerName }) {
   );
 }
 
-export function NowTabUnderwriting({ borrowerName = 'Sarah Anderson', loanId = 'LN-2024-0234', fema = null }) {
+export function NowTabUnderwriting({ borrowerName = 'Sarah Anderson', loanId = 'LN-2024-0234', loan, fema = null }) {
   const [completed, setCompleted] = React.useState(new Set());
   const [clearedConditions, setClearedConditions] = React.useState(new Set());
   const [advanced, setAdvanced] = React.useState(false);
@@ -254,19 +237,18 @@ export function NowTabUnderwriting({ borrowerName = 'Sarah Anderson', loanId = '
 
   return (
     <>
-      <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 6 }}>
+      <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 12 }}>
         <div>
           <h2 style={{ margin: 0, fontSize: 18, fontWeight: 600, letterSpacing: '-0.01em' }}>Underwriting Review</h2>
-          <div style={{ fontSize: 13, marginTop: 4, marginBottom: 18, color: remaining === STEPS.length ? 'var(--status-amber)' : 'var(--text-tertiary)', fontWeight: remaining === STEPS.length ? 500 : 400 }}>
+          <div style={{ fontSize: 13, marginTop: 4, color: remaining === STEPS.length ? 'var(--status-amber)' : 'var(--text-tertiary)', fontWeight: remaining === STEPS.length ? 500 : 400 }}>
             {subtitle}
           </div>
         </div>
-        {/* Status badge removed — shown in header already */}
       </div>
 
-      <StageProgress completed={completed}/>
+      <StageTimelineStrip steps={STEPS} completed={completed} stageName="Underwriting"/>
 
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 14, maxWidth: 760 }}>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
 
         {/* FEMA DISASTER REVIEW — shown first if applicable */}
         {fema && <FEMADisasterCard fema={fema} borrowerName={borrowerName}/>}

@@ -3,6 +3,7 @@ import ReactDOM from 'react-dom';
 import { createRoot } from 'react-dom/client';
 import { Icon } from '../components/Icon';
 import { Avatar, StatusPill } from '../components/Shell';
+import { LoanSummaryCards } from '../components/LoanSummaryCards';
 import { ConditionsTab, AUSTab, PricingLockTab, ClosingTab, AuditTab } from './LoanWorkspaces';
 import { FileReviewTab } from './FileReviewTab';
 import { LOApprovalView } from './LOApprovalView';
@@ -16,6 +17,7 @@ function ServicesTab() {
   );
 }
 import { LoanEstimateView } from './LoanEstimateView';
+import { URLA1003View, URLA1003_SECTIONS } from './URLA1003View';
 import { CommsTab, LOAN_CONTACTS } from './CommsTab';
 import { NowTabApplication } from './NowTabApplication';
 import { NowTabProcessing } from './NowTabProcessing';
@@ -435,16 +437,25 @@ function LoanHeader({ meta, loanId, onNavigatePipeline, onOpenComms }) {
         </div>
       </div>
 
+      <HeaderStat label="Purpose" value={meta?.purpose || '—'}/>
       <HeaderStat label="Loan Amount" value={meta?.amount || '$425,000'}/>
 
-      <div style={{ paddingLeft: 16, borderLeft: '1px solid var(--border-subtle)', whiteSpace: 'nowrap' }}>
-        <div style={statLabel}>Status</div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 4 }}>
-          <StatusPill tone={statusTone}>{meta?.status || 'Underwriting'}</StatusPill>
-        </div>
-      </div>
-
-      <ProgressWithTooltip loanId={loanId} meta={meta}/>
+      {/* DTI and LTV — hidden during Application stage (income/property
+          not confirmed yet). Tone reflects risk thresholds. */}
+      {meta?.status !== 'Application' && (
+        <>
+          <HeaderStat
+            label="DTI"
+            value={meta?.dti != null ? `${meta.dti}%` : '—'}
+            tone={dtiHeaderTone(meta?.dti)}
+          />
+          <HeaderStat
+            label="LTV"
+            value={meta?.ltv != null ? `${meta.ltv}%` : '—'}
+            tone={ltvHeaderTone(meta?.ltv)}
+          />
+        </>
+      )}
 
       <HeaderStat label="Est. Closing" value={meta?.closing || '2026-06-30'}/>
 
@@ -491,13 +502,31 @@ function LoanHeader({ meta, loanId, onNavigatePipeline, onOpenComms }) {
 }
 
 const statLabel = { fontSize: 11.5, color: 'var(--text-tertiary)', fontWeight: 500 };
-function HeaderStat({ label, value }) {
+function HeaderStat({ label, value, tone }) {
+  const valueColor = tone === 'red'   ? 'var(--status-red)'
+                   : tone === 'amber' ? 'var(--status-amber)'
+                   : 'var(--text-primary)';
   return (
     <div style={{ paddingLeft: 16, borderLeft: '1px solid var(--border-subtle)', whiteSpace: 'nowrap' }}>
       <div style={statLabel}>{label}</div>
-      <div style={{ fontSize: 14, fontWeight: 600, marginTop: 4 }}>{value}</div>
+      <div style={{ fontSize: 14, fontWeight: 600, marginTop: 4, color: valueColor }}>{value}</div>
     </div>
   );
+}
+
+// Threshold helpers for DTI / LTV header stats
+function dtiHeaderTone(dti) {
+  if (dti == null) return null;
+  if (dti >= 45) return 'red';
+  if (dti >= 43) return 'red';
+  if (dti >= 36) return 'amber';
+  return null;
+}
+function ltvHeaderTone(ltv) {
+  if (ltv == null) return null;
+  if (ltv > 95) return 'red';
+  if (ltv > 80) return 'amber';
+  return null;
 }
 
 function LeftRail({ tab, onTab, onOpenURLA, dataSubTab, onDataSubTab, onOpenDocs }) {
@@ -589,12 +618,18 @@ function LeftRail({ tab, onTab, onOpenURLA, dataSubTab, onDataSubTab, onOpenDocs
   const items = [
     { id: 'now',   label: 'Tasks',      icon: 'target' },
     { id: 'story', label: 'Loan Story', icon: 'book' },
-    { id: 'data',  label: 'Documents',  icon: 'database' },
+    // Hidden for now — old Documents tab (kept here in case we want to bring it back)
+    // { id: 'data',  label: 'Documents',  icon: 'database' },
+    { divider: true, label: 'Forms' },
+    { id: 'borrowerSummary', label: 'Borrower Summary', icon: 'doc' },
+    { id: 'urla1003',        label: '1003',              icon: 'doc', subItems: URLA1003_SECTIONS },
     { divider: true, label: 'Workspaces' },
     { id: 'filereview', label: 'File Review',   icon: 'listCheck' },
     { id: 'conditions', label: 'Conditions', icon: 'listCheck', badge: 4 },
     { id: 'aus',     label: 'AUS',          icon: 'zap' },
+    { id: 'credit',  label: 'Credit & Liabilities', icon: 'database' },
     { id: 'pricing', label: 'Pricing & Lock',icon: 'dollar' },
+    { id: 'documents', label: 'Documents',   icon: 'doc' },
     { id: 'closing', label: 'Closing',       icon: 'calculator' },
     { id: 'audit',   label: 'Audit',         icon: 'fileSearch' },
     { id: 'services', label: 'Services',     icon: 'settings' },
@@ -640,6 +675,29 @@ function LeftRail({ tab, onTab, onOpenURLA, dataSubTab, onDataSubTab, onOpenDocs
                   <span style={{ background: active ? '#D74C3C' : 'var(--card-red-bg)', color: active ? '#fff' : 'var(--status-red)', fontSize: 10.5, fontWeight: 600, minWidth: 17, height: 17, borderRadius: 999, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', padding: '0 5px' }}>{it.badge}</span>
                 )}
               </button>
+
+              {/* 1003 sub-nav — anchor links into each major section */}
+              {it.id === 'urla1003' && active && it.subItems && (
+                <div style={{ display: 'flex', flexDirection: 'column', paddingLeft: 22, marginTop: 4, gap: 1 }}>
+                  {it.subItems.map(sub => (
+                    <button key={sub.id} onClick={() => {
+                      const el = document.getElementById(sub.id);
+                      if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                    }} style={{
+                      display: 'flex', alignItems: 'center', height: 28,
+                      padding: '0 12px', border: 'none', background: 'transparent',
+                      cursor: 'pointer', fontFamily: 'inherit',
+                      fontSize: 12, fontWeight: 500, color: 'var(--text-secondary)',
+                      borderRadius: 6, textAlign: 'left',
+                    }}
+                      onMouseEnter={e => { e.currentTarget.style.background = 'var(--bg-muted)'; e.currentTarget.style.color = 'var(--text-primary)'; }}
+                      onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = 'var(--text-secondary)'; }}
+                    >
+                      {sub.label}
+                    </button>
+                  ))}
+                </div>
+              )}
 
               {/* Data subnav — grouped, collapsible, drag-and-drop within groups */}
               {it.id === 'data' && active && (
@@ -1152,6 +1210,19 @@ const RAIL_TOOLS = [
   { icon: 'upload',     label: 'Request Docs', color: '#2453D6' },
 ];
 
+// Demo notes — would come from a notes store in production.
+const DEMO_NOTES = [
+  { id: 1, author: 'Alex Martinez', initials: 'AM', avatarColor: '#4A39C9',
+    timestamp: 'Yesterday, 3:42 PM',
+    body: 'Borrower confirmed via email — fine with the 15-day lock extension. Watching rate movement before locking the float-down.' },
+  { id: 2, author: 'Jamie Lee', initials: 'JL', avatarColor: '#A8541C',
+    timestamp: 'May 22, 11:18 AM',
+    body: 'Pulled updated paystub. DTI now at 38% — tight but within guidelines. Income calc note: includes seasonal OT.' },
+  { id: 3, author: 'AI Assistant', initials: 'AI', avatarColor: '#6E59E8', ai: true,
+    timestamp: 'May 20, 9:04 AM',
+    body: 'Detected large deposit ($8,500) on 4/15 — letter of explanation may be needed. Flagged as auto-clearable on next upload.' },
+];
+
 function RailTooltip({ label, visible }) {
   return (
     <div style={{
@@ -1180,150 +1251,305 @@ function RailTooltip({ label, visible }) {
   );
 }
 
-function ToolsPanel({ onOpenURLA, onOpenComms, onOpenDocs, onOpenIncome }) {
-  const [expanded, setExpanded] = React.useState(false);
+function ToolsPanel({ onOpenURLA, onOpenComms, onOpenDocs, onOpenIncome, onOpenNotes }) {
+  const [view, setView] = React.useState(null); // null = drawer closed; 'tools' | 'notes' when open
   const [toolTab, setToolTab] = React.useState('mine');
   const [hoveredTool, setHoveredTool] = React.useState(null);
 
-  // Condensed icon rail
-  if (!expanded) {
-    return (
-      <aside style={{
-        width: 48, flexShrink: 0,
-        borderLeft: '1px solid var(--border-subtle)',
-        background: 'var(--bg-surface)',
-        display: 'flex', flexDirection: 'column', alignItems: 'center',
-        paddingTop: 6,
-        transition: 'width 0.22s ease',
-      }}>
-        {/* Expand toggle */}
-        <div style={{ position: 'relative' }}>
+  // Click a view button: toggle if same, switch if different
+  const toggleView = (id) => setView(v => v === id ? null : id);
+
+  // Selected-state style for the two view-switching buttons in the rail
+  const railNavButton = (isActive) => ({
+    width: 32, height: 32, borderRadius: 8, border: 'none',
+    background: isActive ? 'var(--text-primary)' : 'var(--bg-muted)',
+    color:      isActive ? '#fff' : 'var(--text-secondary)',
+    cursor: 'pointer', marginBottom: 6,
+    display: 'flex', alignItems: 'center', justifyContent: 'center',
+    transition: 'background 0.15s, color 0.15s',
+  });
+
+  const rail = (
+    <aside style={{
+      width: 48, flexShrink: 0,
+      borderLeft: '1px solid var(--border-subtle)',
+      background: 'var(--bg-surface)',
+      display: 'flex', flexDirection: 'column', alignItems: 'center',
+      paddingTop: 6,
+    }}>
+      {/* Open Tools — view: 'tools' */}
+      <div style={{ position: 'relative' }}>
+        <button
+          onClick={() => toggleView('tools')}
+          aria-label="Open tools panel"
+          aria-pressed={view === 'tools'}
+          title="Open tools panel"
+          style={railNavButton(view === 'tools')}
+          onMouseEnter={e => {
+            if (view !== 'tools') e.currentTarget.style.background = 'var(--border-subtle)';
+            setHoveredTool('__expand');
+          }}
+          onMouseLeave={e => {
+            if (view !== 'tools') e.currentTarget.style.background = 'var(--bg-muted)';
+            setHoveredTool(null);
+          }}
+        >
+          <Icon name="command" size={14} color={view === 'tools' ? '#fff' : 'var(--text-secondary)'} aria-hidden="true"/>
+        </button>
+        <RailTooltip label="Open Tools" visible={hoveredTool === '__expand'}/>
+      </div>
+
+      {/* Notes — view: 'notes' (sits above the divider, alongside Open Tools) */}
+      <div style={{ position: 'relative' }}>
+        <button
+          onClick={() => toggleView('notes')}
+          aria-label="Notes"
+          aria-pressed={view === 'notes'}
+          title="Notes"
+          style={railNavButton(view === 'notes')}
+          onMouseEnter={e => {
+            if (view !== 'notes') e.currentTarget.style.background = 'var(--border-subtle)';
+            setHoveredTool('__notes');
+          }}
+          onMouseLeave={e => {
+            if (view !== 'notes') e.currentTarget.style.background = 'var(--bg-muted)';
+            setHoveredTool(null);
+          }}
+        >
+          <Icon name="doc" size={14} color={view === 'notes' ? '#fff' : 'var(--text-secondary)'} aria-hidden="true"/>
+        </button>
+        <RailTooltip label="Notes" visible={hoveredTool === '__notes'}/>
+      </div>
+
+      <div style={{ width: 28, height: 1, background: 'var(--border-subtle)', margin: '2px 0 6px' }}/>
+
+      {/* Popup-launching tools (below divider) */}
+      {RAIL_TOOLS.map(tool => (
+        <div key={tool.label} style={{ position: 'relative' }}>
           <button
-            onClick={() => setExpanded(true)}
-            aria-label="Open tools panel"
-            title="Open tools panel"
-            style={{
-              width: 32, height: 32, borderRadius: 8, border: 'none',
-              background: 'var(--bg-muted)', cursor: 'pointer',
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
-              marginBottom: 8,
+            onClick={() => {
+              if (tool.label === 'Comms') { onOpenComms && onOpenComms(); }
+              else if (tool.label === 'Request Docs') { onOpenDocs && onOpenDocs(); }
+              else if (tool.label === 'Income Calc') { onOpenIncome && onOpenIncome(); }
             }}
-            onMouseEnter={e => { e.currentTarget.style.background = 'var(--border-subtle)'; setHoveredTool('__expand'); }}
-            onMouseLeave={e => { e.currentTarget.style.background = 'var(--bg-muted)'; setHoveredTool(null); }}
+            aria-label={tool.label}
+            title={tool.label}
+            style={{
+              width: 32, height: 36, borderRadius: 8, border: 'none',
+              background: 'transparent', cursor: 'pointer', marginBottom: 2,
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+            }}
+            onMouseEnter={e => { e.currentTarget.style.background = 'var(--bg-muted)'; setHoveredTool(tool.label); }}
+            onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; setHoveredTool(null); }}
           >
-            <Icon name="command" size={14} color="var(--text-secondary)" aria-hidden="true"/>
+            <Icon name={tool.icon} size={15} color={tool.color} strokeWidth={1.7} aria-hidden="true"/>
           </button>
-          <RailTooltip label="Open Tools" visible={hoveredTool === '__expand'}/>
+          <RailTooltip label={tool.label} visible={hoveredTool === tool.label}/>
         </div>
+      ))}
 
-        <div style={{ width: 28, height: 1, background: 'var(--border-subtle)', marginBottom: 6 }}/>
+      {/* AI suggested dot */}
+      <div style={{ marginTop: 6, width: 6, height: 6, borderRadius: '50%', background: 'var(--ai-primary)' }} title="AI suggestions available"/>
+    </aside>
+  );
 
-        {/* Tool icons */}
-        {RAIL_TOOLS.map(tool => (
-          <div key={tool.label} style={{ position: 'relative' }}>
-            <button
-              onClick={() => {
-                if (tool.label === 'Comms') { onOpenComms && onOpenComms(); }
-                else if (tool.label === 'Request Docs') { onOpenDocs && onOpenDocs(); }
-                else if (tool.label === 'Income Calc') { onOpenIncome && onOpenIncome(); }
-                else { setExpanded(true); }
-              }}
-              aria-label={tool.label}
-              title={tool.label}
-              style={{
-                width: 32, height: 36, borderRadius: 8, border: 'none',
-                background: 'transparent', cursor: 'pointer', marginBottom: 2,
-                display: 'flex', alignItems: 'center', justifyContent: 'center',
-              }}
-              onMouseEnter={e => { e.currentTarget.style.background = 'var(--bg-muted)'; setHoveredTool(tool.label); }}
-              onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; setHoveredTool(null); }}
-            >
-              <Icon name={tool.icon} size={15} color={tool.color} strokeWidth={1.7} aria-hidden="true"/>
-            </button>
-            <RailTooltip label={tool.label} visible={hoveredTool === tool.label}/>
-          </div>
-        ))}
+  // Drawer (rendered to the LEFT of the rail when a view is selected)
+  if (view === null) return rail;
 
-        {/* AI suggested dot */}
-        <div style={{ marginTop: 6, width: 6, height: 6, borderRadius: '50%', background: 'var(--ai-primary)' }} title="AI suggestions available"/>
-      </aside>
-    );
-  }
-
-  // Expanded full panel
+  const isNotes = view === 'notes';
   return (
+    <>
     <aside style={{
       width: 280, flexShrink: 0,
       borderLeft: '1px solid var(--border-subtle)',
       background: 'var(--bg-surface)',
       display: 'flex', flexDirection: 'column',
-      transition: 'width 0.22s ease',
+      minHeight: 0, overflowY: 'auto',
     }}>
       {/* Header */}
       <div style={{
         padding: '14px 16px',
         borderBottom: '1px solid var(--border-subtle)',
         display: 'flex', alignItems: 'center', gap: 8,
+        flexShrink: 0,
       }}>
-        <Icon name="command" size={15} color="var(--text-secondary)"/>
-        <span style={{ fontSize: 14, fontWeight: 600, flex: 1 }}>Tools</span>
-        {/* Collapse button */}
-        <button
-          onClick={() => setExpanded(false)}
-          title="Collapse"
-          style={{ width: 24, height: 24, borderRadius: 6, border: 'none', background: 'transparent', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
-          onMouseEnter={e => e.currentTarget.style.background = 'var(--bg-muted)'}
-          onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
-        >
-          <Icon name="chevronRight" size={14} color="var(--text-tertiary)"/>
-        </button>
+        <Icon name={isNotes ? 'doc' : 'command'} size={15} color="var(--text-secondary)"/>
+        <span style={{ fontSize: 14, fontWeight: 600, flex: 1 }}>{isNotes ? 'Notes' : 'Tools'}</span>
+        {/* Header action: pop out to its own window for Notes, collapse for Tools */}
+        {isNotes ? (
+          <button
+            onClick={() => { onOpenNotes && onOpenNotes(); setView(null); }}
+            title="Pop out into window"
+            aria-label="Pop out notes into a new window"
+            style={{ width: 24, height: 24, borderRadius: 6, border: 'none', background: 'transparent', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+            onMouseEnter={e => e.currentTarget.style.background = 'var(--bg-muted)'}
+            onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
+          >
+            <Icon name="externalLink" size={13} color="var(--text-tertiary)"/>
+          </button>
+        ) : (
+          <button
+            onClick={() => setView(null)}
+            title="Collapse"
+            style={{ width: 24, height: 24, borderRadius: 6, border: 'none', background: 'transparent', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+            onMouseEnter={e => e.currentTarget.style.background = 'var(--bg-muted)'}
+            onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
+          >
+            <Icon name="chevronRight" size={14} color="var(--text-tertiary)"/>
+          </button>
+        )}
       </div>
 
-      {/* Tabs */}
-      <div style={{ padding: '12px 14px 0' }}>
-        <div style={{ display: 'flex', background: 'var(--bg-muted)', borderRadius: 8, padding: 3 }}>
-          {[{ id: 'mine', label: 'My Tools' }, { id: 'all', label: 'All' }].map(t => (
-            <button key={t.id} onClick={() => setToolTab(t.id)} style={{
-              flex: 1, height: 28, border: 'none', borderRadius: 6,
-              background: toolTab === t.id ? 'var(--bg-surface)' : 'transparent',
-              boxShadow: toolTab === t.id ? 'var(--shadow-sm)' : 'none',
-              color: 'var(--text-primary)', fontSize: 12.5, fontWeight: 500,
-              cursor: 'pointer', fontFamily: 'inherit',
-            }}>{t.label}</button>
-          ))}
-        </div>
-      </div>
+      {isNotes ? (
+        <NotesDrawerBody/>
+      ) : (
+        <>
+          {/* Tabs */}
+          <div style={{ padding: '12px 14px 0' }}>
+            <div style={{ display: 'flex', background: 'var(--bg-muted)', borderRadius: 8, padding: 3 }}>
+              {[{ id: 'mine', label: 'My Tools' }, { id: 'all', label: 'All' }].map(t => (
+                <button key={t.id} onClick={() => setToolTab(t.id)} style={{
+                  flex: 1, height: 28, border: 'none', borderRadius: 6,
+                  background: toolTab === t.id ? 'var(--bg-surface)' : 'transparent',
+                  boxShadow: toolTab === t.id ? 'var(--shadow-sm)' : 'none',
+                  color: 'var(--text-primary)', fontSize: 12.5, fontWeight: 500,
+                  cursor: 'pointer', fontFamily: 'inherit',
+                }}>{t.label}</button>
+              ))}
+            </div>
+          </div>
 
-      {/* Stage indicator */}
-      <div style={{ padding: '14px 14px 10px' }}>
-        <div style={{
-          padding: '8px 12px', borderRadius: 8, background: 'var(--bg-muted)',
-          fontSize: 12.5, color: 'var(--text-secondary)',
-          display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-        }}>
-          <span>Stage: <strong style={{ color: 'var(--text-primary)', fontWeight: 600 }}>Underwriting</strong></span>
-          <Icon name="chevronDown" size={12} color="var(--text-tertiary)"/>
-        </div>
-      </div>
+          {/* Stage indicator */}
+          <div style={{ padding: '14px 14px 10px' }}>
+            <div style={{
+              padding: '8px 12px', borderRadius: 8, background: 'var(--bg-muted)',
+              fontSize: 12.5, color: 'var(--text-secondary)',
+              display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+            }}>
+              <span>Stage: <strong style={{ color: 'var(--text-primary)', fontWeight: 600 }}>Underwriting</strong></span>
+              <Icon name="chevronDown" size={12} color="var(--text-tertiary)"/>
+            </div>
+          </div>
 
-      {/* AI Suggested */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '10px 16px', borderTop: '1px solid var(--border-subtle)' }}>
-        <Icon name="sparkle" size={13} color="var(--ai-primary)" strokeWidth={1.5}/>
-        <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--ai-ink)', flex: 1 }}>AI Suggested</span>
-        <Icon name="chevronDown" size={13} color="var(--text-tertiary)"/>
-      </div>
+          {/* AI Suggested */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '10px 16px', borderTop: '1px solid var(--border-subtle)' }}>
+            <Icon name="sparkle" size={13} color="var(--ai-primary)" strokeWidth={1.5}/>
+            <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--ai-ink)', flex: 1 }}>AI Suggested</span>
+            <Icon name="chevronDown" size={13} color="var(--text-tertiary)"/>
+          </div>
 
-      <AISuggestedTool icon="calculator" label="Income Calculator" onClick={onOpenIncome}/>
-      <AISuggestedTool icon="upload" label="Request Documents" onClick={onOpenDocs}/>
-      <AISuggestedTool icon="listCheck" label="Conditions Manager"/>
+          <AISuggestedTool icon="calculator" label="Income Calculator" onClick={onOpenIncome}/>
+          <AISuggestedTool icon="upload" label="Request Documents" onClick={onOpenDocs}/>
+          <AISuggestedTool icon="listCheck" label="Conditions Manager"/>
 
-      {/* Categories */}
-      <ToolRow icon="upload" label="Documents & Disclosures" onClick={onOpenDocs}/>
-      <ToolRow icon="mail" label="Communication" badge={2} onClick={onOpenComms}/>
-      <ToolRow icon="download" label="Reporting & Audit"/>
+          {/* Categories */}
+          <ToolRow icon="upload" label="Documents & Disclosures" onClick={onOpenDocs}/>
+          <ToolRow icon="mail" label="Communication" badge={2} onClick={onOpenComms}/>
+          <ToolRow icon="download" label="Reporting & Audit"/>
 
-      <div style={{ flex: 1 }}/>
+          <div style={{ flex: 1 }}/>
+        </>
+      )}
     </aside>
+    {rail}
+    </>
+  );
+}
+
+function NotesDrawerBody() {
+  const [notes, setNotes] = React.useState(DEMO_NOTES);
+  const [draft, setDraft] = React.useState('');
+
+  const post = () => {
+    const body = draft.trim();
+    if (!body) return;
+    setNotes(prev => [{
+      id: Date.now(),
+      author: 'You',
+      initials: 'YO',
+      avatarColor: '#0E1014',
+      timestamp: 'Just now',
+      body,
+    }, ...prev]);
+    setDraft('');
+  };
+
+  return (
+    <>
+      {/* Composer */}
+      <div style={{ padding: '12px 14px', borderBottom: '1px solid var(--border-subtle)', flexShrink: 0 }}>
+        <textarea
+          value={draft}
+          onChange={e => setDraft(e.target.value)}
+          placeholder="Add a note for the file…"
+          rows={3}
+          style={{
+            width: '100%', resize: 'vertical', minHeight: 60,
+            padding: '8px 10px', borderRadius: 7,
+            border: '1px solid var(--border-default)', background: 'var(--bg-surface)',
+            fontFamily: 'inherit', fontSize: 12.5, lineHeight: 1.45,
+            color: 'var(--text-primary)', outline: 'none',
+            boxSizing: 'border-box',
+          }}
+          onFocus={e => e.currentTarget.style.borderColor = 'var(--text-primary)'}
+          onBlur={e => e.currentTarget.style.borderColor = 'var(--border-default)'}
+        />
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: 6 }}>
+          <span style={{ fontSize: 11, color: 'var(--text-tertiary)' }}>
+            Visible to your team
+          </span>
+          <button
+            onClick={post}
+            disabled={!draft.trim()}
+            style={{
+              height: 26, padding: '0 10px', borderRadius: 6,
+              border: 'none', cursor: draft.trim() ? 'pointer' : 'not-allowed',
+              background: draft.trim() ? 'var(--text-primary)' : 'var(--bg-muted)',
+              color: draft.trim() ? '#fff' : 'var(--text-tertiary)',
+              fontFamily: 'inherit', fontSize: 12, fontWeight: 600,
+            }}
+          >
+            Post
+          </button>
+        </div>
+      </div>
+
+      {/* Notes list */}
+      <div style={{ padding: '4px 0', flex: 1 }}>
+        {notes.length === 0 ? (
+          <div style={{ padding: '24px 16px', textAlign: 'center', fontSize: 12.5, color: 'var(--text-tertiary)' }}>
+            No notes yet — add one above to start the thread.
+          </div>
+        ) : (
+          notes.map(n => (
+            <div key={n.id} style={{
+              padding: '12px 14px',
+              borderBottom: '1px solid var(--border-subtle)',
+              display: 'flex', gap: 10,
+            }}>
+              <Avatar initials={n.initials} size={28} color={n.avatarColor}/>
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 2 }}>
+                  <span style={{ fontSize: 12.5, fontWeight: 600, color: 'var(--text-primary)' }}>{n.author}</span>
+                  {n.ai && (
+                    <span style={{
+                      display: 'inline-flex', alignItems: 'center', gap: 3,
+                      fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em',
+                      padding: '1px 6px', borderRadius: 999,
+                      background: 'var(--ai-bg)', color: 'var(--ai-ink)',
+                    }}>
+                      <Icon name="sparkle" size={9} color="var(--ai-primary)" strokeWidth={1.8}/> AI
+                    </span>
+                  )}
+                </div>
+                <div style={{ fontSize: 11, color: 'var(--text-tertiary)', marginBottom: 5 }}>{n.timestamp}</div>
+                <div style={{ fontSize: 12.5, color: 'var(--text-secondary)', lineHeight: 1.5, wordBreak: 'break-word' }}>{n.body}</div>
+              </div>
+            </div>
+          ))
+        )}
+      </div>
+    </>
   );
 }
 
@@ -1345,6 +1571,730 @@ const PROGRESS_INSIGHTS = {
   Closing:      'CD acknowledged. Title clear. On pace for on-time close — no blocking items.',
   Funded:       'Loan funded and purchased. All post-close conditions satisfied.',
 };
+
+// Typical days in each stage (industry baseline)
+const STAGE_AVG_DAYS = { Application: 3, Processing: 10, Underwriting: 12, Approval: 5, Closing: 7, Funded: 0 };
+
+// Sub-milestones each stage cycles through. These match the STEPS arrays
+// defined in each NowTab* view so the in-page task list and the popover
+// off the LoanStatusBar dot reference the same work items.
+const STAGE_SUB_MILESTONES = {
+  Application: [
+    'URLA',
+    'Disclosures',
+    'Doc Collection',
+    'Credit',
+    'AUS',
+    'Appraisal',
+    'Title & Flood',
+    'Ready',
+  ],
+  Processing: [
+    'Appraisal',
+    'Title & Flood',
+    'VOE / VOI',
+    'AUS Submit',
+    'Stacking Order',
+    'Submit to UW',
+  ],
+  Underwriting: [
+    'AUS Review',
+    'Conditions',
+    'Income Calc',
+    'UW Decision',
+    'Cond. Approval',
+  ],
+  Approval: [
+    'Review Approval',
+    'PTF Conditions',
+    'Final Docs',
+    'Clear to Close',
+    'Notify Parties',
+  ],
+  Closing: [
+    'Send CD',
+    'Final VOE',
+    'Title Review',
+    'Wire Confirm',
+    'Schedule',
+    'Fund',
+  ],
+  Funded: [
+    'Loan funded',
+    'Wire confirmed',
+    'Post-close conditions cleared',
+    'Loan boarded to servicer',
+  ],
+};
+
+const TODAY_ISO = '2026-05-27';
+function daysBackToISO(daysBack) {
+  const d = new Date(TODAY_ISO + 'T00:00:00');
+  d.setDate(d.getDate() - Math.round(Math.max(0, daysBack)));
+  return d.toISOString().slice(0, 10);
+}
+function isoToHuman(iso) {
+  if (!iso) return '—';
+  const [y, m, d] = iso.split('-');
+  const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  return `${months[parseInt(m,10) - 1]} ${parseInt(d,10)}, ${y}`;
+}
+
+// Compute sub-milestone completion + dates for a given stage of a given loan.
+function getStageSubMilestones(loan, stageId) {
+  const list = STAGE_SUB_MILESTONES[stageId] || [];
+  const total = list.length;
+  if (!loan || total === 0) return { milestones: [], completed: 0, total };
+
+  const order = PIPELINE_STAGES.map(s => s.id);
+  const stageIdx = order.indexOf(stageId);
+  const currentIdx = order.indexOf(loan.status);
+
+  let completedCount, stageStartedDaysAgo, stageDurationDays;
+  if (stageIdx < currentIdx) {
+    // Past stage — fully complete. Compute how long ago it ended/started.
+    completedCount = total;
+    stageDurationDays = STAGE_AVG_DAYS[stageId] || 7;
+    let daysAfter = loan.days || 0; // time spent in stages after this one
+    for (let i = stageIdx + 1; i < currentIdx; i++) {
+      daysAfter += STAGE_AVG_DAYS[order[i]] || 7;
+    }
+    stageStartedDaysAgo = daysAfter + stageDurationDays;
+  } else if (stageIdx === currentIdx) {
+    stageDurationDays = STAGE_AVG_DAYS[stageId] || 7;
+    stageStartedDaysAgo = loan.days || 0;
+    const progress = stageDurationDays > 0 ? Math.min(1, stageStartedDaysAgo / stageDurationDays) : 1;
+    completedCount = Math.floor(total * progress);
+  } else {
+    completedCount = 0;
+    stageStartedDaysAgo = 0;
+    stageDurationDays = STAGE_AVG_DAYS[stageId] || 7;
+  }
+
+  const milestones = list.map((label, i) => {
+    if (i >= completedCount) return { label, date: null, completed: false };
+    // Distribute completion dates across the stage's actual duration
+    const frac = (i + 1) / total;
+    const daysAgo = Math.max(0, stageStartedDaysAgo - frac * stageDurationDays);
+    return { label, date: daysBackToISO(daysAgo), completed: true };
+  });
+
+  return { milestones, completed: completedCount, total };
+}
+
+// Cumulative bar fill % from sub-milestone progress across all stages.
+// Each stage gets an equal slice of the bar so the dots stay evenly spaced.
+function getOverallProgress(loan) {
+  if (!loan) return 0;
+  const segment = 100 / PIPELINE_STAGES.length;
+  let total = 0;
+  PIPELINE_STAGES.forEach((stage) => {
+    const { completed, total: subTotal } = getStageSubMilestones(loan, stage.id);
+    if (subTotal === 0) return;
+    total += segment * (completed / subTotal);
+  });
+  return Math.round(total);
+}
+
+// ── TRID 6 (the 6 borrower data points that complete a "loan application") ─
+const TRID_ITEMS = [
+  { key: 'name',      label: 'Borrower name' },
+  { key: 'income',    label: 'Borrower income' },
+  { key: 'ssn',       label: 'Social Security #' },
+  { key: 'property',  label: 'Property address' },
+  { key: 'propValue', label: 'Est. property value' },
+  { key: 'amount',    label: 'Loan amount sought' },
+];
+
+// Quick-scan doc statuses: Rate / LE / CD — derived from the canonical
+// `lockStatus` and `disclosures` fields so they always match the loan's stage.
+function getDocStatuses(loan) {
+  if (!loan) return null;
+
+  // Rate lock
+  let rate;
+  switch (loan.lockStatus) {
+    case 'Locked':   rate = { value: 'Locked',   tone: 'green',   short: 'Locked' };   break;
+    case 'Expiring': rate = { value: `Exp ${loan.lockDays ?? 0}d`, tone: 'red', short: 'Expiring' }; break;
+    case 'Floating': rate = { value: 'Floating', tone: 'neutral', short: 'Floating' }; break;
+    default:         rate = { value: 'Not set',  tone: 'neutral', short: 'Not set' };
+  }
+
+  // LE / CD from disclosures
+  const d = (loan.disclosures || '').toLowerCase();
+  let le, cd;
+  if (d === 'funded' || d.startsWith('cd ')) {
+    // CD prepared / acknowledged / funded → LE already sent, CD progressed
+    le = { value: 'Sent',   tone: 'green' };
+    cd = {
+      value: d === 'cd acknowledged' || d === 'funded' ? 'Sent' : 'Prepared',
+      tone:  'green',
+    };
+  } else if (d.includes('le sent')) {
+    le = { value: 'Sent',    tone: 'green'   };
+    cd = { value: 'Pending', tone: 'neutral' };
+  } else {
+    // 'pending', 'le pending', null, etc.
+    le = { value: 'Pending', tone: 'neutral' };
+    cd = { value: 'Pending', tone: 'neutral' };
+  }
+
+  return { rate, le, cd };
+}
+
+// For demo purposes: non-Application loans have all 6 received. Application
+// loans progress through the list deterministically based on days-in-stage.
+function getTridStatus(loan) {
+  if (!loan || loan.status !== 'Application') {
+    return { items: TRID_ITEMS.map(i => ({ ...i, received: true })), received: 6, total: 6 };
+  }
+  // Order in which Application data typically gets collected
+  const order = ['name', 'amount', 'ssn', 'income', 'property', 'propValue'];
+  const count = Math.min(6, Math.max(2, Math.floor((loan.days || 0) / 2) + 2));
+  const received = new Set(order.slice(0, count));
+  return {
+    items: TRID_ITEMS.map(i => ({ ...i, received: received.has(i.key) })),
+    received: count,
+    total: 6,
+  };
+}
+
+// ── Slim row under the loan summary bar: stage progress + TRID tracker ────
+function LoanStatusBar({ meta, loan }) {
+  const statusTone = { Underwriting: 'blue', Approval: 'green', Closing: 'green', Processing: 'amber', Application: 'neutral', Funded: 'green' }[meta?.status] || 'neutral';
+  const progress = React.useMemo(() => loan && loan.status ? getOverallProgress(loan) : (meta?.progress ?? 0), [loan, meta]);
+  const trid = getTridStatus(loan);
+  const isComplete = trid.received === trid.total;
+  const [openStage, setOpenStage] = React.useState(null);
+
+  // Close popover on outside click
+  React.useEffect(() => {
+    if (!openStage) return;
+    const handler = (e) => {
+      if (e.target.closest('.stage-popover, .stage-dot-trigger')) return;
+      setOpenStage(null);
+    };
+    document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, [openStage]);
+
+  return (
+    <div style={{
+      display: 'flex', alignItems: 'center', gap: 16,
+      background: 'var(--bg-surface)',
+      borderBottom: '1px solid var(--border-subtle)',
+      padding: '9px 24px',
+      whiteSpace: 'nowrap',
+      position: 'relative',
+      zIndex: 50,
+    }}>
+      {/* Status + long progress bar with clickable stage dots */}
+      <div style={{ flex: 1, display: 'flex', alignItems: 'center', gap: 12, minWidth: 0, position: 'relative', cursor: 'default' }}>
+        <StatusPill tone={statusTone}>{meta?.status || 'Underwriting'}</StatusPill>
+
+        {/* Progress track with stage-dot overlay */}
+        <div style={{ flex: 1, position: 'relative', minWidth: 80, height: 22, display: 'flex', alignItems: 'center' }}>
+          <div style={{ width: '100%', height: 6, borderRadius: 999, background: 'var(--bg-muted)', position: 'relative' }}>
+            <div style={{
+              width: `${progress}%`, height: '100%', borderRadius: 999,
+              background: 'var(--text-primary)',
+              transition: 'width 0.4s ease',
+            }}/>
+          </div>
+          {/* Dots positioned on top of the track at each stage's pct */}
+          {PIPELINE_STAGES.map(stage => (
+            <StageDotOverlay
+              key={stage.id}
+              stage={stage}
+              loan={loan}
+              isOpen={openStage === stage.id}
+              onToggle={() => setOpenStage(prev => prev === stage.id ? null : stage.id)}
+            />
+          ))}
+        </div>
+
+        <span style={{ fontFamily: 'DM Mono', fontSize: 12, fontWeight: 600, color: 'var(--text-secondary)', minWidth: 32, textAlign: 'right' }}>
+          {progress}%
+        </span>
+      </div>
+
+      {/* Divider */}
+      <div style={{ width: 1, height: 22, background: 'var(--border-subtle)', flexShrink: 0 }}/>
+
+      {/* TRID tracker */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexShrink: 0 }}>
+        <span style={{
+          fontSize: 10.5, fontWeight: 700, color: 'var(--text-tertiary)',
+          letterSpacing: '0.06em', textTransform: 'uppercase',
+        }}>
+          TRID
+        </span>
+        <span style={{
+          fontFamily: 'DM Mono', fontSize: 12, fontWeight: 600,
+          color: isComplete ? 'var(--status-green)' : 'var(--text-primary)',
+        }}>
+          {trid.received}<span style={{ color: 'var(--text-tertiary)' }}>/{trid.total}</span>
+        </span>
+        <div style={{ display: 'flex', gap: 5 }}>
+          {trid.items.map(item => <TridDot key={item.key} item={item}/>)}
+        </div>
+      </div>
+
+      {/* Divider */}
+      <div style={{ width: 1, height: 22, background: 'var(--border-subtle)', flexShrink: 0 }}/>
+
+      {/* Doc/rate quick-scan chips */}
+      {(() => {
+        const docs = getDocStatuses(loan);
+        if (!docs) return null;
+        return (
+          <div style={{ display: 'flex', alignItems: 'center', gap: 14, flexShrink: 0 }}>
+            <DocStatusChip label="Rate" {...docs.rate}/>
+            <DocStatusChip label="LE"   {...docs.le}/>
+            <DocStatusChip label="CD"   {...docs.cd}/>
+          </div>
+        );
+      })()}
+    </div>
+  );
+}
+
+function DocStatusChip({ label, value, tone }) {
+  const map = {
+    green:   { dot: 'var(--status-green)',   text: 'var(--status-green)'   },
+    amber:   { dot: 'var(--status-amber)',   text: 'var(--status-amber)'   },
+    red:     { dot: 'var(--status-red)',     text: 'var(--status-red)'     },
+    neutral: { dot: 'var(--border-default)', text: 'var(--text-tertiary)'  },
+  };
+  const c = map[tone] || map.neutral;
+  return (
+    <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+      <span style={{
+        fontSize: 10.5, fontWeight: 700, color: 'var(--text-tertiary)',
+        letterSpacing: '0.06em', textTransform: 'uppercase',
+      }}>
+        {label}
+      </span>
+      <span style={{
+        width: 8, height: 8, borderRadius: 999, flexShrink: 0,
+        background: tone === 'neutral' ? 'transparent' : c.dot,
+        border:     tone === 'neutral' ? `1.5px solid ${c.dot}` : 'none',
+      }}/>
+      <span style={{ fontSize: 12, fontWeight: 600, color: c.text }}>
+        {value}
+      </span>
+    </div>
+  );
+}
+
+// ── Stage dot on the progress bar — click to open a sub-milestone popover ─
+function StageDotOverlay({ stage, loan, isOpen, onToggle }) {
+  const order = PIPELINE_STAGES.map(s => s.id);
+  const stageIdx = order.indexOf(stage.id);
+  const currentIdx = order.indexOf(loan?.status);
+  const isDone    = stageIdx < currentIdx;
+  const isCurrent = stageIdx === currentIdx;
+  // Equidistant positioning — each stage's dot sits at the end of its slice
+  const positionPct = ((stageIdx + 1) / PIPELINE_STAGES.length) * 100;
+
+  // All dots share the same diameter for a consistent click target; upcoming
+  // gets the thickest border so it stands out against the bar.
+  const size   = 12;
+  const bg     = 'var(--bg-surface)';
+  const border = isCurrent ? '2px solid var(--text-primary)'
+               : isDone    ? '2px solid var(--text-primary)'
+               : '2.5px solid var(--text-secondary)';
+  const ring   = isOpen    ? '0 0 0 4px rgba(110,89,232,0.18)'
+               : isCurrent ? '0 0 0 3px rgba(15,16,20,0.10)'
+               : 'none';
+
+  return (
+    <div
+      className="stage-dot-trigger"
+      style={{
+        position: 'absolute',
+        left: `${positionPct}%`,
+        top: '50%',
+        transform: 'translate(-50%, -50%)',
+        width: 22, height: 22,
+        display: 'flex', alignItems: 'center', justifyContent: 'center',
+        cursor: 'pointer',
+        zIndex: 2,
+      }}
+      onClick={(e) => { e.stopPropagation(); onToggle(); }}
+      title={stage.label}
+      aria-label={`${stage.label} stage — ${isDone ? 'complete' : isCurrent ? 'in progress' : 'upcoming'}`}
+    >
+      <div style={{
+        width: size, height: size, borderRadius: 999,
+        background: bg, border, boxShadow: ring,
+        display: 'flex', alignItems: 'center', justifyContent: 'center',
+        transition: 'all 0.15s',
+      }}>
+        {isDone && <Icon name="check" size={8} color="var(--text-primary)" strokeWidth={3.5}/>}
+      </div>
+      {isOpen && <StageMilestonesPopover stage={stage} loan={loan}/>}
+    </div>
+  );
+}
+
+function StageMilestonesPopover({ stage, loan }) {
+  const { milestones, completed, total } = getStageSubMilestones(loan, stage.id);
+  const order = PIPELINE_STAGES.map(s => s.id);
+  const stageIdx = order.indexOf(stage.id);
+  const currentIdx = order.indexOf(loan?.status);
+  const isDone    = stageIdx < currentIdx;
+  const isCurrent = stageIdx === currentIdx;
+  const stagePct  = total > 0 ? Math.round((completed / total) * 100) : 0;
+  const tonePill  = isDone ? 'green' : isCurrent ? 'blue' : 'neutral';
+  const labelPill = isDone ? 'Complete' : isCurrent ? 'In progress' : 'Upcoming';
+
+  return (
+    <div className="stage-popover" style={{
+      position: 'absolute',
+      top: 'calc(100% + 10px)',
+      left: '50%',
+      transform: 'translateX(-50%)',
+      width: 320, zIndex: 600,
+      background: 'var(--bg-surface)', border: '1px solid var(--border-subtle)',
+      borderRadius: 12, boxShadow: '0 10px 36px rgba(0,0,0,0.18)',
+      padding: '14px 16px',
+      whiteSpace: 'normal',
+    }}
+      onClick={(e) => e.stopPropagation()}
+    >
+      {/* Arrow */}
+      <div style={{
+        position: 'absolute', top: -6, left: '50%', transform: 'translateX(-50%)',
+        width: 10, height: 10,
+        background: 'var(--bg-surface)',
+        border: '1px solid var(--border-subtle)',
+        borderBottom: 'none', borderRight: 'none',
+        rotate: '45deg',
+      }}/>
+
+      {/* Header */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
+        <span style={{ fontSize: 14, fontWeight: 600, color: 'var(--text-primary)' }}>{stage.label}</span>
+        <StatusPill tone={tonePill}>{labelPill}</StatusPill>
+      </div>
+      <div style={{ fontSize: 11.5, color: 'var(--text-tertiary)', marginBottom: 12 }}>
+        {completed} of {total} sub-milestones · {stagePct}% complete
+      </div>
+
+      {/* Sub-milestone list */}
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 0, marginTop: 4 }}>
+        {milestones.map((m, i) => (
+          <div key={m.label} style={{
+            display: 'flex', alignItems: 'flex-start', gap: 9,
+            padding: '7px 0',
+            borderTop: i === 0 ? 'none' : '1px solid var(--border-subtle)',
+          }}>
+            <Icon
+              name={m.completed ? 'checkCircle' : 'clock'}
+              size={13}
+              color={m.completed ? 'var(--status-green)' : 'var(--text-tertiary)'}
+              style={{ marginTop: 1, flexShrink: 0 }}
+            />
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <div style={{
+                fontSize: 12.5, fontWeight: 500,
+                color: m.completed ? 'var(--text-primary)' : 'var(--text-tertiary)',
+                lineHeight: 1.35,
+              }}>
+                {m.label}
+              </div>
+              <div style={{ fontSize: 11, color: 'var(--text-tertiary)', marginTop: 1 }}>
+                {m.completed ? `Completed ${isoToHuman(m.date)}` : 'Pending'}
+              </div>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+// Rich hover popover shown when the user hovers the progress bar.
+// Ported from the old ProgressWithTooltip that used to live in LoanHeader.
+function ProgressInsightPopover({ meta, loan }) {
+  const stageIdx = PIPELINE_STAGES.findIndex(s => s.id === meta?.status);
+  const insight = PROGRESS_INSIGHTS[meta?.status] || 'Loan progressing normally.';
+  const lockColor = loan?.lockStatus === 'Expiring' ? '#E0A23A'
+                  : loan?.lockStatus === 'Floating' ? '#9AA0A6'
+                  : '#3DA866';
+  const condPct = loan?.conditionsTotal > 0
+    ? Math.round(((loan.conditionsTotal - loan.conditionsOpen) / loan.conditionsTotal) * 100)
+    : 100;
+
+  return (
+    <div style={{
+      position: 'absolute', top: 'calc(100% + 12px)', left: '50%', transform: 'translateX(-50%)',
+      width: 360, zIndex: 500,
+      background: 'var(--bg-surface)', border: '1px solid var(--border-subtle)',
+      borderRadius: 12, boxShadow: '0 8px 32px rgba(0,0,0,0.18)',
+      padding: '16px 18px',
+      whiteSpace: 'normal',
+    }}>
+      {/* Arrow */}
+      <div style={{
+        position: 'absolute', top: -6, left: '50%', transform: 'translateX(-50%)',
+        width: 10, height: 10,
+        background: 'var(--bg-surface)',
+        border: '1px solid var(--border-subtle)',
+        borderBottom: 'none', borderRight: 'none',
+        rotate: '45deg',
+      }}/>
+
+      {/* Stage ladder */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: 0, marginBottom: 14 }}>
+        {PIPELINE_STAGES.map((s, i) => {
+          const done = i < stageIdx;
+          const active = i === stageIdx;
+          return (
+            <React.Fragment key={s.id}>
+              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4 }}>
+                <div style={{
+                  width: active ? 12 : 8, height: active ? 12 : 8, borderRadius: 999,
+                  background: done ? 'var(--status-green)' : active ? 'var(--text-primary)' : 'var(--border-default)',
+                  border: active ? '2px solid var(--text-primary)' : 'none',
+                  boxShadow: active ? '0 0 0 3px rgba(0,0,0,0.08)' : 'none',
+                  flexShrink: 0,
+                }}/>
+                {active && (
+                  <span style={{
+                    fontSize: 9, fontWeight: 700, color: 'var(--text-primary)',
+                    textTransform: 'uppercase', letterSpacing: '0.06em', whiteSpace: 'nowrap',
+                  }}>{s.label}</span>
+                )}
+              </div>
+              {i < PIPELINE_STAGES.length - 1 && (
+                <div style={{
+                  flex: 1, height: 2,
+                  background: done ? 'var(--status-green)' : 'var(--border-subtle)',
+                  margin: active ? '0 3px' : '0 2px',
+                  marginBottom: active ? 16 : 0,
+                }}/>
+              )}
+            </React.Fragment>
+          );
+        })}
+      </div>
+
+      {/* Key stats row */}
+      <div style={{ display: 'flex', gap: 10, marginBottom: 12 }}>
+        <div style={{ flex: 1, background: 'var(--bg-muted)', borderRadius: 8, padding: '8px 10px' }}>
+          <div style={{ fontSize: 10, fontWeight: 600, color: 'var(--text-tertiary)', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 3 }}>Conditions</div>
+          <div style={{ fontSize: 13, fontWeight: 700 }}>{condPct}% cleared</div>
+          <div style={{ fontSize: 11, color: 'var(--text-tertiary)' }}>{loan?.conditionsOpen || 0} remaining</div>
+        </div>
+        <div style={{ flex: 1, background: 'var(--bg-muted)', borderRadius: 8, padding: '8px 10px' }}>
+          <div style={{ fontSize: 10, fontWeight: 600, color: 'var(--text-tertiary)', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 3 }}>Rate Lock</div>
+          <div style={{ fontSize: 13, fontWeight: 700, color: lockColor }}>{loan?.lockStatus || '—'}</div>
+          <div style={{ fontSize: 11, color: 'var(--text-tertiary)' }}>{loan?.lockDays != null ? `${loan.lockDays}d left` : 'Floating'}</div>
+        </div>
+        <div style={{ flex: 1, background: 'var(--bg-muted)', borderRadius: 8, padding: '8px 10px' }}>
+          <div style={{ fontSize: 10, fontWeight: 600, color: 'var(--text-tertiary)', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 3 }}>AUS</div>
+          <div style={{ fontSize: 12, fontWeight: 700 }}>{loan?.aus || '—'}</div>
+          <div style={{ fontSize: 11, color: 'var(--text-tertiary)' }}>{loan?.dti ? `DTI ${loan.dti}%` : ''}</div>
+        </div>
+      </div>
+
+      {/* Milestone */}
+      {loan?.milestone && (
+        <div style={{ fontSize: 12, color: 'var(--text-secondary)', marginBottom: 10, display: 'flex', alignItems: 'center', gap: 6 }}>
+          <Icon name="target" size={12} color="var(--text-tertiary)" strokeWidth={1.8}/>
+          <span><strong style={{ color: 'var(--text-primary)', fontWeight: 600 }}>Current milestone:</strong> {loan.milestone}</span>
+        </div>
+      )}
+
+      {/* AI insight */}
+      <div style={{
+        background: 'var(--ai-bg)', border: '1px solid var(--ai-border)',
+        borderRadius: 8, padding: '9px 12px',
+        display: 'flex', gap: 8, alignItems: 'flex-start',
+        fontSize: 12, color: 'var(--ai-ink)', lineHeight: 1.5,
+      }}>
+        <Icon name="sparkle" size={12} color="var(--ai-primary)" strokeWidth={1.5} style={{ marginTop: 1, flexShrink: 0 }}/>
+        <span>{insight}</span>
+      </div>
+    </div>
+  );
+}
+
+function TridDot({ item }) {
+  const [hover, setHover] = React.useState(false);
+  return (
+    <div
+      style={{ position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'center', width: 14, height: 14 }}
+      onMouseEnter={() => setHover(true)}
+      onMouseLeave={() => setHover(false)}
+    >
+      <div style={{
+        width: 10, height: 10, borderRadius: 999,
+        background: item.received ? 'var(--status-green)' : 'transparent',
+        border: item.received ? 'none' : '1.5px solid var(--border-default)',
+        cursor: 'pointer',
+        transition: 'all 0.15s',
+      }}/>
+      {hover && (
+        <div role="tooltip" style={{
+          position: 'absolute', top: 'calc(100% + 8px)', right: -6,
+          background: '#0F1014', color: '#fff',
+          padding: '6px 10px', borderRadius: 6,
+          fontSize: 11.5, fontWeight: 500, lineHeight: 1.4,
+          whiteSpace: 'nowrap', zIndex: 60,
+          boxShadow: '0 6px 20px rgba(0,0,0,0.22)',
+        }}>
+          {/* Arrow */}
+          <div style={{
+            position: 'absolute', bottom: '100%', right: 9,
+            width: 0, height: 0,
+            borderLeft: '5px solid transparent', borderRight: '5px solid transparent',
+            borderBottom: '5px solid #0F1014',
+          }}/>
+          {item.label}{' '}
+          <span style={{ color: item.received ? '#7ED4A1' : 'rgba(255,255,255,0.55)' }}>
+            · {item.received ? 'Received' : 'Pending'}
+          </span>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ── Slim stage track: 6px bar with milestone dots, hover for detail ───────
+function StageTrack({ meta, loanId }) {
+  const status = meta?.status || 'Underwriting';
+  const stageIdx = Math.max(0, PIPELINE_STAGES.findIndex(s => s.id === status));
+  const loan = LOANS.find(l => l.id === loanId) || {};
+  const days = loan?.days ?? 0;
+
+  // Within the current stage, blend toward the next milestone by elapsed time
+  const currentStage = PIPELINE_STAGES[stageIdx];
+  const nextStage    = PIPELINE_STAGES[stageIdx + 1];
+  const stageSpan    = nextStage ? (nextStage.pct - currentStage.pct) : 0;
+  const avgDays      = STAGE_AVG_DAYS[status] || 7;
+  const intraStage   = nextStage ? Math.min(1, days / avgDays) * stageSpan : 0;
+  const fillPct      = currentStage.pct + intraStage;
+
+  return (
+    <div style={{
+      background: 'var(--bg-surface)',
+      borderBottom: '1px solid var(--border-subtle)',
+      padding: '12px 24px 14px',
+      position: 'relative',
+    }}>
+      <div style={{ position: 'relative', height: 6 }}>
+        {/* Track */}
+        <div style={{
+          position: 'absolute', inset: 0,
+          background: 'var(--bg-muted)',
+          borderRadius: 999,
+        }}/>
+        {/* Filled portion */}
+        <div style={{
+          position: 'absolute', left: 0, top: 0, bottom: 0,
+          width: `${fillPct}%`,
+          background: 'var(--text-primary)',
+          borderRadius: 999,
+          transition: 'width 0.4s ease',
+        }}/>
+
+        {/* Milestone dots — sit on the bar */}
+        {PIPELINE_STAGES.map((stage, i) => (
+          <StageDot
+            key={stage.id}
+            stage={stage}
+            isDone={i < stageIdx}
+            isCurrent={i === stageIdx}
+            days={days}
+            avgDays={STAGE_AVG_DAYS[stage.id] || 0}
+          />
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function StageDot({ stage, isDone, isCurrent, days, avgDays }) {
+  const [hover, setHover] = React.useState(false);
+
+  const dotSize = isCurrent ? 10 : 7;
+  const dotBg   = isCurrent ? 'var(--bg-surface)' : isDone ? 'var(--text-primary)' : 'var(--bg-surface)';
+  const border  = isCurrent ? '2px solid var(--text-primary)' : isDone ? 'none' : '1.5px solid var(--border-default)';
+  const ring    = isCurrent ? '0 0 0 4px rgba(15,16,20,0.08)' : 'none';
+
+  return (
+    <div
+      onMouseEnter={() => setHover(true)}
+      onMouseLeave={() => setHover(false)}
+      style={{
+        position: 'absolute',
+        left: `${stage.pct}%`,
+        top: '50%',
+        transform: 'translate(-50%, -50%)',
+        width: 22, height: 22,
+        display: 'flex', alignItems: 'center', justifyContent: 'center',
+        cursor: 'pointer',
+      }}
+    >
+      <div style={{
+        width: dotSize, height: dotSize, borderRadius: 999,
+        background: dotBg, border, boxShadow: ring,
+        transition: 'all 0.15s',
+      }}/>
+
+      {hover && (
+        <div role="tooltip" style={{
+          position: 'absolute',
+          top: 'calc(100% + 10px)',
+          left: '50%', transform: 'translateX(-50%)',
+          width: 230, zIndex: 60,
+          background: '#0F1014', color: '#fff',
+          padding: '10px 12px', borderRadius: 8,
+          fontSize: 12, lineHeight: 1.5,
+          boxShadow: '0 8px 24px rgba(0,0,0,0.25)',
+          whiteSpace: 'normal',
+        }}>
+          {/* Arrow */}
+          <div style={{
+            position: 'absolute', bottom: '100%', left: '50%', transform: 'translateX(-50%)',
+            width: 0, height: 0,
+            borderLeft: '6px solid transparent', borderRight: '6px solid transparent',
+            borderBottom: '6px solid #0F1014',
+          }}/>
+
+          <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 4 }}>
+            <span style={{ fontWeight: 600 }}>{stage.label}</span>
+            <span style={{
+              fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em',
+              padding: '1px 6px', borderRadius: 999,
+              background: isCurrent ? 'rgba(255,255,255,0.18)' : isDone ? 'rgba(255,255,255,0.10)' : 'rgba(255,255,255,0.06)',
+              color: isCurrent ? '#fff' : isDone ? 'rgba(255,255,255,0.85)' : 'rgba(255,255,255,0.55)',
+            }}>
+              {isCurrent ? 'Current' : isDone ? 'Done' : 'Upcoming'}
+            </span>
+          </div>
+
+          {isCurrent && (
+            <div style={{ color: 'rgba(255,255,255,0.82)' }}>
+              {days} day{days !== 1 ? 's' : ''} in stage · {avgDays ? `~${avgDays}d typical` : 'final stage'}
+            </div>
+          )}
+          {isDone && (
+            <div style={{ color: 'rgba(255,255,255,0.75)' }}>Completed</div>
+          )}
+          {!isCurrent && !isDone && (
+            <div style={{ color: 'rgba(255,255,255,0.6)' }}>
+              Not yet started{avgDays ? ` · ~${avgDays}d typical` : ''}
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
 
 function ProgressWithTooltip({ loanId, meta }) {
   const [hover, setHover] = React.useState(false);
@@ -1513,16 +2463,48 @@ function FEMABanner({ fema, onDismiss }) {
   );
 }
 
+// Default progress % per stage, used when LOAN_META has no explicit value
+const STAGE_PROGRESS = { Application: 10, Processing: 40, Underwriting: 60, Approval: 80, Closing: 92, Funded: 100 };
+
+// Resolve the header/meta object for a loan. Prefer LOANS data (the canonical
+// pipeline source). LOAN_META supplements it with fields LOANS doesn't track
+// (coborrower, fuller postal address, custom progress %). If a loan isn't in
+// either source, fall back to Sarah Anderson so the page still renders.
+function resolveLoanMeta(loanId) {
+  const loan = LOANS.find(l => l.id === loanId);
+  const override = LOAN_META[loanId];
+  if (!loan && !override) return LOAN_META['LN-2024-0234'];
+  if (!loan) return override;
+
+  const formattedAmount = loan.amount != null ? `$${loan.amount.toLocaleString('en-US')}` : (override?.amount || '—');
+  return {
+    borrower:   loan.borrower   || override?.borrower,
+    coborrower: override?.coborrower || '',
+    initials:   loan.initials   || override?.initials,
+    color:      loan.avatarColor || override?.color,
+    // Property is null on Application-stage loans — surface that explicitly
+    property:   loan.property || override?.property || 'Property TBD',
+    status:     loan.status,                  // LOANS is canonical
+    amount:     formattedAmount,
+    progress:   override?.progress ?? STAGE_PROGRESS[loan.status] ?? 50,
+    closing:    loan.closingDate || override?.closing,
+    dti:        loan.dti,
+    ltv:        loan.ltv,
+    purpose:    loan.loanPurpose,
+  };
+}
+
 function LoanDetailView({ loanId, tab, onTab, persona = 'LO' }) {
   const localTab = tab || 'now';
   const setTab = onTab || (() => {});
-  const meta = LOAN_META[loanId] || LOAN_META['LN-2024-0234'];
+  const meta = resolveLoanMeta(loanId);
   const loan = LOANS.find(l => l.id === loanId) || {};
   const isApplication = meta.status === 'Application';
   const [urlaOpen, setUrlaOpen] = React.useState(false);
   const commsWindowRef = React.useRef(null);
   const docsWindowRef = React.useRef(null);
   const incomeWindowRef = React.useRef(null);
+  const notesWindowRef = React.useRef(null);
   const [dataSubTab, setDataSubTab] = React.useState('overview');
 
   const openCommsWindow = () => {
@@ -1642,6 +2624,43 @@ function LoanDetailView({ loanId, tab, onTab, persona = 'LO' }) {
     win.addEventListener('beforeunload', () => { root.unmount(); });
   };
 
+  const openNotesWindow = () => {
+    if (notesWindowRef.current && !notesWindowRef.current.closed) {
+      notesWindowRef.current.focus();
+      return;
+    }
+    const borrower = meta?.borrower || 'Borrower';
+    const win = window.open('', `notes-${loanId}`, 'width=480,height=720,resizable=yes,scrollbars=no');
+    if (!win) return;
+    notesWindowRef.current = win;
+
+    win.document.title = `Notes — ${borrower} · ${loanId}`;
+    win.document.head.innerHTML = `<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">`;
+    Array.from(document.styleSheets).forEach(sheet => {
+      try {
+        if (sheet.href) {
+          const link = win.document.createElement('link');
+          link.rel = 'stylesheet'; link.href = sheet.href;
+          win.document.head.appendChild(link);
+        } else if (sheet.cssRules) {
+          const style = win.document.createElement('style');
+          style.textContent = Array.from(sheet.cssRules).map(r => r.cssText).join('\n');
+          win.document.head.appendChild(style);
+        }
+      } catch (_) {}
+    });
+
+    win.document.body.style.cssText = 'margin:0;padding:0;height:100vh;display:flex;flex-direction:column;background:var(--bg-canvas,#F8F8F6);';
+    const mount = win.document.createElement('div');
+    mount.style.cssText = 'flex:1;display:flex;flex-direction:column;min-height:0;overflow:auto;';
+    win.document.body.appendChild(mount);
+
+    const root = createRoot(mount);
+    root.render(<NotesDrawerBody/>);
+
+    win.addEventListener('beforeunload', () => { root.unmount(); });
+  };
+
   const openURLA = () => setUrlaOpen(true);
   const closeURLA = () => setUrlaOpen(false);
 
@@ -1651,33 +2670,45 @@ function LoanDetailView({ loanId, tab, onTab, persona = 'LO' }) {
   };
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', flex: 1 }}>
-      <LoanHeader meta={meta} loanId={loanId || 'LN-2024-0234'} onOpenComms={openCommsWindow}/>
-      {loan.fema && <FEMABanner fema={loan.fema}/>}
+    <div style={{ display: 'flex', flexDirection: 'column', flex: 1, minHeight: 0, overflow: 'hidden' }}>
+      {/* Fixed top: loan summary + status bar + (optional) FEMA banner */}
+      <div style={{ flexShrink: 0 }}>
+        <LoanHeader meta={meta} loanId={loanId || 'LN-2024-0234'} onOpenComms={openCommsWindow}/>
+        <LoanStatusBar meta={meta} loan={loan}/>
+        {/* <StageTrack meta={meta} loanId={loanId || 'LN-2024-0234'}/> */}
+        {loan.fema && <FEMABanner fema={loan.fema}/>}
+      </div>
 
-      <div style={{ display: 'flex', flex: 1, minHeight: 0 }}>
+      {/* Scrollable region: LeftRail + Main + ToolsPanel.
+          Only <main> scrolls vertically; the rails handle their own overflow. */}
+      <div style={{ display: 'flex', flex: 1, minHeight: 0, overflow: 'hidden' }}>
         <LeftRail tab={localTab} onTab={handleTab} onOpenURLA={openURLA} dataSubTab={dataSubTab} onDataSubTab={setDataSubTab} onOpenDocs={openDocsWindow}/>
 
         {/* Main */}
         <main style={{ flex: 1, padding: '24px 28px 40px', overflowY: 'auto', display: 'flex', flexDirection: 'column', minHeight: 0 }}>
+          {(!localTab || localTab === 'now') && <LoanSummaryCards loan={loan} meta={meta}/>}
           {localTab === 'story' ? <StoryTab/>
            : localTab === 'data' ? <DataTab subTab={dataSubTab} onOpenURLA={openURLA} loanId={loanId}/>
            : localTab === 'filereview' ? <FileReviewTab borrowerName={meta?.borrower} loanId={loanId}/>
            : localTab === 'conditions' ? <ConditionsTab/>
            : localTab === 'aus' ? <AUSTab/>
+           : localTab === 'credit' ? <CreditLiabilitiesTab/>
            : localTab === 'pricing' ? <PricingLockTab/>
+           : localTab === 'documents' ? <DocumentsWorkspaceTab/>
            : localTab === 'closing' ? <ClosingTab/>
            : localTab === 'audit' ? <AuditTab/>
            : localTab === 'services' ? <ServicesTab/>
-           : isApplication ? <NowTabApplication borrowerName={meta.borrower} loanId={loanId} onOpenURLA={openURLA}/>
-           : meta.status === 'Processing' ? <NowTabProcessing borrowerName={meta.borrower} loanId={loanId}/>
-           : meta.status === 'Underwriting' ? <NowTabUnderwriting borrowerName={meta.borrower} loanId={loanId} fema={loan.fema || null}/>
-           : meta.status === 'Closing' ? <NowTabClosing borrowerName={meta.borrower} loanId={loanId}/>
-           : meta.status === 'Approval' ? (persona === 'LO' ? <LOApprovalView loanId={loanId}/> : <NowTabApproval borrowerName={meta.borrower} loanId={loanId}/>)
+           : localTab === 'borrowerSummary' ? <FormPlaceholder title="Borrower Summary" description="Auto-generated borrower summary forms will live here — print-ready, signature-routable, with field-by-field overrides." icon="doc"/>
+           : localTab === 'urla1003' ? <URLA1003View loanId={loanId}/>
+           : isApplication ? <NowTabApplication borrowerName={meta.borrower} loanId={loanId} loan={loan} onOpenURLA={openURLA}/>
+           : meta.status === 'Processing' ? <NowTabProcessing borrowerName={meta.borrower} loanId={loanId} loan={loan}/>
+           : meta.status === 'Underwriting' ? <NowTabUnderwriting borrowerName={meta.borrower} loanId={loanId} loan={loan} fema={loan.fema || null}/>
+           : meta.status === 'Closing' ? <NowTabClosing borrowerName={meta.borrower} loanId={loanId} loan={loan}/>
+           : meta.status === 'Approval' ? (persona === 'LO' ? <LOApprovalView loanId={loanId}/> : <NowTabApproval borrowerName={meta.borrower} loanId={loanId} loan={loan}/>)
            : <NowTab/>}
         </main>
 
-        <ToolsPanel onOpenURLA={openURLA} onOpenComms={openCommsWindow} onOpenDocs={openDocsWindow} onOpenIncome={openIncomeWindow}/>
+        <ToolsPanel onOpenURLA={openURLA} onOpenComms={openCommsWindow} onOpenDocs={openDocsWindow} onOpenIncome={openIncomeWindow} onOpenNotes={openNotesWindow}/>
       </div>
 
       {urlaOpen && ReactDOM.createPortal(
@@ -1686,6 +2717,107 @@ function LoanDetailView({ loanId, tab, onTab, persona = 'LO' }) {
         </div>,
         document.body
       )}
+    </div>
+  );
+}
+
+// Generic empty-state placeholder used for Forms and other workspace stubs.
+function FormPlaceholder({ title, description, icon = 'doc' }) {
+  return (
+    <div style={{
+      flex: 1, display: 'flex', flexDirection: 'column',
+      alignItems: 'center', justifyContent: 'center',
+      textAlign: 'center', padding: '60px 24px',
+      color: 'var(--text-secondary)',
+    }}>
+      <div style={{
+        width: 56, height: 56, borderRadius: 14,
+        background: 'var(--bg-muted)',
+        display: 'flex', alignItems: 'center', justifyContent: 'center',
+        marginBottom: 16,
+      }}>
+        <Icon name={icon} size={26} color="var(--text-tertiary)" strokeWidth={1.6}/>
+      </div>
+      <h2 style={{
+        margin: 0, fontSize: 17, fontWeight: 600,
+        color: 'var(--text-primary)', letterSpacing: '-0.01em',
+      }}>
+        {title}
+      </h2>
+      <div style={{
+        fontSize: 13.5, color: 'var(--text-tertiary)',
+        marginTop: 6, maxWidth: 380, lineHeight: 1.5,
+      }}>
+        {description}
+      </div>
+    </div>
+  );
+}
+
+// Placeholder Credit & Liabilities workspace — empty state for now
+function CreditLiabilitiesTab() {
+  return (
+    <div style={{
+      flex: 1, display: 'flex', flexDirection: 'column',
+      alignItems: 'center', justifyContent: 'center',
+      textAlign: 'center', padding: '60px 24px',
+      color: 'var(--text-secondary)',
+    }}>
+      <div style={{
+        width: 56, height: 56, borderRadius: 14,
+        background: 'var(--bg-muted)',
+        display: 'flex', alignItems: 'center', justifyContent: 'center',
+        marginBottom: 16,
+      }}>
+        <Icon name="database" size={26} color="var(--text-tertiary)" strokeWidth={1.6}/>
+      </div>
+      <h2 style={{
+        margin: 0, fontSize: 17, fontWeight: 600,
+        color: 'var(--text-primary)', letterSpacing: '-0.01em',
+      }}>
+        Credit &amp; Liabilities
+      </h2>
+      <div style={{
+        fontSize: 13.5, color: 'var(--text-tertiary)',
+        marginTop: 6, maxWidth: 380, lineHeight: 1.5,
+      }}>
+        This workspace is empty. Credit report details, tradelines, dispute tracking,
+        and liability calculations will live here.
+      </div>
+    </div>
+  );
+}
+
+// Placeholder Documents workspace — empty state for now
+function DocumentsWorkspaceTab() {
+  return (
+    <div style={{
+      flex: 1, display: 'flex', flexDirection: 'column',
+      alignItems: 'center', justifyContent: 'center',
+      textAlign: 'center', padding: '60px 24px',
+      color: 'var(--text-secondary)',
+    }}>
+      <div style={{
+        width: 56, height: 56, borderRadius: 14,
+        background: 'var(--bg-muted)',
+        display: 'flex', alignItems: 'center', justifyContent: 'center',
+        marginBottom: 16,
+      }}>
+        <Icon name="doc" size={26} color="var(--text-tertiary)" strokeWidth={1.6}/>
+      </div>
+      <h2 style={{
+        margin: 0, fontSize: 17, fontWeight: 600,
+        color: 'var(--text-primary)', letterSpacing: '-0.01em',
+      }}>
+        Documents
+      </h2>
+      <div style={{
+        fontSize: 13.5, color: 'var(--text-tertiary)',
+        marginTop: 6, maxWidth: 360, lineHeight: 1.5,
+      }}>
+        This workspace is empty. Document organization, version tracking, and bulk
+        actions will live here.
+      </div>
     </div>
   );
 }

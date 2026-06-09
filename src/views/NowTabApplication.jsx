@@ -3,6 +3,7 @@ import ReactDOM from 'react-dom';
 import { Icon } from '../components/Icon';
 import { StatusPill } from '../components/Shell';
 import { W2Viewer } from '../components/W2Viewer';
+import { StageTimelineStrip } from '../components/WorkspaceCards';
 import { URLAView } from './URLAView';
 
 function URLAWindow({ onClose, onSubmit, borrowerName, loanId }) {
@@ -59,25 +60,46 @@ function URLAWindow({ onClose, onSubmit, borrowerName, loanId }) {
 
 /* Shared primitives (duplicated from LoanDetail to keep this file self-contained) */
 
+// Gradient-header + white-body card, matching the LOApprovalView style.
 function ActionCard({ tone = 'neutral', icon, iconBg, iconColor, header, children, footer }) {
   const toneStyles = {
-    red:     { bg: 'var(--card-red-bg)',   border: 'var(--card-red-border)' },
-    green:   { bg: 'var(--card-green-bg)', border: 'var(--card-green-border)' },
-    amber:   { bg: 'var(--card-amber-bg)', border: 'var(--card-amber-border)' },
-    neutral: { bg: 'var(--bg-surface)',    border: 'var(--border-subtle)' },
-    ai:      { bg: 'var(--ai-bg)',         border: 'var(--ai-border)' },
+    red:     { bg: 'linear-gradient(90deg, #FEE2E2, #FEF2F2)', border: '#FECACA' },
+    green:   { bg: 'linear-gradient(90deg, #E7F8F1, #F0FDF4)', border: '#A7F3D0' },
+    amber:   { bg: 'linear-gradient(90deg, #FEF6E7, #FFF8F0)', border: '#FDE9C2' },
+    blue:    { bg: 'linear-gradient(90deg, #EEF3FE, #F5F8FF)', border: '#C7D2FE' },
+    ai:      { bg: 'linear-gradient(90deg, #F4F1FE, #FAF8FF)', border: '#E4DEFA' },
+    neutral: { bg: 'var(--bg-muted)',                          border: 'var(--border-subtle)' },
   };
   const t = toneStyles[tone] || toneStyles.neutral;
   return (
-    <div style={{ background: t.bg, border: `1px solid ${t.border}`, borderRadius: 12, padding: 18, display: 'flex', gap: 14 }}>
-      <div style={{ width: 36, height: 36, borderRadius: 9, background: iconBg || 'rgba(255,255,255,0.7)', color: iconColor || 'var(--text-primary)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-        {icon}
+    <div style={{
+      background: 'var(--bg-surface)',
+      border: `1px solid ${t.border}`,
+      borderRadius: 14, overflow: 'hidden',
+    }}>
+      <div style={{
+        background: t.bg, borderBottom: `1px solid ${t.border}`,
+        padding: '12px 16px', display: 'flex', alignItems: 'center', gap: 12,
+      }}>
+        {icon && (
+          <div style={{ width: 30, height: 30, borderRadius: 8, background: iconBg || 'rgba(255,255,255,0.65)', color: iconColor || 'var(--text-primary)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+            {icon}
+          </div>
+        )}
+        <div style={{ flex: 1, minWidth: 0 }}>{header}</div>
       </div>
-      <div style={{ flex: 1, minWidth: 0 }}>
-        {header}
-        {children}
-        {footer && <div style={{ marginTop: 14, display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>{footer}</div>}
-      </div>
+      {(children || footer) && (
+        <div style={{ padding: '14px 16px' }}>
+          {children}
+          {footer && (
+            <div style={{
+              marginTop: children ? 14 : 0, paddingTop: children ? 12 : 0,
+              borderTop: children ? '1px solid var(--border-subtle)' : 'none',
+              display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap',
+            }}>{footer}</div>
+          )}
+        </div>
+      )}
     </div>
   );
 }
@@ -93,14 +115,16 @@ function AIInsight({ children }) {
 
 function CardHeader({ title, pill, pillTone = 'amber', eta }) {
   return (
-    <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
-      <span style={{ fontSize: 14.5, fontWeight: 600, whiteSpace: 'nowrap' }}>{title}</span>
+    <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+      <div style={{ flex: 1, minWidth: 0 }}>
+        <div style={{ fontSize: 14.5, fontWeight: 700, color: 'var(--text-primary)' }}>{title}</div>
+        {eta && (
+          <div style={{ display: 'inline-flex', alignItems: 'center', gap: 4, fontSize: 11.5, color: 'var(--text-tertiary)', marginTop: 2 }}>
+            <Icon name="clock" size={11}/>{eta}
+          </div>
+        )}
+      </div>
       {pill && <StatusPill tone={pillTone}>{pill}</StatusPill>}
-      {eta && (
-        <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4, fontSize: 12, color: 'var(--text-tertiary)' }}>
-          <Icon name="clock" size={12}/>{eta}
-        </span>
-      )}
     </div>
   );
 }
@@ -117,39 +141,6 @@ const STEPS = [
   { id: 'title',       label: 'Title & Flood' },
   { id: 'ready',       label: 'Ready' },
 ];
-
-function StageProgress({ completed }) {
-  return (
-    <div style={{ display: 'flex', alignItems: 'center', gap: 0, marginBottom: 24, padding: '14px 16px', background: 'var(--bg-surface)', border: '1px solid var(--border-subtle)', borderRadius: 12 }}>
-      {STEPS.map((s, i) => {
-        const done = completed.has(s.id);
-        const isLast = i === STEPS.length - 1;
-        return (
-          <React.Fragment key={s.id}>
-            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6, flex: 1 }}>
-              <div style={{
-                width: 24, height: 24, borderRadius: 999,
-                background: done ? 'var(--text-primary)' : 'var(--bg-muted)',
-                border: done ? 'none' : '1.5px solid var(--border-default)',
-                display: 'flex', alignItems: 'center', justifyContent: 'center',
-                transition: 'background 0.2s',
-              }}>
-                {done
-                  ? <Icon name="check" size={12} color="#fff" strokeWidth={2.5}/>
-                  : <span style={{ width: 6, height: 6, borderRadius: 999, background: 'var(--border-strong)' }}/>
-                }
-              </div>
-              <span style={{ fontSize: 10.5, fontWeight: done ? 600 : 500, color: done ? 'var(--text-primary)' : 'var(--text-tertiary)', whiteSpace: 'nowrap' }}>{s.label}</span>
-            </div>
-            {!isLast && (
-              <div style={{ height: 1.5, flex: 0.3, background: done ? 'var(--text-primary)' : 'var(--border-default)', marginBottom: 18, transition: 'background 0.2s' }}/>
-            )}
-          </React.Fragment>
-        );
-      })}
-    </div>
-  );
-}
 
 /* ─────────────────────────────────────────────
    MAIN COMPONENT
@@ -238,7 +229,7 @@ function PreApprovalCard({ borrowerName }) {
   );
 }
 
-export function NowTabApplication({ borrowerName = 'Marcus Johnson', loanId, onOpenURLA }) {
+export function NowTabApplication({ borrowerName = 'Marcus Johnson', loanId, loan, onOpenURLA }) {
   const [completed, setCompleted] = React.useState(new Set());
   const [dismissed, setDismissed] = React.useState(new Set());
   const [w2Open, setW2Open]       = React.useState(false);
@@ -255,24 +246,16 @@ export function NowTabApplication({ borrowerName = 'Marcus Johnson', loanId, onO
 
   return (
     <>
-      <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 6 }}>
+      <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 12 }}>
         <div>
           <h2 style={{ margin: 0, fontSize: 18, fontWeight: 600, letterSpacing: '-0.01em' }}>Application Intake</h2>
-          <div style={{ fontSize: 13, color: 'var(--text-tertiary)', marginTop: 4, marginBottom: 18 }}>
+          <div style={{ fontSize: 13, color: 'var(--text-tertiary)', marginTop: 4 }}>
             AI-guided path to submit
           </div>
         </div>
-        <StatusPill tone="neutral">Application</StatusPill>
       </div>
 
-      {/* Progress bar */}
-      <div style={{ marginBottom: 16 }}>
-        <div style={{ height: 5, background: 'var(--bg-muted)', borderRadius: 999, overflow: 'hidden' }}>
-          <div style={{ height: '100%', width: pct + '%', borderRadius: 999, background: pct === 100 ? '#0E9F6E' : 'linear-gradient(90deg, #0A1F44, #0DBFA8)', transition: 'width 0.4s ease' }}/>
-        </div>
-      </div>
-
-      <StageProgress completed={completed}/>
+      <StageTimelineStrip steps={STEPS} completed={completed} stageName="Application"/>
 
       {/* Tabs */}
       <div style={{ display: 'flex', borderBottom: '1px solid var(--border-subtle)', marginBottom: 20 }}>
@@ -293,7 +276,7 @@ export function NowTabApplication({ borrowerName = 'Marcus Johnson', loanId, onO
 
       <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
 
-      <div style={{ display: taskTab === 'done' ? 'none' : 'flex', flexDirection: 'column', gap: 14, maxWidth: 760 }}>
+      <div style={{ display: taskTab === 'done' ? 'none' : 'flex', flexDirection: 'column', gap: 14 }}>
 
         {/* 0. COMPLETE URLA */}
         <ActionCard
@@ -644,7 +627,7 @@ export function NowTabApplication({ borrowerName = 'Marcus Johnson', loanId, onO
 
       {/* Done tab panel */}
       {taskTab === 'done' && (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 8, maxWidth: 760 }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
           {doneCount === 0 ? (
             <div style={{ padding: '32px 0', textAlign: 'center', color: 'var(--text-tertiary)', fontSize: 13 }}>No steps completed yet.</div>
           ) : (
