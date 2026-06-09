@@ -1066,6 +1066,36 @@ function MiniDonut({ pct, size = 56, stroke = 6 }) {
   );
 }
 
+// ── Section header — restores the numbered IA from the old prototype. ───────
+// Consistent eyebrow + headline + sublede so the home reads as 3 distinct
+// bands instead of one undifferentiated scroll.
+function SectionHeader({ number, eyebrow, title, sublede, tone = 'default', right }) {
+  const eyebrowColor = tone === 'ai' ? '#5B21B6' : '#9CA3AF';
+  return (
+    <div style={{
+      display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between',
+      gap: 16, marginTop: 28, marginBottom: 14,
+    }}>
+      <div>
+        <div style={{
+          fontSize: 11, fontWeight: 800, letterSpacing: '0.16em',
+          textTransform: 'uppercase', color: eyebrowColor, marginBottom: 6,
+        }}>
+          {number ? `${String(number).padStart(2, '0')} · ` : ''}{eyebrow}
+        </div>
+        <h2 style={{
+          fontSize: 22, fontWeight: 800, letterSpacing: '-0.02em',
+          margin: '0 0 4px', color: '#111827', lineHeight: 1.2,
+        }}>{title}</h2>
+        {sublede && (
+          <p style={{ fontSize: 13, color: '#6B7280', margin: 0, maxWidth: 640 }}>{sublede}</p>
+        )}
+      </div>
+      {right && <div style={{ flexShrink: 0 }}>{right}</div>}
+    </div>
+  );
+}
+
 function ScorecardStrip() {
   const Stat = ({ label, value, delta }) => (
     <div style={{ minWidth: 0 }}>
@@ -1265,6 +1295,14 @@ export function HomeView({ onNavigate, onOpenLoan }) {
         {/* ── Center ── */}
         <div style={{ flex: 1, overflowY: 'auto', padding: '24px 28px 48px', minWidth: 0 }}>
           <ScorecardStrip/>
+
+          {/* 01 · Today's priorities — operational triage */}
+          <SectionHeader
+            number={1}
+            eyebrow="Today's priorities"
+            title="Files that need a decision"
+            sublede="Risks to resolve, locks to extend, and borrowers to chase."
+          />
           <WidgetGrid renderWidget={(id) => {
             if (id === 'leaderboard')       return <Leaderboard/>;
             if (id === 'company-feed')      return <CompanyFeedWidget feed={FEED}/>;
@@ -1283,6 +1321,24 @@ export function HomeView({ onNavigate, onOpenLoan }) {
             if (id === 'waiting-on-borrower') return <WaitingOnBorrowerWidget onOpenLoan={onOpenLoan}/>;
             return null;
           }}/>
+
+          {/* 02 · Performance — branch leaderboard */}
+          <SectionHeader
+            number={2}
+            eyebrow="Performance"
+            title="Where you stand"
+            sublede="Branch rankings by funded volume, units, and speed."
+          />
+          <Leaderboard/>
+
+          {/* 03 · From your team — culture / company feed */}
+          <SectionHeader
+            number={3}
+            eyebrow="From your team"
+            title="What's happening at Lakeside"
+            sublede="Announcements, wins, and updates from across the company."
+          />
+          <CompanyFeedWidget feed={FEED}/>
         </div>
 
         {/* ── Right Rail ── */}
