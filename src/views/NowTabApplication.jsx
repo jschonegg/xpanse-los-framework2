@@ -3,7 +3,7 @@ import ReactDOM from 'react-dom';
 import { Icon } from '../components/Icon';
 import { StatusPill } from '../components/Shell';
 import { W2Viewer } from '../components/W2Viewer';
-import { ClosingTimelineCard } from '../components/WorkspaceCards';
+import { StageTimelineStrip } from '../components/WorkspaceCards';
 import { URLAView } from './URLAView';
 
 function URLAWindow({ onClose, onSubmit, borrowerName, loanId }) {
@@ -119,39 +119,6 @@ const STEPS = [
   { id: 'ready',       label: 'Ready' },
 ];
 
-function StageProgress({ completed }) {
-  return (
-    <div style={{ display: 'flex', alignItems: 'center', gap: 0, marginBottom: 24, padding: '14px 16px', background: 'var(--bg-surface)', border: '1px solid var(--border-subtle)', borderRadius: 12 }}>
-      {STEPS.map((s, i) => {
-        const done = completed.has(s.id);
-        const isLast = i === STEPS.length - 1;
-        return (
-          <React.Fragment key={s.id}>
-            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6, flex: 1 }}>
-              <div style={{
-                width: 24, height: 24, borderRadius: 999,
-                background: done ? 'var(--text-primary)' : 'var(--bg-muted)',
-                border: done ? 'none' : '1.5px solid var(--border-default)',
-                display: 'flex', alignItems: 'center', justifyContent: 'center',
-                transition: 'background 0.2s',
-              }}>
-                {done
-                  ? <Icon name="check" size={12} color="#fff" strokeWidth={2.5}/>
-                  : <span style={{ width: 6, height: 6, borderRadius: 999, background: 'var(--border-strong)' }}/>
-                }
-              </div>
-              <span style={{ fontSize: 10.5, fontWeight: done ? 600 : 500, color: done ? 'var(--text-primary)' : 'var(--text-tertiary)', whiteSpace: 'nowrap' }}>{s.label}</span>
-            </div>
-            {!isLast && (
-              <div style={{ height: 1.5, flex: 0.3, background: done ? 'var(--text-primary)' : 'var(--border-default)', marginBottom: 18, transition: 'background 0.2s' }}/>
-            )}
-          </React.Fragment>
-        );
-      })}
-    </div>
-  );
-}
-
 /* ─────────────────────────────────────────────
    MAIN COMPONENT
 ───────────────────────────────────────────── */
@@ -256,19 +223,16 @@ export function NowTabApplication({ borrowerName = 'Marcus Johnson', loanId, loa
 
   return (
     <>
-      <ClosingTimelineCard loan={loan}/>
-
       <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 12 }}>
         <div>
-          <h2 style={{ margin: 0, fontSize: 16, fontWeight: 600, letterSpacing: '-0.01em' }}>Application Intake</h2>
-          <div style={{ fontSize: 13, color: 'var(--text-tertiary)', marginTop: 3 }}>
+          <h2 style={{ margin: 0, fontSize: 18, fontWeight: 600, letterSpacing: '-0.01em' }}>Application Intake</h2>
+          <div style={{ fontSize: 13, color: 'var(--text-tertiary)', marginTop: 4 }}>
             AI-guided path to submit
           </div>
         </div>
       </div>
 
-      {/* Stage sub-step progress */}
-      <StageProgress completed={completed}/>
+      <StageTimelineStrip steps={STEPS} completed={completed}/>
 
       {/* Tabs */}
       <div style={{ display: 'flex', borderBottom: '1px solid var(--border-subtle)', marginBottom: 20 }}>

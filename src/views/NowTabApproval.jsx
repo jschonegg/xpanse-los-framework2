@@ -1,7 +1,7 @@
 import React from 'react';
 import { Icon } from '../components/Icon';
 import { StatusPill } from '../components/Shell';
-import { ClosingTimelineCard } from '../components/WorkspaceCards';
+import { StageTimelineStrip } from '../components/WorkspaceCards';
 
 function ActionCard({ tone = 'neutral', icon, iconBg, header, children, footer }) {
   const tones = {
@@ -53,28 +53,6 @@ const STEPS = [
   { id: 'notify',     label: 'Notify Parties' },
 ];
 
-function StageProgress({ completed }) {
-  return (
-    <div style={{ display: 'flex', alignItems: 'center', marginBottom: 24, padding: '14px 16px', background: 'var(--bg-surface)', border: '1px solid var(--border-subtle)', borderRadius: 12 }}>
-      {STEPS.map((s, i) => {
-        const done = completed.has(s.id);
-        const isLast = i === STEPS.length - 1;
-        return (
-          <React.Fragment key={s.id}>
-            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6, flex: 1 }}>
-              <div style={{ width: 24, height: 24, borderRadius: 999, background: done ? 'var(--text-primary)' : 'var(--bg-muted)', border: done ? 'none' : '1.5px solid var(--border-default)', display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'background 0.2s' }}>
-                {done ? <Icon name="check" size={12} color="#fff" strokeWidth={2.5}/> : <span style={{ width: 6, height: 6, borderRadius: 999, background: 'var(--border-strong)' }}/>}
-              </div>
-              <span style={{ fontSize: 10.5, fontWeight: done ? 600 : 500, color: done ? 'var(--text-primary)' : 'var(--text-tertiary)', whiteSpace: 'nowrap' }}>{s.label}</span>
-            </div>
-            {!isLast && <div style={{ height: 1.5, flex: 0.3, background: done ? 'var(--text-primary)' : 'var(--border-default)', marginBottom: 18, transition: 'background 0.2s' }}/>}
-          </React.Fragment>
-        );
-      })}
-    </div>
-  );
-}
-
 const PTF_CONDITIONS = [
   { id: 'P-001', title: 'Updated VOE — within 10 days of closing', due: 'Jun 8', blocking: true },
   { id: 'P-002', title: 'Signed CD acknowledgment from borrower', due: 'Jun 5', blocking: true },
@@ -112,18 +90,16 @@ export function NowTabApproval({ borrowerName = 'Michael Oben', loanId = 'LN-202
 
   return (
     <>
-      <ClosingTimelineCard loan={loan}/>
-
       <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 12 }}>
         <div>
-          <h2 style={{ margin: 0, fontSize: 16, fontWeight: 600, letterSpacing: '-0.01em' }}>Approval Stage</h2>
-          <div style={{ fontSize: 13, color: 'var(--text-tertiary)', marginTop: 3 }}>
+          <h2 style={{ margin: 0, fontSize: 18, fontWeight: 600, letterSpacing: '-0.01em' }}>Approval Stage</h2>
+          <div style={{ fontSize: 13, color: 'var(--text-tertiary)', marginTop: 4 }}>
             Path to Clear to Close — {remaining} of {STEPS.length} steps remaining
           </div>
         </div>
       </div>
 
-      <StageProgress completed={completed}/>
+      <StageTimelineStrip steps={STEPS} completed={completed}/>
 
       <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
 

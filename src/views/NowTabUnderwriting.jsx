@@ -1,7 +1,7 @@
 import React from 'react';
 import { Icon } from '../components/Icon';
 import { StatusPill } from '../components/Shell';
-import { ClosingTimelineCard } from '../components/WorkspaceCards';
+import { StageTimelineStrip } from '../components/WorkspaceCards';
 
 function ActionCard({ tone = 'neutral', icon, iconBg, header, children, footer, isActive, isWaiting }) {
   const tones = {
@@ -68,57 +68,6 @@ const STEPS = [
   { id: 'decision',   label: 'UW Decision' },
   { id: 'approval',   label: 'Cond. Approval' },
 ];
-
-function StageProgress({ completed }) {
-  // First non-completed step is the active one
-  const activeIdx = STEPS.findIndex(s => !completed.has(s.id));
-
-  return (
-    <div style={{ display: 'flex', alignItems: 'center', marginBottom: 24, padding: '14px 20px', background: 'var(--bg-surface)', border: '1px solid var(--border-subtle)', borderRadius: 12 }}>
-      {STEPS.map((s, i) => {
-        const done = completed.has(s.id);
-        const isActive = i === activeIdx;
-        const isWaiting = !done && !isActive;
-        const isLast = i === STEPS.length - 1;
-        return (
-          <React.Fragment key={s.id}>
-            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 7, flex: 1 }}>
-              <div style={{
-                width: 26, height: 26, borderRadius: 999,
-                background: done ? 'var(--text-primary)' : isActive ? 'var(--ai-primary)' : 'var(--bg-muted)',
-                border: done ? 'none' : isActive ? 'none' : '1.5px solid var(--border-default)',
-                display: 'flex', alignItems: 'center', justifyContent: 'center',
-                boxShadow: isActive ? '0 0 0 3px rgba(99,102,241,0.18)' : 'none',
-                transition: 'all 0.2s',
-              }}>
-                {done
-                  ? <Icon name="check" size={12} color="#fff" strokeWidth={2.5}/>
-                  : isActive
-                    ? <span style={{ width: 7, height: 7, borderRadius: 999, background: '#fff' }}/>
-                    : <span style={{ width: 6, height: 6, borderRadius: 999, background: 'var(--border-strong)' }}/>
-                }
-              </div>
-              <span style={{
-                fontSize: 10.5,
-                fontWeight: done ? 600 : isActive ? 700 : 400,
-                color: done ? 'var(--text-primary)' : isActive ? 'var(--ai-primary)' : 'var(--text-tertiary)',
-                whiteSpace: 'nowrap',
-              }}>{s.label}</span>
-            </div>
-            {!isLast && (
-              <div style={{
-                height: 2, flex: 0.3,
-                background: done ? 'var(--text-primary)' : 'var(--border-default)',
-                marginBottom: 20, borderRadius: 1,
-                transition: 'background 0.2s',
-              }}/>
-            )}
-          </React.Fragment>
-        );
-      })}
-    </div>
-  );
-}
 
 // Open conditions for this loan
 const OPEN_CONDITIONS = [
@@ -255,18 +204,16 @@ export function NowTabUnderwriting({ borrowerName = 'Sarah Anderson', loanId = '
 
   return (
     <>
-      <ClosingTimelineCard loan={loan}/>
-
       <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 12 }}>
         <div>
-          <h2 style={{ margin: 0, fontSize: 16, fontWeight: 600, letterSpacing: '-0.01em' }}>Underwriting Review</h2>
-          <div style={{ fontSize: 13, marginTop: 3, color: remaining === STEPS.length ? 'var(--status-amber)' : 'var(--text-tertiary)', fontWeight: remaining === STEPS.length ? 500 : 400 }}>
+          <h2 style={{ margin: 0, fontSize: 18, fontWeight: 600, letterSpacing: '-0.01em' }}>Underwriting Review</h2>
+          <div style={{ fontSize: 13, marginTop: 4, color: remaining === STEPS.length ? 'var(--status-amber)' : 'var(--text-tertiary)', fontWeight: remaining === STEPS.length ? 500 : 400 }}>
             {subtitle}
           </div>
         </div>
       </div>
 
-      <StageProgress completed={completed}/>
+      <StageTimelineStrip steps={STEPS} completed={completed}/>
 
       <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
 

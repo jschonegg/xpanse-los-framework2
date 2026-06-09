@@ -233,6 +233,76 @@ export function RichActionCard({
   );
 }
 
+// ── Per-stage timeline strip ──────────────────────────────────────────────
+// Drop-in replacement for the local StageProgress component each NowTab*
+// defines. Same prop shape (steps + completed Set) but uses the styling
+// from the LOApprovalView "Closing timeline" — bigger circles, gradient
+// progress line, navy/teal palette.
+export function StageTimelineStrip({ steps, completed, title }) {
+  const activeIdx = steps.findIndex(s => !completed.has(s.id));
+  const allDone = activeIdx === -1;
+  const doneCount = allDone ? steps.length : activeIdx;
+  const fillPct = steps.length > 1 ? (doneCount / (steps.length - 1)) * 100 : 0;
+
+  return (
+    <div style={{
+      background: 'var(--bg-surface)',
+      border: '1px solid var(--border-subtle)',
+      borderRadius: 14, padding: '14px 18px',
+      marginBottom: 16,
+    }}>
+      {title && (
+        <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--text-primary)', marginBottom: 14 }}>
+          {title}
+        </div>
+      )}
+      <div style={{ display: 'flex', alignItems: 'flex-start', position: 'relative' }}>
+        {/* Background track */}
+        <div style={{ position: 'absolute', top: 11, left: 11, right: 11, height: 2, background: 'var(--border-subtle)', zIndex: 0 }}/>
+        {/* Filled track */}
+        <div style={{
+          position: 'absolute', top: 11, left: 11, height: 2,
+          background: 'linear-gradient(90deg, #0A1F44, #0DBFA8)',
+          width: `calc(${fillPct}% - ${fillPct === 0 ? 0 : 11}px)`,
+          zIndex: 1, transition: 'width 0.5s ease',
+        }}/>
+        {steps.map((s, i) => {
+          const done = i < doneCount;
+          const isActive = i === activeIdx;
+          return (
+            <div key={s.id} style={{
+              flex: 1, display: 'flex', flexDirection: 'column',
+              alignItems: 'center', position: 'relative', zIndex: 2,
+            }}>
+              <div style={{
+                width: 22, height: 22, borderRadius: '50%',
+                background: done ? '#0A1F44' : isActive ? '#2453D6' : 'var(--bg-surface)',
+                border: isActive ? '2px solid #2453D6' : done ? 'none' : '2px solid var(--border-default)',
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                boxShadow: isActive ? '0 0 0 4px rgba(36,83,214,0.12)' : 'none',
+                transition: 'all 0.3s',
+              }}>
+                {done && !isActive && (
+                  <Icon name="check" size={10} color="#fff" strokeWidth={2.5}/>
+                )}
+                {isActive && (
+                  <div style={{ width: 8, height: 8, borderRadius: '50%', background: '#fff' }}/>
+                )}
+              </div>
+              <span style={{
+                fontSize: 10.5,
+                fontWeight: isActive ? 700 : done ? 600 : 400,
+                color: isActive ? '#2453D6' : done ? 'var(--text-primary)' : 'var(--text-tertiary)',
+                marginTop: 6, textAlign: 'center', lineHeight: 1.3, whiteSpace: 'nowrap',
+              }}>{s.label}</span>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
 // Slim purple AI-insight strip (used inside cards)
 export function AIInsight({ children }) {
   return (
