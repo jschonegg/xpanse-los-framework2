@@ -69,7 +69,11 @@ export default function App() {
   if (window.location.search.includes('view=le'))   return <StandaloneLoanEstimate/>;
 
   const [loggedIn, setLoggedIn] = React.useState(() => sessionStorage.getItem('xpanse-auth') === '1');
-  const handleLogin = () => { sessionStorage.setItem('xpanse-auth', '1'); setLoggedIn(true); };
+  const handleLogin = () => {
+    sessionStorage.setItem('xpanse-auth', '1');
+    localStorage.setItem('los-route', 'home');
+    setLoggedIn(true);
+  };
 
   if (!loggedIn) return <LoginScreen onLogin={handleLogin}/>;
 
