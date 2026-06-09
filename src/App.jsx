@@ -1,6 +1,6 @@
 import React from 'react';
 import { StatusBar, AIFab, LeftNav } from './components/Shell';
-import { LoginView } from './views/Login';
+import { LoginScreen } from './components/LoginScreen';
 import { ProcessorHomeView } from './views/ProcessorHome';
 import { LOANS } from './data/loans';
 import { AIAssistantPanel } from './components/AIAssistant';
@@ -104,10 +104,11 @@ export default function App() {
     return () => window.removeEventListener('keydown', handler);
   }, [cmdOpen, authed]);
 
-  // If unauthenticated, render the smart Login screen instead of the shell.
+  // If unauthenticated, render the Xpanse split-panel login screen.
   if (!authed) {
-    return <LoginView onAuthenticated={() => {
+    return <LoginScreen onLogin={() => {
       localStorage.setItem('los-authed', '1');
+      localStorage.setItem('los-route', 'home');
       if (forceLogin) window.history.replaceState({}, '', window.location.pathname);
       setAuthed(true);
     }}/>;
