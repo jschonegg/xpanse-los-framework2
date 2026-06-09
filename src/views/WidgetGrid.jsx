@@ -1,22 +1,40 @@
 import React from 'react';
 import { Icon } from '../components/Icon';
 
+// ─── Color semantics (strict) ────────────────────────────────────────────────
+// Use these consistently across all widgets — color carries meaning, not
+// decoration.
+//
+//   PURPLE (#7E68FA / #5B21B6 / #4338CA) — AI surfaces + primary CTAs.
+//     If used for AI, always pair with a sparkle icon or "AI" label.
+//   GREEN (#059669 / #10B981) — positive change, success, "verified".
+//   AMBER (#D97706 / #F59E0B) — deadline pressure, time-bound warning.
+//   RED  (#EF4444 / #DC2626) — risk, error, critical, ceiling breach.
+//   GRAY (#6B7280 / #9CA3AF) — neutral, routine, info.
+//
+// Reach for these before introducing new hex values. New colors require a
+// new semantic — don't add a "second purple" that means something else.
+//
 // ─── Widget registry ──────────────────────────────────────────────────────────
 // Each entry describes a widget: metadata + its render component.
 // `defaultWidth` is the preferred width when first added.
 
 // Bump the storage key when DEFAULT_LAYOUT changes meaningfully so existing
 // users see the new default the next time they load the home.
-const STORAGE_KEY = 'los-widget-layout-v6';
+// v7: Files at Risk promoted to full-width as the priority anchor.
+// Leaderboard + Company Feed pulled out of the grid into their own
+// numbered sections (02 · Performance, 03 · From your team) — they're
+// still in the catalog if a user re-adds them.
+const STORAGE_KEY = 'los-widget-layout-v7';
 
 const DEFAULT_LAYOUT = [
   { id: 'ai-coach-brief',      width: 'full' },
-  { id: 'files-at-risk',       width: 'half' },
-  { id: 'ready-for-uw',        width: 'half' },
+  // Files at Risk leads — it's the most cognitively expensive triage and
+  // deserves the most visual weight on the page.
+  { id: 'files-at-risk',       width: 'full' },
   { id: 'lock-clock',          width: 'half' },
   { id: 'waiting-on-borrower', width: 'half' },
-  { id: 'leaderboard',         width: 'full' },
-  { id: 'company-feed',        width: 'full' },
+  { id: 'ready-for-uw',        width: 'full' },
 ];
 
 function loadLayout() {
@@ -79,7 +97,7 @@ export function ClosingCountdownWidget() {
             <div style={{ fontSize: 13, fontWeight: 600, color: '#111827', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{c.name}</div>
             <div style={{ fontSize: 11, color: '#9CA3AF' }}>{c.loanId}</div>
           </div>
-          <span style={{ fontSize: 10.5, fontWeight: 700, color: c.statusColor, background: c.statusColor + '15', padding: '2px 7px', borderRadius: 4, flexShrink: 0 }}>{c.status}</span>
+          <span style={{ fontSize: 11, fontWeight: 700, color: c.statusColor, background: c.statusColor + '15', padding: '2px 7px', borderRadius: 4, flexShrink: 0 }}>{c.status}</span>
         </div>
       ))}
     </div>
@@ -100,7 +118,7 @@ export function RateWatchWidget() {
     <>
       <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 10 }}>
         <div style={{ width: 8, height: 8, borderRadius: 999, background: '#059669' }}/>
-        <span style={{ fontSize: 11.5, color: '#6B7280' }}>Market rates · Updated 2h ago</span>
+        <span style={{ fontSize: 12, color: '#6B7280' }}>Market rates · Updated 2h ago</span>
       </div>
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
         {rates.map(r => (
@@ -137,7 +155,7 @@ export function ConditionsTrackerWidget() {
         {cats.map(c => (
           <div key={c.label}>
             <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 3 }}>
-              <span style={{ fontSize: 12.5, color: '#374151', fontWeight: 500 }}>{c.label}</span>
+              <span style={{ fontSize: 13, color: '#374151', fontWeight: 500 }}>{c.label}</span>
               <span style={{ fontSize: 12, fontFamily: 'DM Mono', color: c.open > 0 ? '#374151' : '#9CA3AF' }}>{c.open}/{c.total}</span>
             </div>
             <div style={{ height: 5, background: '#F3F4F6', borderRadius: 999, overflow: 'hidden' }}>
@@ -175,7 +193,7 @@ export function QuickActionsWidget() {
           <div style={{ width: 32, height: 32, borderRadius: 8, background: a.color, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
             <Icon name={a.icon} size={15} color="#fff"/>
           </div>
-          <span style={{ fontSize: 11.5, fontWeight: 600, color: '#374151', textAlign: 'center', lineHeight: 1.3 }}>{a.label}</span>
+          <span style={{ fontSize: 12, fontWeight: 600, color: '#374151', textAlign: 'center', lineHeight: 1.3 }}>{a.label}</span>
         </button>
       ))}
     </div>
@@ -199,7 +217,7 @@ export function RecentActivityWidget() {
             <Icon name={a.icon} size={12} color={a.color} strokeWidth={2}/>
           </div>
           <div style={{ flex: 1, minWidth: 0 }}>
-            <div style={{ fontSize: 12.5, fontWeight: 500, color: '#111827', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{a.text}</div>
+            <div style={{ fontSize: 13, fontWeight: 500, color: '#111827', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{a.text}</div>
             <div style={{ fontSize: 11, color: '#9CA3AF' }}>{a.loan}</div>
           </div>
           <span style={{ fontSize: 11, color: '#9CA3AF', flexShrink: 0 }}>{a.time}</span>
@@ -343,7 +361,7 @@ export function LockClockWidget({ onOpenLoan }) {
           }}>
             <div style={{ background: sev.bg, color: sev.fg, borderRadius: 7, padding: '5px 9px', textAlign: 'center', minWidth: 58, flexShrink: 0 }}>
               <div style={{ fontSize: 13, fontWeight: 800, lineHeight: 1, fontFamily: 'DM Mono' }}>{r.days}d {r.hours}h</div>
-              <div style={{ fontSize: 9, fontWeight: 700, letterSpacing: '0.06em', marginTop: 2 }}>LEFT</div>
+              <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.06em', marginTop: 2 }}>LEFT</div>
             </div>
             <div style={{ flex: 1, minWidth: 0 }}>
               <div style={{ display: 'flex', alignItems: 'baseline', gap: 6 }}>
@@ -377,7 +395,7 @@ export function WaitingOnBorrowerWidget({ onOpenLoan }) {
     <div>
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-          <Icon name="mail" size={13} color="#4338CA"/>
+          <Icon name="mail" size={13} color="#D97706"/>
           <span style={{ fontSize: 12, color: '#6B7280' }}>Doc requests outstanding</span>
         </div>
         <span style={{ fontSize: 11, fontWeight: 700, background: '#F3F4F6', color: '#374151', padding: '2px 7px', borderRadius: 999 }}>5</span>
@@ -436,6 +454,7 @@ export const WIDGET_REGISTRY = [
     color: '#7E68FA',
     defaultWidth: 'full',
     category: 'Performance',
+    chromeless: true, // widget renders its own header + card; skip shell title
   },
   {
     id: 'pipeline-snapshot',
@@ -552,7 +571,7 @@ export const WIDGET_REGISTRY = [
     label: 'Waiting on Borrower',
     desc: 'Outstanding doc requests with days-since-asked. Overdue highlighted.',
     icon: 'mail',
-    color: '#4338CA',
+    color: '#D97706', // amber — deadline / chase pressure
     defaultWidth: 'half',
     category: 'Pipeline',
   },
@@ -581,7 +600,7 @@ function WidgetShell({ meta, width, onRemove, onToggleWidth, editMode, dragHandl
             <button onClick={onToggleWidth} style={{
               display: 'flex', alignItems: 'center', gap: 3, padding: '3px 8px',
               border: '1px solid #E5E7EB', borderRadius: 5, background: '#fff',
-              fontSize: 10.5, fontWeight: 600, color: '#6B7280', cursor: 'pointer', fontFamily: 'inherit',
+              fontSize: 11, fontWeight: 600, color: '#6B7280', cursor: 'pointer', fontFamily: 'inherit',
             }}>{width === 'full' ? '½' : '⬛ Full'}</button>
             <button onClick={onRemove} style={{
               width: 22, height: 22, display: 'flex', alignItems: 'center', justifyContent: 'center',
@@ -630,7 +649,7 @@ function WidgetShell({ meta, width, onRemove, onToggleWidth, editMode, dragHandl
             <button onClick={onToggleWidth} title={width === 'full' ? 'Shrink to half' : 'Expand to full'} style={{
               display: 'flex', alignItems: 'center', gap: 3, padding: '3px 8px',
               border: '1px solid #E5E7EB', borderRadius: 5, background: '#fff',
-              fontSize: 10.5, fontWeight: 600, color: '#6B7280', cursor: 'pointer', fontFamily: 'inherit',
+              fontSize: 11, fontWeight: 600, color: '#6B7280', cursor: 'pointer', fontFamily: 'inherit',
             }}>
               {width === 'full' ? '½' : '⬛ Full'}
             </button>
@@ -711,9 +730,9 @@ function CatalogDrawer({ activeIds, onAdd, onClose }) {
                   <Icon name={w.icon} size={17} color={w.color}/>
                 </div>
                 <div style={{ flex: 1, minWidth: 0 }}>
-                  <div style={{ fontSize: 13.5, fontWeight: 700, color: '#111827', marginBottom: 2 }}>{w.label}</div>
+                  <div style={{ fontSize: 14, fontWeight: 700, color: '#111827', marginBottom: 2 }}>{w.label}</div>
                   <div style={{ fontSize: 12, color: '#6B7280', lineHeight: 1.4 }}>{w.desc}</div>
-                  <div style={{ fontSize: 10.5, fontWeight: 600, color: w.color, marginTop: 4, textTransform: 'uppercase', letterSpacing: '0.05em' }}>{w.category}</div>
+                  <div style={{ fontSize: 11, fontWeight: 600, color: w.color, marginTop: 4, textTransform: 'uppercase', letterSpacing: '0.05em' }}>{w.category}</div>
                 </div>
                 <button onClick={() => !active && onAdd(w.id)} style={{
                   flexShrink: 0, width: 30, height: 30,
@@ -797,14 +816,14 @@ export function WidgetGrid({ renderWidget }) {
     <>
       {/* Toolbar */}
       <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 18 }}>
-        <span style={{ fontSize: 11.5, fontWeight: 700, letterSpacing: '0.07em', textTransform: 'uppercase', color: '#9CA3AF', flex: 1 }}>
+        <span style={{ fontSize: 12, fontWeight: 700, letterSpacing: '0.07em', textTransform: 'uppercase', color: '#9CA3AF', flex: 1 }}>
           {editMode ? '✦ Drag to reorder · click × to remove' : 'Your dashboard'}
         </span>
         {editMode && (
           <button onClick={() => { setCatalog(true); }} style={{
             display: 'flex', alignItems: 'center', gap: 5, padding: '5px 12px',
             border: '1.5px solid #7E68FA', borderRadius: 7, background: '#7E68FA12',
-            color: '#7E68FA', fontFamily: 'inherit', fontSize: 12.5, fontWeight: 700, cursor: 'pointer',
+            color: '#7E68FA', fontFamily: 'inherit', fontSize: 13, fontWeight: 700, cursor: 'pointer',
           }}>
             <Icon name="plus" size={13} color="#7E68FA" strokeWidth={2.5}/> Add widget
           </button>
@@ -814,7 +833,7 @@ export function WidgetGrid({ renderWidget }) {
           border: '1px solid #E5E7EB', borderRadius: 7,
           background: editMode ? '#111827' : '#fff',
           color: editMode ? '#fff' : '#374151',
-          fontFamily: 'inherit', fontSize: 12.5, fontWeight: 600, cursor: 'pointer',
+          fontFamily: 'inherit', fontSize: 13, fontWeight: 600, cursor: 'pointer',
         }}>
           {editMode
             ? <><Icon name="check" size={12} color="#fff" strokeWidth={2.5}/> Done</>

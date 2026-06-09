@@ -12,6 +12,7 @@ import { LoanEstimateView } from './views/LoanEstimateView';
 import { AIFeedView } from './views/AIFeed';
 import { LargeDepositReviewView } from './views/LargeDepositReview';
 import { PreferencesModal } from './components/PreferencesModal';
+import { LoginScreen } from './components/LoginScreen';
 
 // ── Standalone URLA window (opened via window.open) ──────────────────────────
 function StandaloneURLA() {
@@ -66,6 +67,15 @@ export default function App() {
   // Render standalone URLA if this is a popup window
   if (window.location.search.includes('view=urla')) return <StandaloneURLA/>;
   if (window.location.search.includes('view=le'))   return <StandaloneLoanEstimate/>;
+
+  const [loggedIn, setLoggedIn] = React.useState(() => sessionStorage.getItem('xpanse-auth') === '1');
+  const handleLogin = () => {
+    sessionStorage.setItem('xpanse-auth', '1');
+    localStorage.setItem('los-route', 'home');
+    setLoggedIn(true);
+  };
+
+  if (!loggedIn) return <LoginScreen onLogin={handleLogin}/>;
 
   const [route, setRoute] = React.useState(() => localStorage.getItem('los-route') || 'home');
   const [currentLoan, setCurrentLoan] = React.useState(() => localStorage.getItem('los-loan') || 'LN-2024-0234');
