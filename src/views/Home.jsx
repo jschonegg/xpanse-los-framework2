@@ -1340,7 +1340,6 @@ export function HomeView({ onNavigate, onOpenLoan }) {
                 50%      { opacity: 0.55; transform: scale(1.15); }
               }
             `}</style>
-            ))}
           </div>
         </div>
       </div>
