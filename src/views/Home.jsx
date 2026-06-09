@@ -161,7 +161,7 @@ function Leaderboard() {
           <div style={{ display: 'flex', background: '#F3F4F6', borderRadius: 7, padding: 3, gap: 2 }}>
             {['MTD', 'QTD', 'YTD'].map(p => (
               <button key={p} onClick={() => { setPeriod(p); setAnimKey(k => k + 1); }} style={{
-                padding: '3px 10px', fontSize: 11.5, fontWeight: 700,
+                padding: '3px 10px', fontSize: 12, fontWeight: 700,
                 border: 'none', borderRadius: 5, cursor: 'pointer', fontFamily: 'inherit',
                 background: period === p ? '#fff' : 'transparent',
                 color: period === p ? '#111827' : '#6B7280',
@@ -249,10 +249,10 @@ function Leaderboard() {
 
                 {/* Value */}
                 <div style={{ textAlign: 'right', flexShrink: 0, minWidth: 70 }}>
-                  <div style={{ fontSize: 13.5, fontWeight: 700, fontFamily: 'DM Mono', color: '#111827' }}>
+                  <div style={{ fontSize: 14, fontWeight: 700, fontFamily: 'DM Mono', color: '#111827' }}>
                     {metaDef.fmt(p[metric])}
                   </div>
-                  <div style={{ fontSize: 10.5, color: '#9CA3AF', marginTop: 1 }}>
+                  <div style={{ fontSize: 11, color: '#9CA3AF', marginTop: 1 }}>
                     {Math.round(goalPct)}% of goal
                   </div>
                 </div>
@@ -297,7 +297,7 @@ function Leaderboard() {
                           transition: 'width 0.5s ease',
                         }}/>
                       </div>
-                      <span style={{ fontSize: 11.5, fontWeight: 700, color: '#374151' }}>
+                      <span style={{ fontSize: 12, fontWeight: 700, color: '#374151' }}>
                         {Math.min(100, Math.round((p.volume / p.goal) * 100))}%
                       </span>
                     </div>
@@ -305,13 +305,13 @@ function Leaderboard() {
                       {LB_METRICS[0].fmt(p.volume)} of {LB_METRICS[0].fmt(p.goal)} target
                     </div>
                     {isYou && youRank > 1 && (
-                      <div style={{ marginTop: 8, fontSize: 11.5, fontWeight: 600, color: '#7E68FA', display: 'flex', alignItems: 'center', gap: 5 }}>
+                      <div style={{ marginTop: 8, fontSize: 12, fontWeight: 600, color: '#7E68FA', display: 'flex', alignItems: 'center', gap: 5 }}>
                         <Icon name="trendingUp" size={12} strokeWidth={2}/>
                         {LB_METRICS[0].fmt(leader.volume - p.volume)} behind {leader.name.split(' ')[0]}
                       </div>
                     )}
                     {isYou && youRank === 1 && (
-                      <div style={{ marginTop: 8, fontSize: 11.5, fontWeight: 600, color: '#059669', display: 'flex', alignItems: 'center', gap: 5 }}>
+                      <div style={{ marginTop: 8, fontSize: 12, fontWeight: 600, color: '#059669', display: 'flex', alignItems: 'center', gap: 5 }}>
                         <Icon name="check" size={12} strokeWidth={2.5}/>
                         Leading by {LB_METRICS[0].fmt(p.volume - sorted[1]?.volume)}
                       </div>
@@ -326,8 +326,8 @@ function Leaderboard() {
 
       {/* ── Footer ───────────────────────────────── */}
       <div style={{ padding: '9px 18px', background: '#FAFAFA', borderTop: '1px solid #F3F4F6', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-        <span style={{ fontSize: 11.5, color: '#9CA3AF' }}>{periodLabels[period]}</span>
-        <span style={{ fontSize: 11.5, color: '#9CA3AF' }}>{sorted.length} loan officers</span>
+        <span style={{ fontSize: 12, color: '#9CA3AF' }}>{periodLabels[period]}</span>
+        <span style={{ fontSize: 12, color: '#9CA3AF' }}>{sorted.length} loan officers</span>
       </div>
 
       {/* Bar grow keyframe injected once */}
@@ -370,16 +370,51 @@ const SCORECARD = {
   appToClose:   { value: '31d',    deltaLabel: '-2 days' },
 };
 
+// Severity tones for hero KPI tiles — three levels of urgency so the row
+// doesn't read as four identical tiles. Colors are tuned for the dark hero.
+const SEVERITY = {
+  critical: {
+    bg:           'rgba(255, 90, 80, 0.10)',
+    bgHover:      'rgba(255, 90, 80, 0.16)',
+    border:       'rgba(255, 90, 80, 0.30)',
+    borderHover:  'rgba(255, 90, 80, 0.48)',
+    iconBg:       'rgba(255, 90, 80, 0.18)',
+    iconColor:    '#FF8A82',
+    subColor:     'rgba(255, 154, 148, 0.85)',
+  },
+  deadline: {
+    bg:           'rgba(255, 184, 0, 0.07)',
+    bgHover:      'rgba(255, 184, 0, 0.13)',
+    border:       'rgba(255, 184, 0, 0.22)',
+    borderHover:  'rgba(255, 184, 0, 0.38)',
+    iconBg:       'rgba(255, 184, 0, 0.16)',
+    iconColor:    '#FFC857',
+    subColor:     'rgba(255, 209, 122, 0.80)',
+  },
+  routine: {
+    bg:           'rgba(255,255,255,0.06)',
+    bgHover:      'rgba(255,255,255,0.10)',
+    border:       'rgba(255,255,255,0.12)',
+    borderHover:  'rgba(255,255,255,0.22)',
+    iconBg:       'rgba(255,255,255,0.10)',
+    iconColor:    'rgba(255,255,255,0.85)',
+    subColor:     'rgba(255,255,255,0.5)',
+  },
+};
+
 // Hero KPI tiles — each carries an `intent` that pre-filters the pipeline
 // so clicks land on a curated view rather than the full list.
+// `severity` differentiates the tiles visually: critical tiles get a red
+// pulse dot, deadline tiles get amber, routine tiles render neutral. Stops
+// the row from reading as four identical numbers.
 const HERO_TILES = [
-  { icon: 'calculator', value: '7', label: 'Due today',           sub: '2 high priority',
+  { icon: 'calculator', value: '7', label: 'Due today',           sub: '2 high priority',    severity: 'deadline',
     intent: { view: 'urgent', label: 'Due today' } },
-  { icon: 'fileSearch', value: '3', label: 'Awaiting your review', sub: 'Clear to close',
+  { icon: 'fileSearch', value: '3', label: 'Awaiting your review', sub: 'Clear to close',     severity: 'routine',
     intent: { filters: [{ field: 'aiStatus', op: 'is', value: 'Needs Review' }], label: 'Awaiting your review' } },
-  { icon: 'clock',      value: '2', label: 'Locks expiring ≤7d',  sub: 'Action required',
+  { icon: 'clock',      value: '2', label: 'Locks expiring ≤7d',  sub: 'Action required',    severity: 'critical',
     intent: { filters: [{ field: 'lockStatus', op: 'is', value: 'Expiring' }], label: 'Locks expiring ≤7d' } },
-  { icon: 'zap',        value: '5', label: 'New leads',            sub: 'Assigned overnight',
+  { icon: 'zap',        value: '5', label: 'New leads',            sub: 'Assigned overnight', severity: 'routine',
     intent: { filters: [{ field: 'status', op: 'is', value: 'Application' }], label: 'New leads' } },
 ];
 
@@ -405,7 +440,7 @@ function RingGauge({ value, size = 110, stroke = 7, color = '#818CF8', trackColo
       </svg>
       <div style={{ position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
         <span style={{ fontSize: 22, fontWeight: 800, color: '#fff', letterSpacing: '-0.02em', lineHeight: 1 }}>{value}<span style={{ fontSize: 12, fontWeight: 600 }}>%</span></span>
-        <span style={{ fontSize: 9.5, fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.45)', marginTop: 3 }}>{label}</span>
+        <span style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.45)', marginTop: 3 }}>{label}</span>
       </div>
     </div>
   );
@@ -523,7 +558,7 @@ function TaskDrawerCD({ onComplete }) {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
       <div style={{ background: '#F9FAFC', border: '1px solid #E5E8F0', borderRadius: 10, padding: '14px 16px' }}>
-        <div style={{ fontSize: 11.5, fontWeight: 700, color: '#8B95A6', textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: 10 }}>CD Summary</div>
+        <div style={{ fontSize: 12, fontWeight: 700, color: '#8B95A6', textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: 10 }}>CD Summary</div>
         {[
           { label: 'Loan Amount', value: '$780,000' },
           { label: 'Rate', value: '6.750% · Conv 30yr' },
@@ -534,7 +569,7 @@ function TaskDrawerCD({ onComplete }) {
         ].map(r => (
           <div key={r.label} style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 7, fontSize: 13 }}>
             <span style={{ color: '#5A6577' }}>{r.label}</span>
-            <span style={{ fontWeight: 600, color: '#0B1B2B', fontFamily: 'JetBrains Mono, monospace', fontSize: 12.5 }}>{r.value}</span>
+            <span style={{ fontWeight: 600, color: '#0B1B2B', fontFamily: 'JetBrains Mono, monospace', fontSize: 13 }}>{r.value}</span>
           </div>
         ))}
       </div>
@@ -543,7 +578,7 @@ function TaskDrawerCD({ onComplete }) {
         CD pre-filled from final UW approval. Seller credit ($3,500) reconciled with HUD. Ready to send.
       </div>
       {sent ? (
-        <div style={{ background: '#E7F8F1', border: '1px solid #A7F3D0', borderRadius: 9, padding: '12px 14px', fontSize: 13.5, fontWeight: 700, color: '#065F46', display: 'flex', alignItems: 'center', gap: 8 }}>
+        <div style={{ background: '#E7F8F1', border: '1px solid #A7F3D0', borderRadius: 9, padding: '12px 14px', fontSize: 14, fontWeight: 700, color: '#065F46', display: 'flex', alignItems: 'center', gap: 8 }}>
           <svg width="16" height="16" fill="none" stroke="#0E9F6E" strokeWidth="2.5" viewBox="0 0 24 24"><path d="M20 6 9 17l-5-5"/></svg>
           CD sent to Jennifer Wang — 3-day clock started
         </div>
@@ -575,22 +610,22 @@ function TaskDrawerLock({ onComplete }) {
         ].map(r => (
           <div key={r.label} style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 7, fontSize: 13 }}>
             <span style={{ color: '#5A6577' }}>{r.label}</span>
-            <span style={{ fontWeight: 600, color: '#0B1B2B', fontFamily: 'JetBrains Mono, monospace', fontSize: 12.5 }}>{r.value}</span>
+            <span style={{ fontWeight: 600, color: '#0B1B2B', fontFamily: 'JetBrains Mono, monospace', fontSize: 13 }}>{r.value}</span>
           </div>
         ))}
       </div>
-      <div style={{ fontSize: 12.5, fontWeight: 600, color: '#5A6577', marginBottom: -6 }}>Select extension:</div>
+      <div style={{ fontSize: 13, fontWeight: 600, color: '#5A6577', marginBottom: -6 }}>Select extension:</div>
       {[{ days: 15, expires: 'Jun 7', fee: '$425', note: '7-day buffer' }, { days: 30, expires: 'Jun 21', fee: '$850', note: 'Recommended — 9-day buffer' }].map(opt => (
         <div key={opt.days} onClick={() => !done && setSelected(opt.days)} style={{ padding: '13px 15px', borderRadius: 10, cursor: done ? 'default' : 'pointer', border: `2px solid ${selected === opt.days ? '#2453D6' : '#E5E8F0'}`, background: selected === opt.days ? '#EEF3FE' : '#F9FAFC', transition: 'all 0.12s' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-            <span style={{ fontSize: 13.5, fontWeight: 700, color: '#0B1B2B' }}>{opt.days}-day · expires {opt.expires}</span>
-            <span style={{ fontSize: 13.5, fontWeight: 700, color: '#2453D6', fontFamily: 'JetBrains Mono, monospace' }}>{opt.fee}</span>
+            <span style={{ fontSize: 14, fontWeight: 700, color: '#0B1B2B' }}>{opt.days}-day · expires {opt.expires}</span>
+            <span style={{ fontSize: 14, fontWeight: 700, color: '#2453D6', fontFamily: 'JetBrains Mono, monospace' }}>{opt.fee}</span>
           </div>
           <div style={{ fontSize: 12, color: '#8B95A6', marginTop: 3 }}>{opt.note}</div>
         </div>
       ))}
       {done ? (
-        <div style={{ background: '#E7F8F1', border: '1px solid #A7F3D0', borderRadius: 9, padding: '12px 14px', fontSize: 13.5, fontWeight: 700, color: '#065F46', display: 'flex', alignItems: 'center', gap: 8 }}>
+        <div style={{ background: '#E7F8F1', border: '1px solid #A7F3D0', borderRadius: 9, padding: '12px 14px', fontSize: 14, fontWeight: 700, color: '#065F46', display: 'flex', alignItems: 'center', gap: 8 }}>
           <svg width="16" height="16" fill="none" stroke="#0E9F6E" strokeWidth="2.5" viewBox="0 0 24 24"><path d="M20 6 9 17l-5-5"/></svg>
           Lock extended to {selected === 30 ? 'Jun 21' : 'Jun 7'} — {selected === 30 ? '$850' : '$425'} logged to file
         </div>
@@ -614,10 +649,10 @@ function TaskDrawerPaystub({ onComplete }) {
       </div>
       <div>
         <div style={{ fontSize: 12, fontWeight: 600, color: '#5A6577', marginBottom: 6 }}>Message to borrower</div>
-        <textarea value={msg} onChange={e => setMsg(e.target.value)} style={{ width: '100%', height: 160, border: '1px solid #E5E8F0', borderRadius: 8, padding: '10px 12px', fontSize: 12.5, fontFamily: 'inherit', lineHeight: 1.6, resize: 'none', outline: 'none', boxSizing: 'border-box', color: '#0B1B2B' }}/>
+        <textarea value={msg} onChange={e => setMsg(e.target.value)} style={{ width: '100%', height: 160, border: '1px solid #E5E8F0', borderRadius: 8, padding: '10px 12px', fontSize: 13, fontFamily: 'inherit', lineHeight: 1.6, resize: 'none', outline: 'none', boxSizing: 'border-box', color: '#0B1B2B' }}/>
       </div>
       {sent ? (
-        <div style={{ background: '#E7F8F1', border: '1px solid #A7F3D0', borderRadius: 9, padding: '12px 14px', fontSize: 13.5, fontWeight: 700, color: '#065F46', display: 'flex', alignItems: 'center', gap: 8 }}>
+        <div style={{ background: '#E7F8F1', border: '1px solid #A7F3D0', borderRadius: 9, padding: '12px 14px', fontSize: 14, fontWeight: 700, color: '#065F46', display: 'flex', alignItems: 'center', gap: 8 }}>
           <svg width="16" height="16" fill="none" stroke="#0E9F6E" strokeWidth="2.5" viewBox="0 0 24 24"><path d="M20 6 9 17l-5-5"/></svg>
           Reminder sent via borrower portal — C-003 updated to Awaiting
         </div>
@@ -648,9 +683,9 @@ function TaskDrawerConditions({ onComplete }) {
         <div key={c.id} style={{ background: cleared.has(c.id) ? '#E7F8F1' : '#F9FAFC', border: `1px solid ${cleared.has(c.id) ? '#A7F3D0' : '#E5E8F0'}`, borderRadius: 10, padding: '13px 14px', transition: 'all 0.2s' }}>
           <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 10 }}>
             <div style={{ flex: 1 }}>
-              <div style={{ fontSize: 13.5, fontWeight: 700, color: '#0B1B2B' }}>{c.id} · {c.title}</div>
+              <div style={{ fontSize: 14, fontWeight: 700, color: '#0B1B2B' }}>{c.id} · {c.title}</div>
               <div style={{ fontSize: 12, color: '#5A6577', marginTop: 4, lineHeight: 1.45 }}>{c.detail}</div>
-              <div style={{ fontSize: 11.5, color: '#8B95A6', marginTop: 5 }}>📎 {c.doc}</div>
+              <div style={{ fontSize: 12, color: '#8B95A6', marginTop: 5 }}>📎 {c.doc}</div>
             </div>
             {cleared.has(c.id) ? (
               <div style={{ width: 28, height: 28, borderRadius: '50%', background: '#0E9F6E', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
@@ -670,7 +705,7 @@ function TaskDrawerConditions({ onComplete }) {
           Submit cleared conditions to UW
         </button>
       ) : (
-        <div style={{ fontSize: 12.5, color: '#8B95A6', textAlign: 'center' }}>Clear both conditions to submit</div>
+        <div style={{ fontSize: 13, color: '#8B95A6', textAlign: 'center' }}>Clear both conditions to submit</div>
       )}
     </div>
   );
@@ -692,7 +727,7 @@ function TaskDrawerAppraisal({ onComplete }) {
         ].map(r => (
           <div key={r.label} style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 7, fontSize: 13 }}>
             <span style={{ color: '#5A6577' }}>{r.label}</span>
-            <span style={{ fontWeight: 600, color: '#0B1B2B', fontSize: 12.5 }}>{r.value}</span>
+            <span style={{ fontWeight: 600, color: '#0B1B2B', fontSize: 13 }}>{r.value}</span>
           </div>
         ))}
       </div>
@@ -701,7 +736,7 @@ function TaskDrawerAppraisal({ onComplete }) {
         Inspection is May 22 — report typically follows in 2–3 business days. Expected by May 27.
       </div>
       {sent ? (
-        <div style={{ background: '#E7F8F1', border: '1px solid #A7F3D0', borderRadius: 9, padding: '12px 14px', fontSize: 13.5, fontWeight: 700, color: '#065F46', display: 'flex', alignItems: 'center', gap: 8 }}>
+        <div style={{ background: '#E7F8F1', border: '1px solid #A7F3D0', borderRadius: 9, padding: '12px 14px', fontSize: 14, fontWeight: 700, color: '#065F46', display: 'flex', alignItems: 'center', gap: 8 }}>
           <svg width="16" height="16" fill="none" stroke="#0E9F6E" strokeWidth="2.5" viewBox="0 0 24 24"><path d="M20 6 9 17l-5-5"/></svg>
           Follow-up sent to ValueLink · ETA requested by end of day
         </div>
@@ -757,11 +792,11 @@ function TaskDrawer({ task, onClose, onComplete }) {
             <div style={{ flex: 1 }}>
               {/* Borrower avatar + name */}
               <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
-                <div style={{ width: 28, height: 28, borderRadius: 7, background: task.color, color: '#fff', fontSize: 9.5, fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>{task.initials}</div>
+                <div style={{ width: 28, height: 28, borderRadius: 7, background: task.color, color: '#fff', fontSize: 10, fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>{task.initials}</div>
                 <span style={{ fontSize: 12, color: '#8B95A6', fontFamily: 'JetBrains Mono, monospace' }}>{task.loanId}</span>
               </div>
               <div style={{ fontSize: 17, fontWeight: 800, color: '#0B1B2B', letterSpacing: '-0.01em', lineHeight: 1.2 }}>{drawerData.title}</div>
-              <div style={{ fontSize: 12.5, color: '#8B95A6', marginTop: 4 }}>{drawerData.subtitle}</div>
+              <div style={{ fontSize: 13, color: '#8B95A6', marginTop: 4 }}>{drawerData.subtitle}</div>
             </div>
             <button onClick={close} style={{ width: 30, height: 30, borderRadius: 7, border: '1px solid #E5E8F0', background: '#F9FAFC', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
               <svg width="12" height="12" fill="none" stroke="#8B95A6" strokeWidth="2.5" viewBox="0 0 24 24"><path d="M18 6 6 18M6 6l12 12"/></svg>
@@ -770,7 +805,7 @@ function TaskDrawer({ task, onClose, onComplete }) {
           {/* Urgency bar */}
           <div style={{ marginTop: 12, background: uc.bg, border: `1px solid ${uc.border}`, borderRadius: 8, padding: '8px 12px', display: 'flex', alignItems: 'center', gap: 8 }}>
             <div style={{ width: 7, height: 7, borderRadius: '50%', background: uc.dot, flexShrink: 0 }}/>
-            <span style={{ fontSize: 12.5, color: uc.text, fontWeight: 500, lineHeight: 1.4 }}>{drawerData.urgency}</span>
+            <span style={{ fontSize: 13, color: uc.text, fontWeight: 500, lineHeight: 1.4 }}>{drawerData.urgency}</span>
           </div>
         </div>
 
@@ -833,14 +868,14 @@ function MilestoneCelebration({ impact, onClose }) {
 
         <div style={{ fontSize: 52, marginBottom: 12, lineHeight: 1 }}>{impact.milestoneEmoji}</div>
         <div style={{ fontSize: 24, fontWeight: 800, color: '#fff', letterSpacing: '-0.02em', marginBottom: 6 }}>{impact.milestoneTitle}</div>
-        <div style={{ fontSize: 13.5, color: 'rgba(255,255,255,0.45)', marginBottom: 28 }}>{impact.milestoneSubtitle}</div>
+        <div style={{ fontSize: 14, color: 'rgba(255,255,255,0.45)', marginBottom: 28 }}>{impact.milestoneSubtitle}</div>
 
         {/* Impact tiles */}
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 10, marginBottom: 28 }}>
           {impact.milestoneImpacts.map((item, i) => (
             <div key={i} style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 12, padding: '12px 10px' }}>
               <div style={{ fontSize: 18, marginBottom: 6 }}>{item.icon}</div>
-              <div style={{ fontSize: 10.5, color: 'rgba(255,255,255,0.4)', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 3 }}>{item.label}</div>
+              <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.4)', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 3 }}>{item.label}</div>
               <div style={{ fontSize: 13, fontWeight: 700, color: '#fff' }}>{item.value}</div>
             </div>
           ))}
@@ -848,7 +883,7 @@ function MilestoneCelebration({ impact, onClose }) {
 
         {/* Next steps */}
         <div style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 12, padding: '14px 16px', marginBottom: 24, textAlign: 'left' }}>
-          <div style={{ fontSize: 10.5, fontWeight: 700, color: 'rgba(255,255,255,0.35)', textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: 10 }}>Next steps</div>
+          <div style={{ fontSize: 11, fontWeight: 700, color: 'rgba(255,255,255,0.35)', textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: 10 }}>Next steps</div>
           {impact.milestoneNext.map((step, i) => (
             <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: i < impact.milestoneNext.length - 1 ? 8 : 0 }}>
               <div style={{ width: 20, height: 20, borderRadius: '50%', background: 'rgba(126,104,250,0.2)', border: '1px solid rgba(126,104,250,0.4)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
@@ -896,14 +931,14 @@ function TaskImpactToast({ task, impact, onDismiss, onOpenLoan }) {
             <div style={{ width: 16, height: 16, borderRadius: '50%', background: '#22C55E', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
               <Icon name="check" size={9} color="#fff" strokeWidth={3}/>
             </div>
-            <span style={{ fontSize: 12.5, fontWeight: 700, color: '#15803D' }}>{impact.headline}</span>
+            <span style={{ fontSize: 13, fontWeight: 700, color: '#15803D' }}>{impact.headline}</span>
           </div>
           {/* Impact line */}
           <div style={{ display: 'flex', alignItems: 'center', gap: 5, padding: '5px 8px', background: 'rgba(34,197,94,0.1)', borderRadius: 6, marginBottom: 6 }}>
-            <span style={{ fontSize: 10.5, color: '#166534' }}>⚡</span>
-            <span style={{ fontSize: 11.5, fontWeight: 600, color: '#166534' }}>{impact.loanChange}</span>
+            <span style={{ fontSize: 11, color: '#166534' }}>⚡</span>
+            <span style={{ fontSize: 12, fontWeight: 600, color: '#166534' }}>{impact.loanChange}</span>
           </div>
-          <div style={{ fontSize: 11.5, color: '#4B5563', lineHeight: 1.45, marginBottom: 6 }}>{impact.detail}</div>
+          <div style={{ fontSize: 12, color: '#4B5563', lineHeight: 1.45, marginBottom: 6 }}>{impact.detail}</div>
           <div style={{ fontSize: 11, color: '#7E68FA', fontWeight: 600 }}>{impact.nextLabel}</div>
         </div>
         <button onClick={() => { setVisible(false); setTimeout(onDismiss, 300); }} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#9CA3AF', flexShrink: 0, padding: 0, lineHeight: 1 }}>
@@ -940,13 +975,13 @@ function TaskRow({ task, onComplete, onOpenLoan }) {
       transition: 'all 0.4s cubic-bezier(0.4,0,0.2,1)',
     }} onClick={() => state === 'idle' && onOpenLoan(task.loanId)}>
       <div style={{ display: 'flex', alignItems: 'flex-start', gap: 8 }}>
-        <div style={{ width: 26, height: 26, borderRadius: 7, background: task.color, color: '#fff', fontSize: 9, fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, marginTop: 1 }}>{task.initials}</div>
+        <div style={{ width: 26, height: 26, borderRadius: 7, background: task.color, color: '#fff', fontSize: 11, fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, marginTop: 1 }}>{task.initials}</div>
         <div style={{ flex: 1, minWidth: 0 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-            <div style={{ fontSize: 12.5, fontWeight: 600, color: state === 'completing' ? '#166534' : '#111827', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', textDecoration: state === 'completing' ? 'line-through' : 'none', transition: 'color 0.2s', flex: 1, minWidth: 0 }}>{task.label}</div>
-            {task.fema && <span style={{ fontSize: 9.5, fontWeight: 700, background: '#B91C1C', color: '#fff', padding: '1px 6px', borderRadius: 4, whiteSpace: 'nowrap', flexShrink: 0 }}>FEMA</span>}
+            <div style={{ fontSize: 13, fontWeight: 600, color: state === 'completing' ? '#166534' : '#111827', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', textDecoration: state === 'completing' ? 'line-through' : 'none', transition: 'color 0.2s', flex: 1, minWidth: 0 }}>{task.label}</div>
+            {task.fema && <span style={{ fontSize: 10, fontWeight: 700, background: '#B91C1C', color: '#fff', padding: '1px 6px', borderRadius: 4, whiteSpace: 'nowrap', flexShrink: 0 }}>FEMA</span>}
           </div>
-          <div style={{ fontSize: 10.5, color: '#9CA3AF', marginTop: 2, lineHeight: 1.4 }}>{task.context}</div>
+          <div style={{ fontSize: 11, color: '#9CA3AF', marginTop: 2, lineHeight: 1.4 }}>{task.context}</div>
           <div style={{ fontSize: 11, color: task.daysLeft === 0 ? '#EF4444' : '#9CA3AF', fontWeight: task.daysLeft === 0 ? 700 : 400, marginTop: 4 }}>{task.borrower.split(' ').slice(-1)} · {task.dueLabel}</div>
         </div>
         {/* Animated checkbox */}
@@ -1008,7 +1043,7 @@ function CompanyFeedWidget({ feed }) {
               <span style={{ fontSize: 13, fontWeight: 700, color: '#111827' }}>{item.title}</span>
               <span style={{ fontSize: 10, fontWeight: 700, color: item.tagColor, background: item.tagColor + '18', padding: '1px 6px', borderRadius: 3, flexShrink: 0 }}>{item.tag}</span>
             </div>
-            <p style={{ margin: 0, fontSize: 12.5, color: '#4B5563', lineHeight: 1.5 }}>{item.body}</p>
+            <p style={{ margin: 0, fontSize: 13, color: '#4B5563', lineHeight: 1.5 }}>{item.body}</p>
             <div style={{ fontSize: 11, color: '#9CA3AF', marginTop: 5 }}>
               {item.time}
               {item.link && <a href={item.link} target="_blank" rel="noopener noreferrer" style={{ fontSize: 11, fontWeight: 600, color: '#7E68FA', textDecoration: 'none', marginLeft: 10 }}>Read →</a>}
@@ -1028,9 +1063,9 @@ function AIActionsWidget({ actions, onOpen, onDismiss }) {
     <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
       {actions.map(a => (
         <div key={a.id} style={{ display: 'flex', alignItems: 'center', gap: 9, padding: '9px 11px', background: '#FAF8FF', border: '1px solid #EDE9FE', borderRadius: 9 }}>
-          <div style={{ width: 26, height: 26, borderRadius: 7, background: a.color, color: '#fff', fontSize: 9, fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>{a.initials}</div>
+          <div style={{ width: 26, height: 26, borderRadius: 7, background: a.color, color: '#fff', fontSize: 11, fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>{a.initials}</div>
           <div style={{ flex: 1, minWidth: 0 }}>
-            <div style={{ fontSize: 12.5, fontWeight: 500, color: '#374151', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{a.label}</div>
+            <div style={{ fontSize: 13, fontWeight: 500, color: '#374151', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{a.label}</div>
             <div style={{ fontSize: 11, color: '#A78BFA', marginTop: 1 }}>{a.conf}% confidence</div>
           </div>
           <button onClick={() => onOpen(a.loanId, a.tab)} style={{ fontSize: 11, fontWeight: 700, color: '#fff', background: '#7E68FA', border: 'none', borderRadius: 5, padding: '3px 9px', cursor: 'pointer', flexShrink: 0 }}>Go</button>
@@ -1121,7 +1156,7 @@ function ScorecardStrip() {
         <div style={{ fontSize: 14, fontWeight: 700, color: '#111827', letterSpacing: '-0.01em' }}>
           {SCORECARD.units.current} of {SCORECARD.units.total} units
         </div>
-        <div style={{ fontSize: 11.5, color: '#6B7280', marginTop: 1 }}>On pace for 13.8 · {SCORECARD.units.deltaLabel}</div>
+        <div style={{ fontSize: 12, color: '#6B7280', marginTop: 1 }}>On pace for 13.8 · {SCORECARD.units.deltaLabel}</div>
       </div>
       <div style={{ flex: 1 }}/>
       <div style={{ display: 'flex', gap: 24, flexShrink: 0 }}>
@@ -1232,7 +1267,7 @@ export function HomeView({ onNavigate, onOpenLoan }) {
                 height: 38, padding: '0 20px',
                 background: '#fff', color: '#1e1b4b',
                 border: 'none', borderRadius: 9, cursor: 'pointer', fontFamily: 'inherit',
-                fontSize: 13.5, fontWeight: 700, letterSpacing: '-0.01em',
+                fontSize: 14, fontWeight: 700, letterSpacing: '-0.01em',
                 boxShadow: '0 2px 12px rgba(0,0,0,0.3)',
               }}>
                 Open my pipeline <Icon name="arrowRight" size={13} strokeWidth={2.5}/>
@@ -1242,7 +1277,7 @@ export function HomeView({ onNavigate, onOpenLoan }) {
                 height: 38, padding: '0 18px',
                 background: 'rgba(255,255,255,0.08)', color: 'rgba(255,255,255,0.85)',
                 border: '1px solid rgba(255,255,255,0.18)', borderRadius: 9, cursor: 'pointer', fontFamily: 'inherit',
-                fontSize: 13.5, fontWeight: 600,
+                fontSize: 14, fontWeight: 600,
               }}>
                 <Icon name="plus" size={14} strokeWidth={2.4}/>
                 Start application
@@ -1250,12 +1285,15 @@ export function HomeView({ onNavigate, onOpenLoan }) {
             </div>
           </div>
 
-          {/* Right — 2x2 KPI tile grid */}
+          {/* Right — 2x2 KPI tile grid with severity tone differentiation */}
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, alignSelf: 'center' }}>
-            {HERO_TILES.map((t, i) => (
+            {HERO_TILES.map((t, i) => {
+              const sev = SEVERITY[t.severity] || SEVERITY.routine;
+              return (
               <button key={i} onClick={() => onNavigate('pipeline', t.intent)} style={{
-                background: 'rgba(255,255,255,0.06)',
-                border: '1px solid rgba(255,255,255,0.12)',
+                position: 'relative',
+                background: sev.bg,
+                border: `1px solid ${sev.border}`,
                 borderRadius: 12,
                 padding: '14px 16px 12px',
                 color: '#fff',
@@ -1263,27 +1301,45 @@ export function HomeView({ onNavigate, onOpenLoan }) {
                 cursor: 'pointer',
                 fontFamily: 'inherit',
                 textAlign: 'left',
-                transition: 'background 0.15s, border-color 0.15s',
+                transition: 'background 0.15s, border-color 0.15s, transform 0.08s',
                 minWidth: 0,
               }}
-              onMouseEnter={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.10)'; e.currentTarget.style.borderColor = 'rgba(255,255,255,0.22)'; }}
-              onMouseLeave={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.06)'; e.currentTarget.style.borderColor = 'rgba(255,255,255,0.12)'; }}
+              onMouseEnter={e => { e.currentTarget.style.background = sev.bgHover; e.currentTarget.style.borderColor = sev.borderHover; }}
+              onMouseLeave={e => { e.currentTarget.style.background = sev.bg;      e.currentTarget.style.borderColor = sev.border; }}
               >
+                {t.severity === 'critical' && (
+                  <span title="Critical — needs attention now" style={{
+                    position: 'absolute', top: 10, right: 10,
+                    width: 8, height: 8, borderRadius: 999,
+                    background: '#FF4D4F',
+                    boxShadow: '0 0 0 3px rgba(255, 77, 79, 0.30)',
+                    animation: 'sevPulse 1.6s ease-in-out infinite',
+                  }}/>
+                )}
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 8 }}>
                   <div style={{
                     width: 26, height: 26, borderRadius: 7,
-                    background: 'rgba(255,255,255,0.10)',
+                    background: sev.iconBg,
                     display: 'flex', alignItems: 'center', justifyContent: 'center',
-                    color: 'rgba(255,255,255,0.85)',
+                    color: sev.iconColor,
                   }}>
                     <Icon name={t.icon} size={13} strokeWidth={1.85}/>
                   </div>
-                  <span style={{ color: 'rgba(255,255,255,0.4)', fontSize: 13, lineHeight: 1 }}>↗</span>
+                  {t.severity !== 'critical' && (
+                    <span style={{ color: 'rgba(255,255,255,0.4)', fontSize: 13, lineHeight: 1 }}>↗</span>
+                  )}
                 </div>
                 <div style={{ fontSize: 26, fontWeight: 800, letterSpacing: '-0.02em', lineHeight: 1, fontFamily: 'DM Mono' }}>{t.value}</div>
                 <div style={{ fontSize: 12, fontWeight: 600, color: 'rgba(255,255,255,0.92)', marginTop: 6 }}>{t.label}</div>
-                <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.5)', marginTop: 2 }}>{t.sub}</div>
-              </button>
+                <div style={{ fontSize: 11, color: sev.subColor, marginTop: 2 }}>{t.sub}</div>
+              </button>);
+            })}
+            <style>{`
+              @keyframes sevPulse {
+                0%, 100% { opacity: 1; transform: scale(1); }
+                50%      { opacity: 0.55; transform: scale(1.15); }
+              }
+            `}</style>
             ))}
           </div>
         </div>
@@ -1294,8 +1350,6 @@ export function HomeView({ onNavigate, onOpenLoan }) {
 
         {/* ── Center ── */}
         <div style={{ flex: 1, overflowY: 'auto', padding: '24px 28px 48px', minWidth: 0 }}>
-          <ScorecardStrip/>
-
           {/* 01 · Today's priorities — operational triage */}
           <SectionHeader
             number={1}
@@ -1322,13 +1376,15 @@ export function HomeView({ onNavigate, onOpenLoan }) {
             return null;
           }}/>
 
-          {/* 02 · Performance — branch leaderboard */}
+          {/* 02 · Performance — personal scorecard + branch leaderboard */}
           <SectionHeader
             number={2}
             eyebrow="Performance"
             title="Where you stand"
-            sublede="Branch rankings by funded volume, units, and speed."
+            sublede="Your monthly progress and how you compare across the branch."
           />
+          <ScorecardStrip/>
+          <div style={{ height: 14 }}/>
           <Leaderboard/>
 
           {/* 03 · From your team — culture / company feed */}
@@ -1380,7 +1436,7 @@ export function HomeView({ onNavigate, onOpenLoan }) {
               <div style={{ padding: '18px 0', textAlign: 'center' }}>
                 <div style={{ fontSize: 28, marginBottom: 8 }}>🎉</div>
                 <div style={{ fontSize: 14, fontWeight: 700, color: '#111827' }}>Pipeline's moving.</div>
-                <div style={{ fontSize: 12.5, color: '#9CA3AF', marginTop: 4 }}>All tasks done for today.</div>
+                <div style={{ fontSize: 13, color: '#9CA3AF', marginTop: 4 }}>All tasks done for today.</div>
               </div>
             ) : (
               visibleTasks.map(t => (
@@ -1403,13 +1459,13 @@ export function HomeView({ onNavigate, onOpenLoan }) {
                 <Icon name="sparkle" size={11} color="#7E68FA" strokeWidth={1.6}/>
                 <span style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase', color: '#9CA3AF' }}>AI Ready</span>
               </div>
-              <button onClick={() => onNavigate('feed')} style={{ fontSize: 11.5, color: '#7E68FA', background: 'none', border: 'none', cursor: 'pointer', fontFamily: 'inherit', fontWeight: 700 }}>All →</button>
+              <button onClick={() => onNavigate('feed')} style={{ fontSize: 12, color: '#7E68FA', background: 'none', border: 'none', cursor: 'pointer', fontFamily: 'inherit', fontWeight: 700 }}>All →</button>
             </div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 5 }}>
               {visibleAI.map(a => (
                 <div key={a.id} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 10px', background: '#FAF8FF', border: '1px solid #EDE9FE', borderRadius: 8 }}>
-                  <div style={{ width: 22, height: 22, borderRadius: 6, background: a.color, color: '#fff', fontSize: 8.5, fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>{a.initials}</div>
-                  <div style={{ flex: 1, minWidth: 0, fontSize: 11.5, fontWeight: 500, color: '#374151', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{a.label}</div>
+                  <div style={{ width: 22, height: 22, borderRadius: 6, background: a.color, color: '#fff', fontSize: 10, fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>{a.initials}</div>
+                  <div style={{ flex: 1, minWidth: 0, fontSize: 12, fontWeight: 500, color: '#374151', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{a.label}</div>
                   <button onClick={() => onOpenLoan(a.loanId, a.tab)} style={{ fontSize: 11, fontWeight: 700, color: '#fff', background: '#7E68FA', border: 'none', borderRadius: 5, padding: '3px 8px', cursor: 'pointer', flexShrink: 0 }}>Go</button>
                   <button onClick={() => setDoneAI(prev => new Set([...prev, a.id]))} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#C4B5FD', padding: 0, flexShrink: 0, display: 'flex' }}><Icon name="x" size={11}/></button>
                 </div>
@@ -1432,7 +1488,7 @@ export function HomeView({ onNavigate, onOpenLoan }) {
                 onMouseEnter={e => e.currentTarget.style.opacity = '0.7'}
                 onMouseLeave={e => e.currentTarget.style.opacity = '1'}
                 >
-                  <div style={{ width: 26, height: 26, borderRadius: 6, background: item.color, color: '#fff', fontSize: 9, fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, marginTop: 1 }}>{item.initials}</div>
+                  <div style={{ width: 26, height: 26, borderRadius: 6, background: item.color, color: '#fff', fontSize: 11, fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, marginTop: 1 }}>{item.initials}</div>
                   <div style={{ flex: 1 }}>
                     <div style={{ fontSize: 12, fontWeight: item.actionable ? 600 : 400, color: '#374151', lineHeight: 1.4 }}>{item.text}</div>
                     <div style={{ fontSize: 11, color: '#9CA3AF', marginTop: 1 }}>{item.time}</div>
