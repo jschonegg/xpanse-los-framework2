@@ -4,6 +4,7 @@ import { Icon } from '../components/Icon';
 import { WidgetGrid, PipelineSnapshotWidget, ClosingCountdownWidget, RateWatchWidget, ConditionsTrackerWidget, QuickActionsWidget, RecentActivityWidget,
          FilesAtRiskWidget, ReadyForUWWidget, LockClockWidget, WaitingOnBorrowerWidget } from './WidgetGrid';
 import { AIInsightsBanner } from './Pipeline';
+import { LoanHealthMonitorWidget } from './LoanHealthMonitor';
 import { LOANS } from '../data/loans';
 
 // ─── Data ─────────────────────────────────────────────────────────────────────
@@ -1193,11 +1194,11 @@ export function HomeView({ onNavigate, onOpenLoan }) {
     <>
     <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden', background: '#0F1117' }}>
 
-      {/* ── Hero ── */}
+      {/* ── Hero ── (compact: same info, less vertical space) */}
       <div style={{
         background: 'linear-gradient(135deg, #1a1535 0%, #1e1b4b 40%, #1a1d3a 100%)',
         borderBottom: '1px solid rgba(255,255,255,0.07)',
-        padding: '20px 36px 32px',
+        padding: '14px 32px 20px',
         flexShrink: 0,
         position: 'relative',
         overflow: 'hidden',
@@ -1206,23 +1207,23 @@ export function HomeView({ onNavigate, onOpenLoan }) {
         <div style={{ position: 'absolute', top: -60, right: 200, width: 340, height: 340, borderRadius: 999, background: 'radial-gradient(circle, rgba(126,104,250,0.15) 0%, transparent 70%)', pointerEvents: 'none' }}/>
 
         {/* Top utility row — brand left, branch + weather right */}
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 16, marginBottom: 24, position: 'relative' }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 16, marginBottom: 14, position: 'relative' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
             <div style={{
-              width: 32, height: 32, borderRadius: 8,
+              width: 28, height: 28, borderRadius: 7,
               background: '#fff', color: '#1e1b4b',
               display: 'flex', alignItems: 'center', justifyContent: 'center',
-              fontSize: 15, fontWeight: 800, letterSpacing: '-0.02em',
+              fontSize: 14, fontWeight: 800, letterSpacing: '-0.02em',
               flexShrink: 0,
             }}>{LENDER.mark}</div>
             <div style={{ lineHeight: 1.2 }}>
-              <div style={{ fontSize: 14, fontWeight: 700, color: '#fff', letterSpacing: '-0.01em' }}>{LENDER.name}</div>
-              <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.45)' }}>{LENDER.tagline}</div>
+              <div style={{ fontSize: 13, fontWeight: 700, color: '#fff', letterSpacing: '-0.01em' }}>{LENDER.name}</div>
+              <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.45)' }}>{LENDER.tagline}</div>
             </div>
           </div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 18, fontSize: 13, color: 'rgba(255,255,255,0.55)' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 16, fontSize: 12, color: 'rgba(255,255,255,0.55)' }}>
             <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
-              <Icon name="pin" size={13} strokeWidth={1.7}/>
+              <Icon name="pin" size={12} strokeWidth={1.7}/>
               <span style={{ color: 'rgba(255,255,255,0.85)' }}>{BRANCH.name}</span>
             </span>
             <span style={{ width: 3, height: 3, borderRadius: 999, background: 'rgba(255,255,255,0.25)' }}/>
@@ -1235,51 +1236,49 @@ export function HomeView({ onNavigate, onOpenLoan }) {
         </div>
 
         {/* Main row — greeting block left, 2x2 KPI grid right */}
-        <div style={{ display: 'grid', gridTemplateColumns: '1.15fr 1fr', gap: 36, alignItems: 'center', position: 'relative' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: '1.15fr 1fr', gap: 28, alignItems: 'center', position: 'relative' }}>
 
           {/* Left — greeting block */}
           <div style={{ minWidth: 0 }}>
-            {/* Date pill */}
+            {/* Date + greeting + subcopy as a tight block */}
             <div style={{
-              display: 'inline-flex', alignItems: 'center', gap: 8,
-              fontSize: 12, fontWeight: 600, letterSpacing: '0.14em',
+              display: 'inline-flex', alignItems: 'center', gap: 7,
+              fontSize: 11, fontWeight: 600, letterSpacing: '0.14em',
               color: 'rgba(255,255,255,0.5)',
-              marginBottom: 16,
+              marginBottom: 8,
             }}>
-              <span style={{ width: 6, height: 6, borderRadius: 999, background: 'rgba(255,255,255,0.5)' }}/>
+              <span style={{ width: 5, height: 5, borderRadius: 999, background: 'rgba(255,255,255,0.5)' }}/>
               {new Date().toLocaleDateString(undefined, { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' }).toUpperCase()}
             </div>
 
-            {/* Greeting */}
-            <h1 style={{ margin: '0 0 12px', fontSize: 38, fontWeight: 800, letterSpacing: '-0.03em', color: '#fff', lineHeight: 1.1 }}>
+            <h1 style={{ margin: '0 0 6px', fontSize: 30, fontWeight: 800, letterSpacing: '-0.025em', color: '#fff', lineHeight: 1.1 }}>
               {greeting()}, Jordan.
             </h1>
 
-            {/* Subcopy */}
-            <p style={{ margin: '0 0 22px', fontSize: 14, color: 'rgba(255,255,255,0.6)', lineHeight: 1.6, maxWidth: 480 }}>
+            <p style={{ margin: '0 0 14px', fontSize: 13, color: 'rgba(255,255,255,0.6)', lineHeight: 1.5, maxWidth: 480 }}>
               Glad to see you back. Pick up where you left off, or jump straight into your pipeline.
             </p>
 
             {/* CTAs */}
-            <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
               <button onClick={() => onNavigate('pipeline')} style={{
-                display: 'flex', alignItems: 'center', gap: 8,
-                height: 38, padding: '0 20px',
+                display: 'flex', alignItems: 'center', gap: 7,
+                height: 34, padding: '0 16px',
                 background: '#fff', color: '#1e1b4b',
-                border: 'none', borderRadius: 9, cursor: 'pointer', fontFamily: 'inherit',
-                fontSize: 14, fontWeight: 700, letterSpacing: '-0.01em',
+                border: 'none', borderRadius: 8, cursor: 'pointer', fontFamily: 'inherit',
+                fontSize: 13, fontWeight: 700, letterSpacing: '-0.01em',
                 boxShadow: '0 2px 12px rgba(0,0,0,0.3)',
               }}>
-                Open my pipeline <Icon name="arrowRight" size={13} strokeWidth={2.5}/>
+                Open my pipeline <Icon name="arrowRight" size={12} strokeWidth={2.5}/>
               </button>
               <button onClick={() => onNavigate('pipeline')} style={{
-                display: 'flex', alignItems: 'center', gap: 8,
-                height: 38, padding: '0 18px',
+                display: 'flex', alignItems: 'center', gap: 7,
+                height: 34, padding: '0 14px',
                 background: 'rgba(255,255,255,0.08)', color: 'rgba(255,255,255,0.85)',
-                border: '1px solid rgba(255,255,255,0.18)', borderRadius: 9, cursor: 'pointer', fontFamily: 'inherit',
-                fontSize: 14, fontWeight: 600,
+                border: '1px solid rgba(255,255,255,0.18)', borderRadius: 8, cursor: 'pointer', fontFamily: 'inherit',
+                fontSize: 13, fontWeight: 600,
               }}>
-                <Icon name="plus" size={14} strokeWidth={2.4}/>
+                <Icon name="plus" size={13} strokeWidth={2.4}/>
                 Start application
               </button>
             </div>
@@ -1294,8 +1293,8 @@ export function HomeView({ onNavigate, onOpenLoan }) {
                 position: 'relative',
                 background: sev.bg,
                 border: `1px solid ${sev.border}`,
-                borderRadius: 12,
-                padding: '14px 16px 12px',
+                borderRadius: 10,
+                padding: '10px 12px 9px',
                 color: '#fff',
                 display: 'flex', flexDirection: 'column',
                 cursor: 'pointer',
@@ -1309,29 +1308,29 @@ export function HomeView({ onNavigate, onOpenLoan }) {
               >
                 {t.severity === 'critical' && (
                   <span title="Critical — needs attention now" style={{
-                    position: 'absolute', top: 10, right: 10,
-                    width: 8, height: 8, borderRadius: 999,
+                    position: 'absolute', top: 8, right: 8,
+                    width: 7, height: 7, borderRadius: 999,
                     background: '#FF4D4F',
                     boxShadow: '0 0 0 3px rgba(255, 77, 79, 0.30)',
                     animation: 'sevPulse 1.6s ease-in-out infinite',
                   }}/>
                 )}
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 8 }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 4 }}>
                   <div style={{
-                    width: 26, height: 26, borderRadius: 7,
+                    width: 22, height: 22, borderRadius: 6,
                     background: sev.iconBg,
                     display: 'flex', alignItems: 'center', justifyContent: 'center',
                     color: sev.iconColor,
                   }}>
-                    <Icon name={t.icon} size={13} strokeWidth={1.85}/>
+                    <Icon name={t.icon} size={12} strokeWidth={1.85}/>
                   </div>
                   {t.severity !== 'critical' && (
-                    <span style={{ color: 'rgba(255,255,255,0.4)', fontSize: 13, lineHeight: 1 }}>↗</span>
+                    <span style={{ color: 'rgba(255,255,255,0.4)', fontSize: 12, lineHeight: 1 }}>↗</span>
                   )}
                 </div>
-                <div style={{ fontSize: 26, fontWeight: 800, letterSpacing: '-0.02em', lineHeight: 1, fontFamily: 'DM Mono' }}>{t.value}</div>
-                <div style={{ fontSize: 12, fontWeight: 600, color: 'rgba(255,255,255,0.92)', marginTop: 6 }}>{t.label}</div>
-                <div style={{ fontSize: 11, color: sev.subColor, marginTop: 2 }}>{t.sub}</div>
+                <div style={{ fontSize: 22, fontWeight: 800, letterSpacing: '-0.02em', lineHeight: 1, fontFamily: 'DM Mono' }}>{t.value}</div>
+                <div style={{ fontSize: 11, fontWeight: 600, color: 'rgba(255,255,255,0.92)', marginTop: 4 }}>{t.label}</div>
+                <div style={{ fontSize: 10, color: sev.subColor, marginTop: 1 }}>{t.sub}</div>
               </button>);
             })}
             <style>{`
@@ -1368,6 +1367,7 @@ export function HomeView({ onNavigate, onOpenLoan }) {
             if (id === 'recent-activity')   return <RecentActivityWidget/>;
             // Ported from old prototype
             if (id === 'ai-coach-brief')      return <AIInsightsBanner      loans={LOANS} onOpenLoan={onOpenLoan}/>;
+            if (id === 'loan-health-monitor') return <LoanHealthMonitorWidget onOpenLoan={onOpenLoan}/>;
             if (id === 'files-at-risk')       return <FilesAtRiskWidget       onOpenLoan={onOpenLoan}/>;
             if (id === 'ready-for-uw')        return <ReadyForUWWidget        onOpenLoan={onOpenLoan}/>;
             if (id === 'lock-clock')          return <LockClockWidget         onOpenLoan={onOpenLoan}/>;

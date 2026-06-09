@@ -25,16 +25,16 @@ import { Icon } from '../components/Icon';
 // Leaderboard + Company Feed pulled out of the grid into their own
 // numbered sections (02 · Performance, 03 · From your team) — they're
 // still in the catalog if a user re-adds them.
-const STORAGE_KEY = 'los-widget-layout-v7';
+const STORAGE_KEY = 'los-widget-layout-v8';
 
 const DEFAULT_LAYOUT = [
-  { id: 'ai-coach-brief',      width: 'full' },
-  // Files at Risk leads — it's the most cognitively expensive triage and
-  // deserves the most visual weight on the page.
-  { id: 'files-at-risk',       width: 'full' },
-  { id: 'lock-clock',          width: 'half' },
-  { id: 'waiting-on-borrower', width: 'half' },
-  { id: 'ready-for-uw',        width: 'full' },
+  { id: 'ai-coach-brief',       width: 'full' },
+  // Loan Health Monitor is the anchor — full multi-loan triage with
+  // stage / completeness / risks / AI / next-action all on one row.
+  { id: 'loan-health-monitor',  width: 'full' },
+  { id: 'lock-clock',           width: 'half' },
+  { id: 'waiting-on-borrower',  width: 'half' },
+  { id: 'ready-for-uw',         width: 'full' },
 ];
 
 function loadLayout() {
@@ -527,6 +527,17 @@ export const WIDGET_REGISTRY = [
     color: '#374151',
     defaultWidth: 'half',
     category: 'Tools',
+  },
+  // ── New: comprehensive multi-loan triage widget ────────────────────────
+  {
+    id: 'loan-health-monitor',
+    label: 'Loan Health Monitor',
+    desc: 'At-a-glance view of every file: stage, completeness, risks, AI signal, and next action.',
+    icon: 'pipeline',
+    color: '#5B21B6',
+    defaultWidth: 'full',
+    category: 'Pipeline',
+    chromeless: true, // widget renders its own header + card
   },
   // ── Ported from old prototype ──────────────────────────────────────────
   {
