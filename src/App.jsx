@@ -1,5 +1,6 @@
 import React from 'react';
 import { StatusBar, AIFab, LeftNav } from './components/Shell';
+import { LoginView } from './views/Login';
 import { ProcessorHomeView } from './views/ProcessorHome';
 import { LOANS } from './data/loans';
 import { AIAssistantPanel } from './components/AIAssistant';
@@ -12,7 +13,6 @@ import { LoanEstimateView } from './views/LoanEstimateView';
 import { AIFeedView } from './views/AIFeed';
 import { LargeDepositReviewView } from './views/LargeDepositReview';
 import { PreferencesModal } from './components/PreferencesModal';
-import { LoginScreen } from './components/LoginScreen';
 
 // ── Standalone URLA window (opened via window.open) ──────────────────────────
 function StandaloneURLA() {
@@ -68,16 +68,13 @@ export default function App() {
   if (window.location.search.includes('view=urla')) return <StandaloneURLA/>;
   if (window.location.search.includes('view=le'))   return <StandaloneLoanEstimate/>;
 
-  // All hooks must be declared before any conditional return below — moving
-  // the !loggedIn return after the hooks keeps render-to-render hook order
-  // stable (React's Rules of Hooks).
-  const [loggedIn, setLoggedIn] = React.useState(() => sessionStorage.getItem('xpanse-auth') === '1');
-  const handleLogin = () => {
-    sessionStorage.setItem('xpanse-auth', '1');
-    localStorage.setItem('los-route', 'home');
-    setLoggedIn(true);
-  };
+  // Auth gate — login is shown until the user authenticates (or until they've
+  // authenticated once on this device). Pass ?login to force-show login again.
+  const forceLogin = window.location.search.includes('login');
+  const [authed, setAuthed] = React.useState(() => !forceLogin && localStorage.getItem('los-authed') === '1');
 
+  // All remaining hooks are declared above the auth early-return so the
+  // hook order stays stable across renders (Rules of Hooks).
   const [route, setRoute] = React.useState(() => localStorage.getItem('los-route') || 'home');
   const [currentLoan, setCurrentLoan] = React.useState(() => localStorage.getItem('los-loan') || 'LN-2024-0234');
   const [loanTab, setLoanTab] = React.useState(() => localStorage.getItem('los-loan-tab') || 'now');
@@ -89,15 +86,12 @@ export default function App() {
   const [aiOverride, setAiOverride] = React.useState(null);
   const [cmdOpen, setCmdOpen] = React.useState(false);
   const [prefsOpen, setPrefsOpen] = React.useState(false);
-
-  if (!loggedIn) return <LoginScreen onLogin={handleLogin}/>;
-
   const [pipelineIntent, setPipelineIntent] = React.useState(null);
 
-  // Global keyboard shortcuts — declared here so all hooks fire before the
-  // login early-return below (Rules of Hooks).
+  // Global keyboard shortcuts — guarded so it's effectively a no-op until
+  // the user is authenticated, but still registered on every render.
   React.useEffect(() => {
-    if (!loggedIn) return;
+    if (!authed) return;
     const handler = (e) => {
       if (!e.metaKey && !e.ctrlKey) return;
       if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
@@ -108,9 +102,16 @@ export default function App() {
     };
     window.addEventListener('keydown', handler);
     return () => window.removeEventListener('keydown', handler);
-  }, [cmdOpen, loggedIn]);
+  }, [cmdOpen, authed]);
 
-  if (!loggedIn) return <LoginScreen onLogin={handleLogin}/>;
+  // If unauthenticated, render the smart Login screen instead of the shell.
+  if (!authed) {
+    return <LoginView onAuthenticated={() => {
+      localStorage.setItem('los-authed', '1');
+      if (forceLogin) window.history.replaceState({}, '', window.location.pathname);
+      setAuthed(true);
+    }}/>;
+  }
 
   const navigate = (r, intent) => {
     setRoute(r); localStorage.setItem('los-route', r);
