@@ -359,19 +359,16 @@ export function AIInsightsBanner({ loans, onOpenLoan }) {
         @keyframes aiSlideInLeft  { from { opacity: 0; transform: translateX(-8px); } to { opacity: 1; transform: translateX(0); } }
       `}</style>
 
-      {/* ── Section 1: AI insights label (tinted background) ── */}
+      {/* ── Section 1: AI insights label (tinted, compact) ── */}
       <div style={{
-        display: 'flex', alignItems: 'center', gap: 9,
-        padding: '10px 14px',
+        display: 'flex', alignItems: 'center', gap: 7,
+        padding: '8px 12px',
         background: 'rgba(110, 89, 232, 0.07)',
         borderRight: '1px solid var(--ai-border, #E4DEFA)',
         flexShrink: 0,
       }}>
-        <Icon name="sparkle" size={15} color="var(--ai-primary, #6E59E8)"/>
-        <div style={{ display: 'flex', flexDirection: 'column', lineHeight: 1.2 }}>
-          <span style={{ fontSize: 12.5, fontWeight: 600, color: 'var(--ai-ink, #3F2FBF)' }}>AI insights</span>
-          <span style={{ fontSize: 10.5, color: 'var(--text-tertiary)' }}>Updated just now</span>
-        </div>
+        <Icon name="sparkle" size={13} color="var(--ai-primary, #6E59E8)"/>
+        <span style={{ fontSize: 12, fontWeight: 600, color: 'var(--ai-ink, #3F2FBF)' }}>AI insights</span>
       </div>
 
       {/* ── Section 2: insight content (animated on flip) ── */}
@@ -379,7 +376,7 @@ export function AIInsightsBanner({ loans, onOpenLoan }) {
         key={`${idx}-${l.id}`}
         style={{
           display: 'flex', alignItems: 'center', gap: 10,
-          padding: '10px 14px',
+          padding: '8px 14px',
           flex: 1, minWidth: 0,
           animation: slideKeyframes ? `${slideKeyframes} 0.22s ease-out` : undefined,
         }}
@@ -400,7 +397,7 @@ export function AIInsightsBanner({ loans, onOpenLoan }) {
       {/* ── Section 3: CTA ── */}
       <div style={{
         display: 'flex', alignItems: 'center',
-        padding: '10px 12px',
+        padding: '6px 10px',
         flexShrink: 0,
       }}>
         <button
@@ -423,7 +420,7 @@ export function AIInsightsBanner({ loans, onOpenLoan }) {
       {/* ── Section 4: carousel controls ── */}
       <div style={{
         display: 'flex', alignItems: 'center', gap: 4,
-        padding: '10px 10px',
+        padding: '8px 8px',
         flexShrink: 0,
       }}>
         <CarouselBtn onClick={goPrev} disabled={items.length <= 1} dir="prev" aria-label="Previous insight"/>
@@ -436,7 +433,7 @@ export function AIInsightsBanner({ loans, onOpenLoan }) {
       {/* ── Section 5: dismiss ── */}
       <div style={{
         display: 'flex', alignItems: 'center',
-        padding: '10px 12px 10px 6px',
+        padding: '8px 10px 8px 4px',
         flexShrink: 0,
       }}>
         <button
