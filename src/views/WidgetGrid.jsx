@@ -7,16 +7,20 @@ import { Icon } from '../components/Icon';
 
 // Bump the storage key when DEFAULT_LAYOUT changes meaningfully so existing
 // users see the new default the next time they load the home.
-const STORAGE_KEY = 'los-widget-layout-v6';
+// v7: Files at Risk promoted to full-width as the priority anchor.
+// Leaderboard + Company Feed pulled out of the grid into their own
+// numbered sections (02 · Performance, 03 · From your team) — they're
+// still in the catalog if a user re-adds them.
+const STORAGE_KEY = 'los-widget-layout-v7';
 
 const DEFAULT_LAYOUT = [
   { id: 'ai-coach-brief',      width: 'full' },
-  { id: 'files-at-risk',       width: 'half' },
-  { id: 'ready-for-uw',        width: 'half' },
+  // Files at Risk leads — it's the most cognitively expensive triage and
+  // deserves the most visual weight on the page.
+  { id: 'files-at-risk',       width: 'full' },
   { id: 'lock-clock',          width: 'half' },
   { id: 'waiting-on-borrower', width: 'half' },
-  { id: 'leaderboard',         width: 'full' },
-  { id: 'company-feed',        width: 'full' },
+  { id: 'ready-for-uw',        width: 'full' },
 ];
 
 function loadLayout() {
