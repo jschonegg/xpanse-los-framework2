@@ -17,6 +17,7 @@ function ServicesTab() {
   );
 }
 import { LoanEstimateView } from './LoanEstimateView';
+import { URLA1003View, URLA1003_SECTIONS } from './URLA1003View';
 import { CommsTab, LOAN_CONTACTS } from './CommsTab';
 import { NowTabApplication } from './NowTabApplication';
 import { NowTabProcessing } from './NowTabProcessing';
@@ -617,12 +618,18 @@ function LeftRail({ tab, onTab, onOpenURLA, dataSubTab, onDataSubTab, onOpenDocs
   const items = [
     { id: 'now',   label: 'Tasks',      icon: 'target' },
     { id: 'story', label: 'Loan Story', icon: 'book' },
-    { id: 'data',  label: 'Documents',  icon: 'database' },
+    // Hidden for now — old Documents tab (kept here in case we want to bring it back)
+    // { id: 'data',  label: 'Documents',  icon: 'database' },
+    { divider: true, label: 'Forms' },
+    { id: 'borrowerSummary', label: 'Borrower Summary', icon: 'doc' },
+    { id: 'urla1003',        label: '1003',              icon: 'doc', subItems: URLA1003_SECTIONS },
     { divider: true, label: 'Workspaces' },
     { id: 'filereview', label: 'File Review',   icon: 'listCheck' },
     { id: 'conditions', label: 'Conditions', icon: 'listCheck', badge: 4 },
     { id: 'aus',     label: 'AUS',          icon: 'zap' },
+    { id: 'credit',  label: 'Credit & Liabilities', icon: 'database' },
     { id: 'pricing', label: 'Pricing & Lock',icon: 'dollar' },
+    { id: 'documents', label: 'Documents',   icon: 'doc' },
     { id: 'closing', label: 'Closing',       icon: 'calculator' },
     { id: 'audit',   label: 'Audit',         icon: 'fileSearch' },
     { id: 'services', label: 'Services',     icon: 'settings' },
@@ -668,6 +675,29 @@ function LeftRail({ tab, onTab, onOpenURLA, dataSubTab, onDataSubTab, onOpenDocs
                   <span style={{ background: active ? '#D74C3C' : 'var(--card-red-bg)', color: active ? '#fff' : 'var(--status-red)', fontSize: 10.5, fontWeight: 600, minWidth: 17, height: 17, borderRadius: 999, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', padding: '0 5px' }}>{it.badge}</span>
                 )}
               </button>
+
+              {/* 1003 sub-nav — anchor links into each major section */}
+              {it.id === 'urla1003' && active && it.subItems && (
+                <div style={{ display: 'flex', flexDirection: 'column', paddingLeft: 22, marginTop: 4, gap: 1 }}>
+                  {it.subItems.map(sub => (
+                    <button key={sub.id} onClick={() => {
+                      const el = document.getElementById(sub.id);
+                      if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                    }} style={{
+                      display: 'flex', alignItems: 'center', height: 28,
+                      padding: '0 12px', border: 'none', background: 'transparent',
+                      cursor: 'pointer', fontFamily: 'inherit',
+                      fontSize: 12, fontWeight: 500, color: 'var(--text-secondary)',
+                      borderRadius: 6, textAlign: 'left',
+                    }}
+                      onMouseEnter={e => { e.currentTarget.style.background = 'var(--bg-muted)'; e.currentTarget.style.color = 'var(--text-primary)'; }}
+                      onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = 'var(--text-secondary)'; }}
+                    >
+                      {sub.label}
+                    </button>
+                  ))}
+                </div>
+              )}
 
               {/* Data subnav — grouped, collapsible, drag-and-drop within groups */}
               {it.id === 'data' && active && (
@@ -1545,53 +1575,49 @@ const PROGRESS_INSIGHTS = {
 // Typical days in each stage (industry baseline)
 const STAGE_AVG_DAYS = { Application: 3, Processing: 10, Underwriting: 12, Approval: 5, Closing: 7, Funded: 0 };
 
-// Sub-milestones each stage cycles through — used to drive the bar fill and
-// to populate the per-stage popover.
+// Sub-milestones each stage cycles through. These match the STEPS arrays
+// defined in each NowTab* view so the in-page task list and the popover
+// off the LoanStatusBar dot reference the same work items.
 const STAGE_SUB_MILESTONES = {
   Application: [
-    '1003 application started',
-    'Borrower identification captured',
-    'Credit pull authorized',
-    'Property details collected',
-    'Pre-qualification letter issued',
+    'URLA',
+    'Disclosures',
+    'Doc Collection',
+    'Credit',
+    'AUS',
+    'Appraisal',
+    'Title & Flood',
+    'Ready',
   ],
   Processing: [
-    'Initial disclosures (LE) sent',
-    'Borrower returned signed disclosures',
-    'Income documents collected',
-    'Asset statements collected',
-    'Employment verification ordered',
-    'Title order placed',
-    'Appraisal ordered',
-    'AUS submission complete',
+    'Appraisal',
+    'Title & Flood',
+    'VOE / VOI',
+    'AUS Submit',
+    'Stacking Order',
+    'Submit to UW',
   ],
   Underwriting: [
-    'Initial UW review started',
-    'Income calculation completed',
-    'Asset reserves verified',
-    'Credit eligibility confirmed',
-    'Property appraisal reviewed',
-    'DTI and LTV finalized',
-    'Compliance checks passed',
-    'Initial conditions issued',
-    'Borrower conditions cleared',
-    'UW decision rendered',
+    'AUS Review',
+    'Conditions',
+    'Income Calc',
+    'UW Decision',
+    'Cond. Approval',
   ],
   Approval: [
-    'Conditional approval issued',
-    'Prior-to-doc conditions cleared',
-    'Final document prep',
-    'Clear to close issued',
-    'CD generated',
+    'Review Approval',
+    'PTF Conditions',
+    'Final Docs',
+    'Clear to Close',
+    'Notify Parties',
   ],
   Closing: [
-    'CD sent to borrower',
-    'CD acknowledged (3-day countdown)',
-    'Wire instructions verified',
-    'Final settlement statement',
-    'Closing scheduled',
-    'Documents signed at closing',
-    'Closing package delivered',
+    'Send CD',
+    'Final VOE',
+    'Title Review',
+    'Wire Confirm',
+    'Schedule',
+    'Fund',
   ],
   Funded: [
     'Loan funded',
@@ -1760,6 +1786,7 @@ function LoanStatusBar({ meta, loan }) {
       padding: '9px 24px',
       whiteSpace: 'nowrap',
       position: 'relative',
+      zIndex: 50,
     }}>
       {/* Status + long progress bar with clickable stage dots */}
       <div style={{ flex: 1, display: 'flex', alignItems: 'center', gap: 12, minWidth: 0, position: 'relative', cursor: 'default' }}>
@@ -2665,10 +2692,14 @@ function LoanDetailView({ loanId, tab, onTab, persona = 'LO' }) {
            : localTab === 'filereview' ? <FileReviewTab borrowerName={meta?.borrower} loanId={loanId}/>
            : localTab === 'conditions' ? <ConditionsTab/>
            : localTab === 'aus' ? <AUSTab/>
+           : localTab === 'credit' ? <CreditLiabilitiesTab/>
            : localTab === 'pricing' ? <PricingLockTab/>
+           : localTab === 'documents' ? <DocumentsWorkspaceTab/>
            : localTab === 'closing' ? <ClosingTab/>
            : localTab === 'audit' ? <AuditTab/>
            : localTab === 'services' ? <ServicesTab/>
+           : localTab === 'borrowerSummary' ? <FormPlaceholder title="Borrower Summary" description="Auto-generated borrower summary forms will live here — print-ready, signature-routable, with field-by-field overrides." icon="doc"/>
+           : localTab === 'urla1003' ? <URLA1003View loanId={loanId}/>
            : isApplication ? <NowTabApplication borrowerName={meta.borrower} loanId={loanId} loan={loan} onOpenURLA={openURLA}/>
            : meta.status === 'Processing' ? <NowTabProcessing borrowerName={meta.borrower} loanId={loanId} loan={loan}/>
            : meta.status === 'Underwriting' ? <NowTabUnderwriting borrowerName={meta.borrower} loanId={loanId} loan={loan} fema={loan.fema || null}/>
@@ -2686,6 +2717,107 @@ function LoanDetailView({ loanId, tab, onTab, persona = 'LO' }) {
         </div>,
         document.body
       )}
+    </div>
+  );
+}
+
+// Generic empty-state placeholder used for Forms and other workspace stubs.
+function FormPlaceholder({ title, description, icon = 'doc' }) {
+  return (
+    <div style={{
+      flex: 1, display: 'flex', flexDirection: 'column',
+      alignItems: 'center', justifyContent: 'center',
+      textAlign: 'center', padding: '60px 24px',
+      color: 'var(--text-secondary)',
+    }}>
+      <div style={{
+        width: 56, height: 56, borderRadius: 14,
+        background: 'var(--bg-muted)',
+        display: 'flex', alignItems: 'center', justifyContent: 'center',
+        marginBottom: 16,
+      }}>
+        <Icon name={icon} size={26} color="var(--text-tertiary)" strokeWidth={1.6}/>
+      </div>
+      <h2 style={{
+        margin: 0, fontSize: 17, fontWeight: 600,
+        color: 'var(--text-primary)', letterSpacing: '-0.01em',
+      }}>
+        {title}
+      </h2>
+      <div style={{
+        fontSize: 13.5, color: 'var(--text-tertiary)',
+        marginTop: 6, maxWidth: 380, lineHeight: 1.5,
+      }}>
+        {description}
+      </div>
+    </div>
+  );
+}
+
+// Placeholder Credit & Liabilities workspace — empty state for now
+function CreditLiabilitiesTab() {
+  return (
+    <div style={{
+      flex: 1, display: 'flex', flexDirection: 'column',
+      alignItems: 'center', justifyContent: 'center',
+      textAlign: 'center', padding: '60px 24px',
+      color: 'var(--text-secondary)',
+    }}>
+      <div style={{
+        width: 56, height: 56, borderRadius: 14,
+        background: 'var(--bg-muted)',
+        display: 'flex', alignItems: 'center', justifyContent: 'center',
+        marginBottom: 16,
+      }}>
+        <Icon name="database" size={26} color="var(--text-tertiary)" strokeWidth={1.6}/>
+      </div>
+      <h2 style={{
+        margin: 0, fontSize: 17, fontWeight: 600,
+        color: 'var(--text-primary)', letterSpacing: '-0.01em',
+      }}>
+        Credit &amp; Liabilities
+      </h2>
+      <div style={{
+        fontSize: 13.5, color: 'var(--text-tertiary)',
+        marginTop: 6, maxWidth: 380, lineHeight: 1.5,
+      }}>
+        This workspace is empty. Credit report details, tradelines, dispute tracking,
+        and liability calculations will live here.
+      </div>
+    </div>
+  );
+}
+
+// Placeholder Documents workspace — empty state for now
+function DocumentsWorkspaceTab() {
+  return (
+    <div style={{
+      flex: 1, display: 'flex', flexDirection: 'column',
+      alignItems: 'center', justifyContent: 'center',
+      textAlign: 'center', padding: '60px 24px',
+      color: 'var(--text-secondary)',
+    }}>
+      <div style={{
+        width: 56, height: 56, borderRadius: 14,
+        background: 'var(--bg-muted)',
+        display: 'flex', alignItems: 'center', justifyContent: 'center',
+        marginBottom: 16,
+      }}>
+        <Icon name="doc" size={26} color="var(--text-tertiary)" strokeWidth={1.6}/>
+      </div>
+      <h2 style={{
+        margin: 0, fontSize: 17, fontWeight: 600,
+        color: 'var(--text-primary)', letterSpacing: '-0.01em',
+      }}>
+        Documents
+      </h2>
+      <div style={{
+        fontSize: 13.5, color: 'var(--text-tertiary)',
+        marginTop: 6, maxWidth: 360, lineHeight: 1.5,
+      }}>
+        This workspace is empty. Document organization, version tracking, and bulk
+        actions will live here.
+      </div>
     </div>
   );
 }

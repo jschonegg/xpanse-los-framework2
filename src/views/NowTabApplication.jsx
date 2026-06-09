@@ -60,25 +60,46 @@ function URLAWindow({ onClose, onSubmit, borrowerName, loanId }) {
 
 /* Shared primitives (duplicated from LoanDetail to keep this file self-contained) */
 
+// Gradient-header + white-body card, matching the LOApprovalView style.
 function ActionCard({ tone = 'neutral', icon, iconBg, iconColor, header, children, footer }) {
   const toneStyles = {
-    red:     { bg: 'var(--card-red-bg)',   border: 'var(--card-red-border)' },
-    green:   { bg: 'var(--card-green-bg)', border: 'var(--card-green-border)' },
-    amber:   { bg: 'var(--card-amber-bg)', border: 'var(--card-amber-border)' },
-    neutral: { bg: 'var(--bg-surface)',    border: 'var(--border-subtle)' },
-    ai:      { bg: 'var(--ai-bg)',         border: 'var(--ai-border)' },
+    red:     { bg: 'linear-gradient(90deg, #FEE2E2, #FEF2F2)', border: '#FECACA' },
+    green:   { bg: 'linear-gradient(90deg, #E7F8F1, #F0FDF4)', border: '#A7F3D0' },
+    amber:   { bg: 'linear-gradient(90deg, #FEF6E7, #FFF8F0)', border: '#FDE9C2' },
+    blue:    { bg: 'linear-gradient(90deg, #EEF3FE, #F5F8FF)', border: '#C7D2FE' },
+    ai:      { bg: 'linear-gradient(90deg, #F4F1FE, #FAF8FF)', border: '#E4DEFA' },
+    neutral: { bg: 'var(--bg-muted)',                          border: 'var(--border-subtle)' },
   };
   const t = toneStyles[tone] || toneStyles.neutral;
   return (
-    <div style={{ background: t.bg, border: `1px solid ${t.border}`, borderRadius: 12, padding: 18, display: 'flex', gap: 14 }}>
-      <div style={{ width: 36, height: 36, borderRadius: 9, background: iconBg || 'rgba(255,255,255,0.7)', color: iconColor || 'var(--text-primary)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-        {icon}
+    <div style={{
+      background: 'var(--bg-surface)',
+      border: `1px solid ${t.border}`,
+      borderRadius: 14, overflow: 'hidden',
+    }}>
+      <div style={{
+        background: t.bg, borderBottom: `1px solid ${t.border}`,
+        padding: '12px 16px', display: 'flex', alignItems: 'center', gap: 12,
+      }}>
+        {icon && (
+          <div style={{ width: 30, height: 30, borderRadius: 8, background: iconBg || 'rgba(255,255,255,0.65)', color: iconColor || 'var(--text-primary)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+            {icon}
+          </div>
+        )}
+        <div style={{ flex: 1, minWidth: 0 }}>{header}</div>
       </div>
-      <div style={{ flex: 1, minWidth: 0 }}>
-        {header}
-        {children}
-        {footer && <div style={{ marginTop: 14, display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>{footer}</div>}
-      </div>
+      {(children || footer) && (
+        <div style={{ padding: '14px 16px' }}>
+          {children}
+          {footer && (
+            <div style={{
+              marginTop: children ? 14 : 0, paddingTop: children ? 12 : 0,
+              borderTop: children ? '1px solid var(--border-subtle)' : 'none',
+              display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap',
+            }}>{footer}</div>
+          )}
+        </div>
+      )}
     </div>
   );
 }
@@ -94,14 +115,16 @@ function AIInsight({ children }) {
 
 function CardHeader({ title, pill, pillTone = 'amber', eta }) {
   return (
-    <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
-      <span style={{ fontSize: 14.5, fontWeight: 600, whiteSpace: 'nowrap' }}>{title}</span>
+    <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+      <div style={{ flex: 1, minWidth: 0 }}>
+        <div style={{ fontSize: 14.5, fontWeight: 700, color: 'var(--text-primary)' }}>{title}</div>
+        {eta && (
+          <div style={{ display: 'inline-flex', alignItems: 'center', gap: 4, fontSize: 11.5, color: 'var(--text-tertiary)', marginTop: 2 }}>
+            <Icon name="clock" size={11}/>{eta}
+          </div>
+        )}
+      </div>
       {pill && <StatusPill tone={pillTone}>{pill}</StatusPill>}
-      {eta && (
-        <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4, fontSize: 12, color: 'var(--text-tertiary)' }}>
-          <Icon name="clock" size={12}/>{eta}
-        </span>
-      )}
     </div>
   );
 }
@@ -232,7 +255,7 @@ export function NowTabApplication({ borrowerName = 'Marcus Johnson', loanId, loa
         </div>
       </div>
 
-      <StageTimelineStrip steps={STEPS} completed={completed}/>
+      <StageTimelineStrip steps={STEPS} completed={completed} stageName="Application"/>
 
       {/* Tabs */}
       <div style={{ display: 'flex', borderBottom: '1px solid var(--border-subtle)', marginBottom: 20 }}>

@@ -95,10 +95,11 @@ html, body {
 }
 
 body {
-  min-height: 100vh;
+  height: 100vh;
   min-width: 1280px;
   display: flex;
   flex-direction: column;
+  overflow: hidden;
 }
 
 button { font-family: inherit; cursor: pointer; }
@@ -196,7 +197,10 @@ input, select, textarea { font-family: inherit; }
     var(--ai-bg);
 }
 
-#root { flex: 1; display: flex; flex-direction: column; min-height: 100vh; }
+/* App shell pins to viewport height so only inner regions scroll
+   (loan detail's <main>, pipeline table, etc.). Without this the whole
+   page can grow taller than the viewport and the chrome scrolls away. */
+#root { flex: 1; display: flex; flex-direction: column; height: 100vh; min-height: 0; overflow: hidden; }
 
 /* Keyboard focus ring — applies to anything focusable that doesn't already
    define its own outline. Uses :focus-visible so mouse clicks don't show

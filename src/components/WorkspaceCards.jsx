@@ -238,11 +238,12 @@ export function RichActionCard({
 // defines. Same prop shape (steps + completed Set) but uses the styling
 // from the LOApprovalView "Closing timeline" — bigger circles, gradient
 // progress line, navy/teal palette.
-export function StageTimelineStrip({ steps, completed, title }) {
+export function StageTimelineStrip({ steps, completed, title, stageName }) {
   const activeIdx = steps.findIndex(s => !completed.has(s.id));
   const allDone = activeIdx === -1;
   const doneCount = allDone ? steps.length : activeIdx;
   const fillPct = steps.length > 1 ? (doneCount / (steps.length - 1)) * 100 : 0;
+  const completionPct = steps.length > 0 ? Math.round((doneCount / steps.length) * 100) : 0;
 
   return (
     <div style={{
@@ -251,11 +252,26 @@ export function StageTimelineStrip({ steps, completed, title }) {
       borderRadius: 14, padding: '14px 18px',
       marginBottom: 16,
     }}>
-      {title && (
-        <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--text-primary)', marginBottom: 14 }}>
-          {title}
+      {/* Header: stage name (or custom title) on left, % complete on right */}
+      <div style={{
+        display: 'flex', alignItems: 'baseline', justifyContent: 'space-between',
+        marginBottom: 14, gap: 12,
+      }}>
+        <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--text-primary)' }}>
+          {title || (stageName ? `${stageName} progress` : 'Progress')}
         </div>
-      )}
+        <div style={{ display: 'flex', alignItems: 'baseline', gap: 6 }}>
+          <span style={{
+            fontFamily: 'DM Mono', fontSize: 13, fontWeight: 700,
+            color: allDone ? 'var(--status-green)' : 'var(--text-primary)',
+          }}>
+            {completionPct}%
+          </span>
+          <span style={{ fontSize: 11.5, color: 'var(--text-tertiary)' }}>
+            ({doneCount} of {steps.length})
+          </span>
+        </div>
+      </div>
       <div style={{ display: 'flex', alignItems: 'flex-start', position: 'relative' }}>
         {/* Background track */}
         <div style={{ position: 'absolute', top: 11, left: 11, right: 11, height: 2, background: 'var(--border-subtle)', zIndex: 0 }}/>
