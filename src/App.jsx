@@ -68,14 +68,15 @@ export default function App() {
   if (window.location.search.includes('view=urla')) return <StandaloneURLA/>;
   if (window.location.search.includes('view=le'))   return <StandaloneLoanEstimate/>;
 
+  // All hooks must be declared before any conditional return below — moving
+  // the !loggedIn return after the hooks keeps render-to-render hook order
+  // stable (React's Rules of Hooks).
   const [loggedIn, setLoggedIn] = React.useState(() => sessionStorage.getItem('xpanse-auth') === '1');
   const handleLogin = () => {
     sessionStorage.setItem('xpanse-auth', '1');
     localStorage.setItem('los-route', 'home');
     setLoggedIn(true);
   };
-
-  if (!loggedIn) return <LoginScreen onLogin={handleLogin}/>;
 
   const [route, setRoute] = React.useState(() => localStorage.getItem('los-route') || 'home');
   const [currentLoan, setCurrentLoan] = React.useState(() => localStorage.getItem('los-loan') || 'LN-2024-0234');
@@ -89,7 +90,28 @@ export default function App() {
   const [cmdOpen, setCmdOpen] = React.useState(false);
   const [prefsOpen, setPrefsOpen] = React.useState(false);
 
+  if (!loggedIn) return <LoginScreen onLogin={handleLogin}/>;
+
   const [pipelineIntent, setPipelineIntent] = React.useState(null);
+
+  // Global keyboard shortcuts — declared here so all hooks fire before the
+  // login early-return below (Rules of Hooks).
+  React.useEffect(() => {
+    if (!loggedIn) return;
+    const handler = (e) => {
+      if (!e.metaKey && !e.ctrlKey) return;
+      if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
+      if (e.key === 'k') { e.preventDefault(); setCmdOpen(o => !o); }
+      if (e.key === 'p' && !cmdOpen) { e.preventDefault(); setRoute('pipeline'); localStorage.setItem('los-route', 'pipeline'); }
+      if (e.key === 'h' && !cmdOpen) { e.preventDefault(); setRoute('home');     localStorage.setItem('los-route', 'home'); }
+      if (e.key === 'n' && !cmdOpen) { e.preventDefault(); setCmdOpen(true); }
+    };
+    window.addEventListener('keydown', handler);
+    return () => window.removeEventListener('keydown', handler);
+  }, [cmdOpen, loggedIn]);
+
+  if (!loggedIn) return <LoginScreen onLogin={handleLogin}/>;
+
   const navigate = (r, intent) => {
     setRoute(r); localStorage.setItem('los-route', r);
     if (r === 'pipeline') setPipelineIntent(intent || null);
@@ -109,20 +131,6 @@ export default function App() {
   };
   const toggleAi = () => { setAiOverride(null); setAiOpen(o => { const next = !o; localStorage.setItem('los-ai-open', next ? '1' : '0'); return next; }); };
   const openAiWith = (override) => { setAiOverride(override); setAiOpen(true); localStorage.setItem('los-ai-open', '1'); };
-
-  // Global keyboard shortcuts
-  React.useEffect(() => {
-    const handler = (e) => {
-      if (!e.metaKey && !e.ctrlKey) return;
-      if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
-      if (e.key === 'k') { e.preventDefault(); setCmdOpen(o => !o); }
-      if (e.key === 'p' && !cmdOpen) { e.preventDefault(); navigate('pipeline'); }
-      if (e.key === 'h' && !cmdOpen) { e.preventDefault(); navigate('home'); }
-      if (e.key === 'n' && !cmdOpen) { e.preventDefault(); setCmdOpen(true); }
-    };
-    window.addEventListener('keydown', handler);
-    return () => window.removeEventListener('keydown', handler);
-  }, [cmdOpen]);
 
   const ctx = { route, loanId: currentLoan, loanTab, override: aiOverride };
 
