@@ -18,7 +18,7 @@ export const URLA1003_SECTIONS = [
 const LOAN_URLA_DATA = {
   'LN-2024-0234': {
     borrower:    { name: 'Sarah Anderson', ssn: '***-**-4521', dob: '03/14/1986', citizenship: 'U.S. Citizen', maritalStatus: 'Married', dependents: 2, dependentsAges: '8, 5', email: 'sarah.anderson@example.com', phoneHome: '(303) 555-0142', phoneCell: '(303) 555-0118' },
-    coborrower:  { name: 'John Anderson',  ssn: '***-**-7733', dob: '11/02/1984', citizenship: 'U.S. Citizen', maritalStatus: 'Married', email: 'john.anderson@example.com', phoneCell: '(303) 555-0119' },
+    coborrower:  { name: 'John Anderson',  ssn: '***-**-7733', dob: '11/02/1984', citizenship: 'U.S. Citizen', maritalStatus: 'Married', dependents: 2, dependentsAges: '8, 5', email: 'john.anderson@example.com', phoneHome: '(303) 555-0142', phoneCell: '(303) 555-0119' },
     currentAddress: { street: '422 Larkspur Way', city: 'Denver', state: 'CO', zip: '80206', yearsAtAddress: 4, housing: 'Own' },
     coborrowerAddress: { street: '422 Larkspur Way', city: 'Denver', state: 'CO', zip: '80206', yearsAtAddress: 4, housing: 'Own' },
     employment: { employer: 'Brightspoke Health', position: 'Director of Operations', startDate: '01/15/2018', yearsInLine: 9, monthlyIncome: 12500, selfEmployed: false },
@@ -52,6 +52,7 @@ const SECOND_APP_TEMPLATE = {
   coborrower:  null,
   currentAddress: { street: '1725 Schrute Farms Rd', city: 'Honesdale', state: 'PA', zip: '18431', yearsAtAddress: 12, housing: 'Own' },
   coborrowerAddress: null,
+  coborrowerSameAddress: true,
   employment: { employer: 'Dunder Mifflin Paper Co', position: 'Assistant Regional Manager', startDate: '03/15/2005', yearsInLine: 20, monthlyIncome: 6800, selfEmployed: false },
   additionalIncome: { source: 'Schrute Farms B&B', monthlyAmt: 1400 },
   coborrowerEmployment: null,
@@ -69,6 +70,9 @@ function buildAppFromLoanData(ld) {
     coborrower:              ld.coborrower || null,
     currentAddress:          ld.currentAddress,
     coborrowerAddress:       ld.coborrowerAddress || null,
+    // Default to "same as primary" — true for typical joint apps (married
+    // couples cohabiting). User can uncheck if co-borrower lives elsewhere.
+    coborrowerSameAddress:   true,
     employment:              ld.employment,
     additionalIncome:        ld.additionalIncome,
     coborrowerEmployment:    ld.coborrowerEmployment || null,
@@ -248,7 +252,26 @@ function YesNoRow({ label, value, coValue, showCoColumn }) {
 }
 
 // ─── Section 1: Borrower Info ───────────────────────────────────────────────
-function SectionBorrowerInfo({ app, onAddCo, onRemoveCo }) {
+// Same exact field set for both borrowers so the two 1a cards line up.
+function PersonalInfoFields({ person }) {
+  return (
+    <div style={{ padding: '16px 14px', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '14px 18px', background: 'var(--bg-surface)' }}>
+      <URLAField label="Full Name"       value={person.name}/>
+      <URLAField label="Social Security" value={person.ssn} mono/>
+      <URLAField label="Date of Birth"   value={person.dob} mono/>
+      <URLAField label="Citizenship"     value={person.citizenship}/>
+      <URLAField label="Marital Status"  value={person.maritalStatus}/>
+      <URLAField label="Dependents"      value={person.dependents != null ? `${person.dependents}${person.dependentsAges ? ` (ages ${person.dependentsAges})` : ''}` : '—'}/>
+      <URLAField label="Home Phone"      value={person.phoneHome || '—'}/>
+      <URLAField label="Cell Phone"      value={person.phoneCell || '—'}/>
+      <div style={{ gridColumn: '1 / -1' }}>
+        <URLAField label="Email"         value={person.email}/>
+      </div>
+    </div>
+  );
+}
+
+function SectionBorrowerInfo({ app, onAddCo, onRemoveCo, onUpdateApp }) {
   const hasCo = !!app.coborrower;
   const b = app.borrower;
   return (
@@ -257,51 +280,13 @@ function SectionBorrowerInfo({ app, onAddCo, onRemoveCo }) {
       <div id="urla1003-1a" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, alignItems: 'flex-start', scrollMarginTop: 8 }}>
         <div style={{ border: '1px solid var(--border-subtle)', borderRadius: 10, overflow: 'hidden' }}>
           <SectionHead label="1a · Personal Information" sub="Borrower"/>
-          <div style={{ padding: '16px 14px', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '14px 18px', background: 'var(--bg-surface)' }}>
-            <URLAField label="Full Name"       value={b.name}/>
-            <URLAField label="Social Security" value={b.ssn} mono/>
-            <URLAField label="Date of Birth"   value={b.dob} mono/>
-            <URLAField label="Citizenship"     value={b.citizenship}/>
-            <URLAField label="Marital Status"  value={b.maritalStatus}/>
-            <URLAField label="Dependents"      value={b.dependents != null ? `${b.dependents} (ages ${b.dependentsAges || '—'})` : '—'}/>
-            {b.phoneHome && <URLAField label="Home Phone" value={b.phoneHome}/>}
-            <URLAField label="Cell Phone"      value={b.phoneCell}/>
-            <div style={{ gridColumn: '1 / -1' }}>
-              <URLAField label="Email"         value={b.email}/>
-            </div>
-          </div>
+          <PersonalInfoFields person={app.borrower}/>
         </div>
 
         {hasCo ? (
           <div style={{ border: '1px solid var(--border-subtle)', borderRadius: 10, overflow: 'hidden' }}>
-            <div style={{
-              background: 'var(--bg-muted)', color: 'var(--text-primary)',
-              padding: '8px 14px', borderRadius: '8px 8px 0 0',
-              borderBottom: '1px solid var(--border-subtle)',
-              display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8,
-            }}>
-              <div style={{ display: 'flex', alignItems: 'baseline', gap: 8 }}>
-                <span style={{ fontSize: 12, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em' }}>1a · Personal Information</span>
-                <span style={{ fontSize: 11.5, fontWeight: 500, opacity: 0.7 }}>Co-Borrower</span>
-              </div>
-              <button onClick={onRemoveCo} title="Remove co-borrower"
-                style={{ display: 'inline-flex', alignItems: 'center', gap: 4, padding: '3px 8px', height: 24, borderRadius: 6, border: '1px solid var(--border-subtle)', background: 'var(--bg-surface)', cursor: 'pointer', fontFamily: 'inherit', fontSize: 11.5, fontWeight: 500, color: 'var(--text-secondary)' }}
-                onMouseEnter={e => { e.currentTarget.style.background = 'var(--card-red-bg)'; e.currentTarget.style.color = 'var(--status-red)'; e.currentTarget.style.borderColor = 'var(--card-red-border)'; }}
-                onMouseLeave={e => { e.currentTarget.style.background = 'var(--bg-surface)'; e.currentTarget.style.color = 'var(--text-secondary)'; e.currentTarget.style.borderColor = 'var(--border-subtle)'; }}>
-                <Icon name="x" size={11} strokeWidth={2.4}/> Remove
-              </button>
-            </div>
-            <div style={{ padding: '16px 14px', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '14px 18px', background: 'var(--bg-surface)' }}>
-              <URLAField label="Full Name"       value={app.coborrower.name}/>
-              <URLAField label="Social Security" value={app.coborrower.ssn} mono/>
-              <URLAField label="Date of Birth"   value={app.coborrower.dob} mono/>
-              <URLAField label="Citizenship"     value={app.coborrower.citizenship}/>
-              <URLAField label="Marital Status"  value={app.coborrower.maritalStatus}/>
-              {app.coborrower.phoneCell && <URLAField label="Cell Phone" value={app.coborrower.phoneCell}/>}
-              <div style={{ gridColumn: '1 / -1' }}>
-                <URLAField label="Email"         value={app.coborrower.email}/>
-              </div>
-            </div>
+            <SectionHead label="1a · Personal Information" sub="Co-Borrower"/>
+            <PersonalInfoFields person={app.coborrower}/>
           </div>
         ) : (
           <button onClick={onAddCo}
@@ -328,7 +313,16 @@ function SectionBorrowerInfo({ app, onAddCo, onRemoveCo }) {
       {/* Current address (paired when co-borrower present) */}
       <div style={{ display: 'grid', gridTemplateColumns: hasCo ? '1fr 1fr' : '1fr', gap: 16, alignItems: 'flex-start' }}>
         <AddressCard sub="Borrower" address={app.currentAddress} narrow={hasCo}/>
-        {hasCo && <AddressCard sub="Co-Borrower" address={app.coborrowerAddress || app.currentAddress} narrow/>}
+        {hasCo && (
+          <AddressCard
+            sub="Co-Borrower"
+            address={app.coborrowerSameAddress ? app.currentAddress : (app.coborrowerAddress || app.currentAddress)}
+            narrow
+            sameAsPrimary={!!app.coborrowerSameAddress}
+            onToggleSameAsPrimary={() => onUpdateApp && onUpdateApp({ coborrowerSameAddress: !app.coborrowerSameAddress })}
+            primaryBorrowerName={app.borrower.name}
+          />
+        )}
       </div>
 
       {/* 1b — Employment (paired when co-borrower present) */}
@@ -342,31 +336,74 @@ function SectionBorrowerInfo({ app, onAddCo, onRemoveCo }) {
   );
 }
 
-function AddressCard({ sub, address, narrow }) {
+function AddressCard({ sub, address, narrow, sameAsPrimary, onToggleSameAsPrimary, primaryBorrowerName }) {
   if (!address) return null;
+  const canToggle = typeof onToggleSameAsPrimary === 'function';
   return (
     <div style={{ border: '1px solid var(--border-subtle)', borderRadius: 10, overflow: 'hidden' }}>
-      <SectionHead label="Current Address" sub={sub}/>
-      <div style={{ padding: '16px 14px', display: 'grid', gridTemplateColumns: narrow ? '2fr 1fr' : '2fr 1fr 1fr 1fr', gap: '14px 18px', background: 'var(--bg-surface)' }}>
-        {narrow ? (
-          <>
-            <div style={{ gridColumn: '1 / -1' }}><URLAField label="Street" value={address.street}/></div>
-            <URLAField label="City"  value={address.city}/>
-            <URLAField label="State / ZIP" value={`${address.state} ${address.zip}`} mono/>
-            <URLAField label="Years at Address" value={`${address.yearsAtAddress} yrs`}/>
-            <URLAField label="Housing" value={address.housing}/>
-          </>
-        ) : (
-          <>
-            <URLAField label="Street" value={address.street}/>
-            <URLAField label="City"   value={address.city}/>
-            <URLAField label="State"  value={address.state}/>
-            <URLAField label="ZIP"    value={address.zip} mono/>
-            <URLAField label="Years at Address" value={`${address.yearsAtAddress} yrs`}/>
-            <URLAField label="Housing" value={address.housing}/>
-          </>
-        )}
-      </div>
+      {/* Header — when this card has a "same as primary" toggle, inline the
+          checkbox in the header so both borrower and co-borrower cards keep
+          identical header heights and the form bodies stay aligned. */}
+      {canToggle ? (
+        <div style={{
+          background: 'var(--bg-muted)', color: 'var(--text-primary)',
+          padding: '8px 14px', borderRadius: '8px 8px 0 0',
+          borderBottom: '1px solid var(--border-subtle)',
+          display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12,
+        }}>
+          <div style={{ display: 'flex', alignItems: 'baseline', gap: 8, minWidth: 0 }}>
+            <span style={{ fontSize: 12, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em' }}>Current Address</span>
+            {sub && <span style={{ fontSize: 11.5, fontWeight: 500, opacity: 0.7 }}>{sub}</span>}
+          </div>
+          <label style={{ display: 'inline-flex', alignItems: 'center', gap: 6, cursor: 'pointer', fontFamily: 'inherit' }}>
+            <input
+              type="checkbox"
+              checked={!!sameAsPrimary}
+              onChange={onToggleSameAsPrimary}
+              style={{ accentColor: 'var(--text-primary)', cursor: 'pointer' }}
+            />
+            <span style={{ fontSize: 11.5, fontWeight: 500, color: 'var(--text-secondary)' }}>
+              Same as primary borrower
+            </span>
+          </label>
+        </div>
+      ) : (
+        <SectionHead label="Current Address" sub={sub}/>
+      )}
+      {/* Address fields — hidden when "same as primary" is checked */}
+      {sameAsPrimary ? (
+        <div style={{
+          padding: '20px 14px', background: 'var(--bg-surface)',
+          fontSize: 12.5, color: 'var(--text-tertiary)', fontStyle: 'italic',
+          textAlign: 'center', lineHeight: 1.5,
+        }}>
+          Inherits the primary borrower's current address.<br/>
+          <span style={{ fontStyle: 'normal', color: 'var(--text-secondary)' }}>
+            {address.street} · {address.city}, {address.state} {address.zip}
+          </span>
+        </div>
+      ) : (
+        <div style={{ padding: '16px 14px', display: 'grid', gridTemplateColumns: narrow ? '2fr 1fr' : '2fr 1fr 1fr 1fr', gap: '14px 18px', background: 'var(--bg-surface)' }}>
+          {narrow ? (
+            <>
+              <div style={{ gridColumn: '1 / -1' }}><URLAField label="Street" value={address.street}/></div>
+              <URLAField label="City"  value={address.city}/>
+              <URLAField label="State / ZIP" value={`${address.state} ${address.zip}`} mono/>
+              <URLAField label="Years at Address" value={`${address.yearsAtAddress} yrs`}/>
+              <URLAField label="Housing" value={address.housing}/>
+            </>
+          ) : (
+            <>
+              <URLAField label="Street" value={address.street}/>
+              <URLAField label="City"   value={address.city}/>
+              <URLAField label="State"  value={address.state}/>
+              <URLAField label="ZIP"    value={address.zip} mono/>
+              <URLAField label="Years at Address" value={`${address.yearsAtAddress} yrs`}/>
+              <URLAField label="Housing" value={address.housing}/>
+            </>
+          )}
+        </div>
+      )}
     </div>
   );
 }
@@ -756,7 +793,12 @@ export function URLA1003View({ loanId = 'LN-2024-0234' }) {
           so clicking a sub-link in the LeftRail jumps directly to that
           subsection without any intermediate header banners. */}
       <div style={{ paddingBottom: 40, display: 'flex', flexDirection: 'column', gap: 28 }}>
-        <SectionBorrowerInfo app={current} onAddCo={handleAddCo} onRemoveCo={handleRemoveCo}/>
+        <SectionBorrowerInfo
+          app={current}
+          onAddCo={handleAddCo}
+          onRemoveCo={handleRemoveCo}
+          onUpdateApp={(patch) => updateApp(activeApp, patch)}
+        />
         <SectionAssetsLiabilities ld={ld}/>
         <SectionLoanProperty ld={ld}/>
         <SectionDeclarations ld={ld} app={current}/>
