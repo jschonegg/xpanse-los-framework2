@@ -19,11 +19,14 @@ function ActionCard({ tone = 'neutral', icon, iconBg, header, children, footer, 
   return (
     <div style={{
       background: 'var(--bg-surface)',
-      border: `1px solid ${isActive ? 'var(--ai-primary)' : t.border}`,
-      borderLeft: isActive ? '3px solid var(--ai-primary)' : `1px solid ${t.border}`,
+      border: `1px solid ${t.border}`,
       borderRadius: 14,
       overflow: 'hidden',
-      boxShadow: isActive ? '0 2px 12px rgba(99,102,241,0.10)' : 'none',
+      // Active task cards get a slightly elevated shadow instead of an
+      // accent border — keeps the card chrome consistent across states.
+      boxShadow: isActive
+        ? '0 6px 20px rgba(15,16,20,0.10), 0 2px 4px rgba(15,16,20,0.04)'
+        : 'none',
       opacity: isWaiting ? 0.5 : 1,
       transition: 'opacity 0.2s, box-shadow 0.2s',
     }}>
