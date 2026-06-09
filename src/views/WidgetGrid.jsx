@@ -1,6 +1,20 @@
 import React from 'react';
 import { Icon } from '../components/Icon';
 
+// ─── Color semantics (strict) ────────────────────────────────────────────────
+// Use these consistently across all widgets — color carries meaning, not
+// decoration.
+//
+//   PURPLE (#7E68FA / #5B21B6 / #4338CA) — AI surfaces + primary CTAs.
+//     If used for AI, always pair with a sparkle icon or "AI" label.
+//   GREEN (#059669 / #10B981) — positive change, success, "verified".
+//   AMBER (#D97706 / #F59E0B) — deadline pressure, time-bound warning.
+//   RED  (#EF4444 / #DC2626) — risk, error, critical, ceiling breach.
+//   GRAY (#6B7280 / #9CA3AF) — neutral, routine, info.
+//
+// Reach for these before introducing new hex values. New colors require a
+// new semantic — don't add a "second purple" that means something else.
+//
 // ─── Widget registry ──────────────────────────────────────────────────────────
 // Each entry describes a widget: metadata + its render component.
 // `defaultWidth` is the preferred width when first added.
@@ -381,7 +395,7 @@ export function WaitingOnBorrowerWidget({ onOpenLoan }) {
     <div>
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-          <Icon name="mail" size={13} color="#4338CA"/>
+          <Icon name="mail" size={13} color="#D97706"/>
           <span style={{ fontSize: 12, color: '#6B7280' }}>Doc requests outstanding</span>
         </div>
         <span style={{ fontSize: 11, fontWeight: 700, background: '#F3F4F6', color: '#374151', padding: '2px 7px', borderRadius: 999 }}>5</span>
@@ -557,7 +571,7 @@ export const WIDGET_REGISTRY = [
     label: 'Waiting on Borrower',
     desc: 'Outstanding doc requests with days-since-asked. Overdue highlighted.',
     icon: 'mail',
-    color: '#4338CA',
+    color: '#D97706', // amber — deadline / chase pressure
     defaultWidth: 'half',
     category: 'Pipeline',
   },
