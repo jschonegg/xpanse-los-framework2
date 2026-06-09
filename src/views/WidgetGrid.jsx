@@ -436,6 +436,7 @@ export const WIDGET_REGISTRY = [
     color: '#7E68FA',
     defaultWidth: 'full',
     category: 'Performance',
+    chromeless: true, // widget renders its own header + card; skip shell title
   },
   {
     id: 'pipeline-snapshot',
