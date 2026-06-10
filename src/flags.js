@@ -17,6 +17,7 @@ const defaults = {
   lessEmoji: true,
   mergedActionCard: true,
   aiCoachBrand: true,
+  hideTodaysPrioritiesHeader: true,
 };
 
 function readOverrides() {

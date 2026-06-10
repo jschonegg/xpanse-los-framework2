@@ -458,12 +458,8 @@ export function FilesNeedingActionWidget({ onOpenLoan }) {
   const ActiveBody = TABS.find(t => t.id === active).Body;
   return (
     <div>
-      <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', marginBottom: 10 }}>
-        <div style={{ fontSize: 14, fontWeight: 700, color: '#111827' }}>Files needing action</div>
-        <span style={{ fontSize: 11, color: '#9CA3AF' }}>
-          {TABS.reduce((s, t) => s + t.count, 0)} across {TABS.length} queues
-        </span>
-      </div>
+      {/* WidgetShell renders the "Files needing action" title above this card,
+          so we skip an inner header and start straight at the tab strip. */}
       {/* Tab strip */}
       <div style={{ display: 'flex', gap: 0, borderBottom: '1px solid #F3F4F6', marginBottom: 12 }}>
         {TABS.map(t => {

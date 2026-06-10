@@ -1408,13 +1408,16 @@ export function HomeView({ onNavigate, onOpenLoan }) {
           {flags.heroFlowing && (
             <div style={{ margin: '-24px -28px 24px' }}>{hero}</div>
           )}
-          {/* 01 · Today's priorities — operational triage */}
-          <SectionHeader
-            number={1}
-            eyebrow="Today's priorities"
-            title="Files that need a decision"
-            sublede="Risks to resolve, locks to extend, and borrowers to chase."
-          />
+          {/* 01 · Today's priorities — hidden behind hideTodaysPrioritiesHeader flag.
+              The WidgetGrid below carries its own "Your dashboard" label. */}
+          {!flags.hideTodaysPrioritiesHeader && (
+            <SectionHeader
+              number={1}
+              eyebrow="Today's priorities"
+              title="Files that need a decision"
+              sublede="Risks to resolve, locks to extend, and borrowers to chase."
+            />
+          )}
           <WidgetGrid hiddenIds={hiddenWidgetIds} renderWidget={(id) => {
             if (id === 'leaderboard')       return <Leaderboard/>;
             if (id === 'company-feed')      return <CompanyFeedWidget feed={FEED}/>;
