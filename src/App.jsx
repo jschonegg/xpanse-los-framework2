@@ -141,7 +141,16 @@ export default function App() {
 
   return (
     <>
-      <LeftNav route={route} onNavigate={navigate} onOpenCmd={() => setCmdOpen(true)} onOpenPrefs={() => setPrefsOpen(true)}/>
+      <LeftNav
+        route={route}
+        onNavigate={navigate}
+        onOpenCmd={() => setCmdOpen(true)}
+        onOpenPrefs={() => setPrefsOpen(true)}
+        onLogoClick={() => {
+          localStorage.removeItem('los-authed');
+          setAuthed(false);
+        }}
+      />
       <div style={{ flex: 1, display: 'flex', flexDirection: 'column', minHeight: 0, paddingBottom: 36, paddingLeft: 44 }}>
         {route === 'deposit-review' && <LargeDepositReviewView onBack={() => navigate('home')}/>}
         {route !== 'deposit-review' && (
