@@ -1,5 +1,6 @@
 import React from 'react';
 import { Icon } from './Icon';
+import { flags } from '../flags';
 
 // ─── Default preferences ──────────────────────────────────────────────────────
 const DEFAULTS = {
@@ -419,8 +420,14 @@ export function PreferencesModal({ onClose }) {
         background: 'rgba(0,0,0,0.25)',
       }}/>
 
-      {/* Drawer */}
-      <div style={{
+      {/* Drawer — flag leftNavPolish flips it to slide in from the left, anchored next to the LeftNav rail */}
+      <div style={flags.leftNavPolish ? {
+        position: 'fixed', top: 0, left: 44, bottom: 0, zIndex: 801,
+        width: 480, background: 'var(--bg-surface)',
+        borderRight: '1px solid var(--border-subtle)',
+        boxShadow: '8px 0 40px rgba(0,0,0,0.14)',
+        display: 'flex', flexDirection: 'column',
+      } : {
         position: 'fixed', top: 0, right: 0, bottom: 0, zIndex: 801,
         width: 480, background: 'var(--bg-surface)',
         borderLeft: '1px solid var(--border-subtle)',
