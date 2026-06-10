@@ -1,5 +1,6 @@
 import React from 'react';
 import { Icon } from './Icon';
+import { flags } from '../flags';
 
 export function LogoMark({ size = 32 }) {
   return (
@@ -58,7 +59,8 @@ function LeftNavItem({ icon, label, active, onClick, disabled, iconSize = 19, st
   );
 }
 
-export function LeftNav({ route, onNavigate, onOpenCmd, onOpenPrefs }) {
+export function LeftNav({ route, onNavigate, onOpenCmd, onOpenPrefs, onLogoClick }) {
+  const logoInteractive = flags.logoToLogin && typeof onLogoClick === 'function';
   const topItems = [
     { id: 'home',     icon: 'home',     label: 'Home',     kind: 'route' },
     { id: 'pipeline', icon: 'pipeline', label: 'Pipeline', kind: 'route' },
@@ -88,9 +90,26 @@ export function LeftNav({ route, onNavigate, onOpenCmd, onOpenPrefs }) {
       flexShrink: 0,
     }}>
       {/* Logo */}
-      <div style={{ height: 32, display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 6 }}>
-        <LogoMark size={22}/>
-      </div>
+      {logoInteractive ? (
+        <button
+          type="button"
+          onClick={onLogoClick}
+          aria-label="Back to login"
+          title="Back to login"
+          style={{
+            height: 32, width: 32, marginBottom: 6,
+            background: 'transparent', border: 'none', padding: 0,
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            cursor: 'pointer', fontFamily: 'inherit',
+          }}
+        >
+          <LogoMark size={22}/>
+        </button>
+      ) : (
+        <div style={{ height: 32, display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 6 }}>
+          <LogoMark size={22}/>
+        </div>
+      )}
 
       {/* Top items */}
       {topItems.map(item => (
