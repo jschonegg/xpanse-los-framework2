@@ -3,7 +3,8 @@ import ReactDOM from 'react-dom';
 import { Icon } from '../components/Icon';
 import { flags } from '../flags';
 import { WidgetGrid, PipelineSnapshotWidget, ClosingCountdownWidget, RateWatchWidget, ConditionsTrackerWidget, QuickActionsWidget, RecentActivityWidget,
-         FilesAtRiskWidget, ReadyForUWWidget, LockClockWidget, WaitingOnBorrowerWidget } from './WidgetGrid';
+         FilesAtRiskWidget, ReadyForUWWidget, LockClockWidget, WaitingOnBorrowerWidget,
+         FilesNeedingActionWidget } from './WidgetGrid';
 import { AIInsightsBanner } from './Pipeline';
 import { AIInsightsCards } from './AIInsightsCards';
 import { LoanHealthMonitorWidget } from './LoanHealthMonitor';
@@ -1431,6 +1432,7 @@ export function HomeView({ onNavigate, onOpenLoan }) {
             if (id === 'ready-for-uw')        return <ReadyForUWWidget        onOpenLoan={onOpenLoan}/>;
             if (id === 'lock-clock')          return <LockClockWidget         onOpenLoan={onOpenLoan}/>;
             if (id === 'waiting-on-borrower') return <WaitingOnBorrowerWidget onOpenLoan={onOpenLoan}/>;
+            if (id === 'files-needing-action') return <FilesNeedingActionWidget onOpenLoan={onOpenLoan}/>;
             return null;
           }}/>
 

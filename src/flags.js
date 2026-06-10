@@ -15,6 +15,7 @@ const defaults = {
   imsBrand: true,
   yourDayCustomizable: true,
   lessEmoji: true,
+  mergedActionCard: true,
 };
 
 function readOverrides() {
