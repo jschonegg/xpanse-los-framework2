@@ -22,6 +22,7 @@ const defaults = {
   lakesideFeedCard: true,
   consistentCardHeaders: true,
   homeReorderV1: true,
+  aiInsightsUnderScorecard: true,
 };
 
 function readOverrides() {

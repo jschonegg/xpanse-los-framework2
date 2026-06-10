@@ -1227,9 +1227,13 @@ export function HomeView({ onNavigate, onOpenLoan }) {
     return () => window.removeEventListener(PREFS_EVENT, onChange);
   }, []);
   const showYourDay = !flags.yourDayCustomizable || prefs.show_your_day_sidebar !== false;
-  const hiddenWidgetIds = (flags.yourDayCustomizable && prefs.show_loan_health_monitor === false)
-    ? ['loan-health-monitor']
-    : [];
+  const hiddenWidgetIds = [
+    ...(flags.yourDayCustomizable && prefs.show_loan_health_monitor === false ? ['loan-health-monitor'] : []),
+    // When aiInsightsUnderScorecard is ON, the AI Coach brief is rendered
+    // directly under the ScorecardStrip — hide the WidgetGrid copy so it
+    // doesn't appear twice.
+    ...(flags.aiInsightsUnderScorecard ? ['ai-coach-brief'] : []),
+  ];
   const visibleTasks = TASKS.filter(t => !doneTasks.has(t.id));
   const visibleAI    = AI_ACTIONS.filter(a => !doneAI.has(a.id));
   const urgentCount  = visibleTasks.filter(t => t.urgent).length;
@@ -1433,6 +1437,8 @@ export function HomeView({ onNavigate, onOpenLoan }) {
           )}
           {flags.homeReorderV1 && <ScorecardStrip/>}
           {flags.homeReorderV1 && <div style={{ height: 14 }}/>}
+          {flags.homeReorderV1 && flags.aiInsightsUnderScorecard && <AIInsightsCards onOpenLoan={onOpenLoan}/>}
+          {flags.homeReorderV1 && flags.aiInsightsUnderScorecard && <div style={{ height: 14 }}/>}
           {flags.homeReorderV1 && <Leaderboard/>}
           {flags.homeReorderV1 && <div style={{ height: 14 }}/>}
 
