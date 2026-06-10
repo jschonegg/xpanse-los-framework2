@@ -1,6 +1,6 @@
 import React from 'react';
 import { Icon } from '../components/Icon';
-import { StatusPill } from '../components/Shell';
+import { StatusPill, PageHeader } from '../components/Shell';
 
 // ─── Checklist data ────────────────────────────────────────────────────────────
 
@@ -309,18 +309,13 @@ export function FileReviewTab({ borrowerName = 'Sarah Anderson', loanId = 'LN-20
   ];
 
   return (
-    <div style={{ maxWidth: 800 }}>
+    <div style={{ display: 'flex', flexDirection: 'column' }}>
 
-      {/* ── Header ── */}
-      <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 20 }}>
-        <div>
-          <h2 style={{ margin: 0, fontSize: 18, fontWeight: 600, letterSpacing: '-0.01em' }}>File Review</h2>
-          <div style={{ fontSize: 13, color: 'var(--text-tertiary)', marginTop: 4 }}>
-            Pre-submission completeness check — {borrowerName} · {loanId}
-          </div>
-        </div>
-        <div style={{ display: 'flex', gap: 8 }}>
-          {/* Loan status selector */}
+      <PageHeader
+        icon="listCheck"
+        title="File Review"
+        subtitle={`Pre-submission completeness check — ${borrowerName} · ${loanId}`}
+        actions={
           <select
             value={loanStatus}
             onChange={e => setLoanStatus(e.target.value)}
@@ -334,8 +329,8 @@ export function FileReviewTab({ borrowerName = 'Sarah Anderson', loanId = 'LN-20
             <option>Suspended Pending Documents</option>
             <option>Ready for UW Submission</option>
           </select>
-        </div>
-      </div>
+        }
+      />
 
       {/* ── Readiness bar ── */}
       <div style={{

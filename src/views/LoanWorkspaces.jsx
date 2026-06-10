@@ -1,6 +1,6 @@
 import React from 'react';
 import { Icon } from '../components/Icon';
-import { Avatar, StatusPill } from '../components/Shell';
+import { Avatar, StatusPill, PageHeader } from '../components/Shell';
 
 /* Workspaces: Conditions, AUS, Pricing & Lock, Closing, Audit
    All persona-agnostic — every role uses the same workspace, with permissions
@@ -176,6 +176,7 @@ function ConditionsTab() {
   return (
     <>
       <WorkspaceHeader
+        icon="listCheck"
         title="Conditions"
         subtitle="AI-assisted document review and condition clearing"
         actions={<>
@@ -521,6 +522,7 @@ function AUSTab() {
   return (
     <>
       <WorkspaceHeader
+        icon="zap"
         title="AUS Findings"
         subtitle="Automated underwriting decision and conditions"
         actions={<>
@@ -743,6 +745,7 @@ function PricingLockTab() {
         </div>
       )}
       <WorkspaceHeader
+        icon="dollar"
         title="Pricing & Lock"
         subtitle="Rate scenarios, lock status, and price adjustments"
         actions={<>
@@ -922,6 +925,7 @@ function ClosingTab() {
   return (
     <>
       <WorkspaceHeader
+        icon="calculator"
         title="Closing"
         subtitle="Closing Disclosure, signing schedule, and funding"
         actions={<>
@@ -1216,6 +1220,7 @@ function AuditTab() {
   return (
     <>
       <WorkspaceHeader
+        icon="fileSearch"
         title="Audit Trail"
         subtitle="Every field change, user action, and system event"
         actions={<>
@@ -1350,19 +1355,11 @@ function AuditTab() {
    SHARED PRIMITIVES
    ============================================================ */
 
-function WorkspaceHeader({ title, subtitle, actions }) {
-  return (
-    <div style={{
-      display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between',
-      gap: 16, marginBottom: 22,
-    }}>
-      <div>
-        <h2 style={{ margin: 0, fontSize: 22, fontWeight: 600, letterSpacing: '-0.015em' }}>{title}</h2>
-        <div style={{ fontSize: 13, color: 'var(--text-tertiary)', marginTop: 4 }}>{subtitle}</div>
-      </div>
-      {actions && <div style={{ display: 'flex', gap: 8 }}>{actions}</div>}
-    </div>
-  );
+// Delegates to the shared PageHeader so all workspace tabs (Conditions,
+// AUS, Pricing, Closing, Audit) inherit the same page-header pattern.
+// `icon` defaults to 'doc' to match form-style pages; callers can override.
+function WorkspaceHeader({ title, subtitle, actions, icon = 'doc', status }) {
+  return <PageHeader icon={icon} title={title} subtitle={subtitle} status={status} actions={actions}/>;
 }
 
 function SummaryTile({ value, label, tone = 'neutral' }) {

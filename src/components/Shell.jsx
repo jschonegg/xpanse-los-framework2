@@ -125,6 +125,49 @@ export function LeftNav({ route, onNavigate, onOpenCmd, onOpenPrefs }) {
   );
 }
 
+// Shared page header — icon · title · subtitle · optional status pill · actions.
+// Used by the 1003, Borrower Summary, and other form/workspace pages so they
+// all share one source of truth for layout and spacing.
+//
+//   <PageHeader
+//     icon="doc"
+//     title="Uniform Residential Loan Application"
+//     subtitle="Form 1003 · 1108 Beacon Hill Rd, Boston MA"
+//     status={<StatusPill tone="blue">Draft</StatusPill>}
+//     actions={<>
+//       <button className="btn btn-outline btn-sm">…Export PDF</button>
+//       <button className="btn btn-primary btn-sm">…Save</button>
+//     </>}
+//   />
+export function PageHeader({ icon = 'doc', title, subtitle, status, actions }) {
+  return (
+    <div style={{
+      display: 'flex', alignItems: 'center', gap: 16,
+      padding: '4px 0 16px',
+      borderBottom: '1px solid var(--border-subtle)',
+      marginBottom: 22,
+    }}>
+      <div style={{
+        width: 38, height: 38, borderRadius: 9,
+        background: 'var(--bg-muted)',
+        display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
+      }}>
+        <Icon name={icon} size={19} color="var(--text-secondary)" strokeWidth={1.6}/>
+      </div>
+      <div style={{ flex: 1, minWidth: 0 }}>
+        <div style={{ fontSize: 18, fontWeight: 700, letterSpacing: '-0.01em' }}>{title}</div>
+        {subtitle && (
+          <div style={{ fontSize: 12.5, color: 'var(--text-tertiary)', marginTop: 2 }}>
+            {subtitle}
+          </div>
+        )}
+      </div>
+      {status}
+      {actions && <div style={{ display: 'flex', gap: 6 }}>{actions}</div>}
+    </div>
+  );
+}
+
 export function StatusPill({ tone = 'blue', children, dot, style }) {
   const tones = {
     blue:    { bg: 'var(--status-blue-bg)',  fg: 'var(--status-blue)' },
