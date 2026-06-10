@@ -4,6 +4,7 @@ import { Icon } from '../components/Icon';
 import { WidgetGrid, PipelineSnapshotWidget, ClosingCountdownWidget, RateWatchWidget, ConditionsTrackerWidget, QuickActionsWidget, RecentActivityWidget,
          FilesAtRiskWidget, ReadyForUWWidget, LockClockWidget, WaitingOnBorrowerWidget } from './WidgetGrid';
 import { AIInsightsBanner } from './Pipeline';
+import { AIInsightsCards } from './AIInsightsCards';
 import { LoanHealthMonitorWidget } from './LoanHealthMonitor';
 import { LOANS } from '../data/loans';
 
@@ -1366,7 +1367,7 @@ export function HomeView({ onNavigate, onOpenLoan }) {
             if (id === 'quick-actions')     return <QuickActionsWidget/>;
             if (id === 'recent-activity')   return <RecentActivityWidget/>;
             // Ported from old prototype
-            if (id === 'ai-coach-brief')      return <AIInsightsBanner      loans={LOANS} onOpenLoan={onOpenLoan}/>;
+            if (id === 'ai-coach-brief')      return <AIInsightsCards       onOpenLoan={onOpenLoan}/>;
             if (id === 'loan-health-monitor') return <LoanHealthMonitorWidget onOpenLoan={onOpenLoan}/>;
             if (id === 'files-at-risk')       return <FilesAtRiskWidget       onOpenLoan={onOpenLoan}/>;
             if (id === 'ready-for-uw')        return <ReadyForUWWidget        onOpenLoan={onOpenLoan}/>;
