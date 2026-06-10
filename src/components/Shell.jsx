@@ -3,13 +3,17 @@ import { Icon } from './Icon';
 import { flags } from '../flags';
 import { IMSLogoMonogram } from './IMSLogo';
 
-// Bold X mark used in the LeftNav rail. Sits directly on the dark
-// background; two diagonal strokes with rounded caps, no enclosing tile.
+// Xpanse primary X mark, sourced from the design system zip
+// (Logo/Xpanse_Primary.png). Used in the LeftNav rail.
 function XpanseMark({ size = 28 }) {
   return (
-    <svg width={size} height={size} viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg" aria-label="X">
-      <path d="M7 7 L25 25 M25 7 L7 25" stroke="#fff" strokeWidth="4" strokeLinecap="round"/>
-    </svg>
+    <img
+      src="/xpanse-mark.png"
+      width={size}
+      height={Math.round(size * (24 / 35))}
+      alt="Xpanse"
+      style={{ display: 'block', objectFit: 'contain' }}
+    />
   );
 }
 
