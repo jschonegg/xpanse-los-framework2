@@ -1452,14 +1452,27 @@ export function HomeView({ onNavigate, onOpenLoan }) {
           <div style={{ height: 14 }}/>
           <Leaderboard/>
 
-          {/* 03 · From your team — culture / company feed */}
-          <SectionHeader
-            number={3}
-            eyebrow="From your team"
-            title="What's happening at Lakeside"
-            sublede="Announcements, wins, and updates from across the company."
-          />
-          <CompanyFeedWidget feed={FEED}/>
+          {/* 03 · From your team — when lakesideFeedCard is ON, the
+              SectionHeader is replaced with a single card titled
+              "Lakeside Feed" wrapping the company feed. */}
+          {flags.lakesideFeedCard ? (
+            <div style={{ background: '#fff', border: '1px solid #E5E7EB', borderRadius: 14, padding: '16px 18px', marginTop: 24 }}>
+              <div style={{ fontSize: 14, fontWeight: 800, color: '#111827', letterSpacing: '-0.01em', marginBottom: 12 }}>
+                Lakeside Feed
+              </div>
+              <CompanyFeedWidget feed={FEED}/>
+            </div>
+          ) : (
+            <>
+              <SectionHeader
+                number={3}
+                eyebrow="From your team"
+                title="What's happening at Lakeside"
+                sublede="Announcements, wins, and updates from across the company."
+              />
+              <CompanyFeedWidget feed={FEED}/>
+            </>
+          )}
         </div>
 
         {/* ── Right Rail ── (hideable via Preferences → Appearance → Home layout) */}
