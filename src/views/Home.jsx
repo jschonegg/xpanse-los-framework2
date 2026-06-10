@@ -1,6 +1,7 @@
 import React from 'react';
 import ReactDOM from 'react-dom';
 import { Icon } from '../components/Icon';
+import { flags } from '../flags';
 import { WidgetGrid, PipelineSnapshotWidget, ClosingCountdownWidget, RateWatchWidget, ConditionsTrackerWidget, QuickActionsWidget, RecentActivityWidget,
          FilesAtRiskWidget, ReadyForUWWidget, LockClockWidget, WaitingOnBorrowerWidget } from './WidgetGrid';
 import { AIInsightsBanner } from './Pipeline';
@@ -1190,11 +1191,10 @@ export function HomeView({ onNavigate, onOpenLoan }) {
     }
   };
 
-  return (
-    <>
-    <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden', background: '#0F1117' }}>
-
-      {/* ── Hero ── (compact: same info, less vertical space) */}
+  // ── Hero block — gated by flags.heroFlowing.
+  // OFF (default): rendered above the main area as a pinned page header.
+  // ON: rendered as the first child of the scrolling center column so it scrolls with the page.
+  const hero = (
       <div style={{
         background: 'linear-gradient(135deg, #1a1535 0%, #1e1b4b 40%, #1a1d3a 100%)',
         borderBottom: '1px solid rgba(255,255,255,0.07)',
@@ -1342,12 +1342,22 @@ export function HomeView({ onNavigate, onOpenLoan }) {
           </div>
         </div>
       </div>
+  );
+
+  return (
+    <>
+    <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden', background: '#0F1117' }}>
+
+      {!flags.heroFlowing && hero}
 
       {/* ── Main area ── */}
       <div style={{ flex: 1, display: 'flex', overflow: 'hidden', background: '#F4F5F7' }}>
 
         {/* ── Center ── */}
         <div style={{ flex: 1, overflowY: 'auto', padding: '24px 28px 48px', minWidth: 0 }}>
+          {flags.heroFlowing && (
+            <div style={{ margin: '-24px -28px 24px' }}>{hero}</div>
+          )}
           {/* 01 · Today's priorities — operational triage */}
           <SectionHeader
             number={1}
