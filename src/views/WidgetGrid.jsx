@@ -25,16 +25,15 @@ import { Icon } from '../components/Icon';
 // Leaderboard + Company Feed pulled out of the grid into their own
 // numbered sections (02 · Performance, 03 · From your team) — they're
 // still in the catalog if a user re-adds them.
-const STORAGE_KEY = 'los-widget-layout-v8';
+// v9: Lock Clock + Waiting on Borrower + Ready for UW merged into one
+//     tabbed "Files needing action" card behind the mergedActionCard flag.
+// v10: Loan Health Monitor removed from the default layout. Still in the
+//      catalog so users can add it back through the dashboard customizer.
+const STORAGE_KEY = 'los-widget-layout-v10';
 
 const DEFAULT_LAYOUT = [
   { id: 'ai-coach-brief',       width: 'full' },
-  // Loan Health Monitor is the anchor — full multi-loan triage with
-  // stage / completeness / risks / AI / next-action all on one row.
-  { id: 'loan-health-monitor',  width: 'full' },
-  { id: 'lock-clock',           width: 'half' },
-  { id: 'waiting-on-borrower',  width: 'half' },
-  { id: 'ready-for-uw',         width: 'full' },
+  { id: 'files-needing-action', width: 'full' },
 ];
 
 function loadLayout() {
@@ -445,6 +444,52 @@ export function WaitingOnBorrowerWidget({ onOpenLoan }) {
 // The previous AICoachBriefWidget + NEXT_MOVE_QUEUE was removed when we adopted
 // Melissa's banner for cross-screen consistency.
 
+// ── Files needing action (merged tabbed card) ───────────────────────────────
+// Combines Ready for UW + Lock Clock + Waiting on Borrower into one card with
+// tabs. Each tab body just renders the existing widget so its internal header
+// (counts, status pills) and rows stay intact.
+export function FilesNeedingActionWidget({ onOpenLoan }) {
+  const TABS = [
+    { id: 'ready-for-uw',        label: 'Ready for UW',        count: 3, Body: ReadyForUWWidget },
+    { id: 'lock-clock',          label: 'Locks expiring',      count: 3, Body: LockClockWidget },
+    { id: 'waiting-on-borrower', label: 'Waiting on borrower', count: 5, Body: WaitingOnBorrowerWidget },
+  ];
+  const [active, setActive] = React.useState(TABS[0].id);
+  const ActiveBody = TABS.find(t => t.id === active).Body;
+  return (
+    <div>
+      {/* WidgetShell renders the "Files needing action" title above this card,
+          so we skip an inner header and start straight at the tab strip. */}
+      {/* Tab strip */}
+      <div style={{ display: 'flex', gap: 0, borderBottom: '1px solid #F3F4F6', marginBottom: 12 }}>
+        {TABS.map(t => {
+          const isActive = t.id === active;
+          return (
+            <button key={t.id} onClick={() => setActive(t.id)} style={{
+              padding: '7px 14px', fontSize: 12, fontWeight: 600,
+              border: 'none', borderBottom: isActive ? '2px solid #111827' : '2px solid transparent',
+              background: 'transparent', color: isActive ? '#111827' : '#6B7280',
+              cursor: 'pointer', fontFamily: 'inherit', marginBottom: -1,
+              display: 'inline-flex', alignItems: 'center', gap: 6,
+              transition: 'color 0.12s, border-color 0.12s',
+            }}>
+              {t.label}
+              <span style={{
+                fontSize: 10, fontWeight: 700,
+                background: isActive ? '#111827' : '#F3F4F6',
+                color: isActive ? '#fff' : '#6B7280',
+                padding: '1px 6px', borderRadius: 999,
+              }}>{t.count}</span>
+            </button>
+          );
+        })}
+      </div>
+      {/* Active tab body */}
+      <ActiveBody onOpenLoan={onOpenLoan}/>
+    </div>
+  );
+}
+
 export const WIDGET_REGISTRY = [
   {
     id: 'leaderboard',
@@ -455,6 +500,15 @@ export const WIDGET_REGISTRY = [
     defaultWidth: 'full',
     category: 'Performance',
     chromeless: true, // widget renders its own header + card; skip shell title
+  },
+  {
+    id: 'files-needing-action',
+    label: 'Files needing action',
+    desc: 'Ready for UW, locks expiring, and waiting on borrower — in one tabbed card.',
+    icon: 'listCheck',
+    color: '#7E68FA',
+    defaultWidth: 'full',
+    category: 'Pipeline',
   },
   {
     id: 'pipeline-snapshot',
@@ -772,7 +826,7 @@ function CatalogDrawer({ activeIds, onAdd, onClose }) {
 }
 
 // ─── Main WidgetGrid ──────────────────────────────────────────────────────────
-export function WidgetGrid({ renderWidget }) {
+export function WidgetGrid({ renderWidget, hiddenIds, hideSectionLabel }) {
   const [layout,   setLayout]   = React.useState(loadLayout);
   const [editMode, setEditMode] = React.useState(false);
   const [catalog,  setCatalog]  = React.useState(false);
@@ -781,6 +835,10 @@ export function WidgetGrid({ renderWidget }) {
   const dragIdx = React.useRef(null);
   const [dropIdx, setDropIdx] = React.useState(null);
 
+  // Filter out widgets the caller wants hidden (e.g. from user prefs).
+  // Persisted layout stays intact — we just don't render the hidden ones.
+  const hidden = hiddenIds instanceof Set ? hiddenIds : new Set(hiddenIds || []);
+  const visibleLayout = hidden.size > 0 ? layout.filter(w => !hidden.has(w.id)) : layout;
   const activeIds = layout.map(w => w.id);
 
   const handleAdd = (id) => {
@@ -828,7 +886,7 @@ export function WidgetGrid({ renderWidget }) {
       {/* Toolbar */}
       <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 18 }}>
         <span style={{ fontSize: 12, fontWeight: 700, letterSpacing: '0.07em', textTransform: 'uppercase', color: '#9CA3AF', flex: 1 }}>
-          {editMode ? '✦ Drag to reorder · click × to remove' : 'Your dashboard'}
+          {editMode ? '✦ Drag to reorder · click × to remove' : (hideSectionLabel ? '' : 'Your dashboard')}
         </span>
         {editMode && (
           <button onClick={() => { setCatalog(true); }} style={{
@@ -860,7 +918,7 @@ export function WidgetGrid({ renderWidget }) {
         gap: 16,
         alignItems: 'start',
       }}>
-        {layout.map((item, idx) => {
+        {visibleLayout.map((item, idx) => {
           const meta = WIDGET_REGISTRY.find(w => w.id === item.id);
           if (!meta) return null;
           const isDropTarget = dropIdx === idx;

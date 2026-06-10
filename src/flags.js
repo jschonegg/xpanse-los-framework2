@@ -13,6 +13,16 @@ const defaults = {
   leaderboardBranchStats: true,
   leftNavPolish: true,
   imsBrand: true,
+  yourDayCustomizable: true,
+  lessEmoji: true,
+  mergedActionCard: true,
+  aiCoachBrand: true,
+  hideTodaysPrioritiesHeader: true,
+  hidePerformanceHeader: true,
+  lakesideFeedCard: true,
+  consistentCardHeaders: true,
+  homeReorderV1: true,
+  aiInsightsUnderScorecard: true,
 };
 
 function readOverrides() {

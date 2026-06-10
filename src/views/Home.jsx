@@ -3,10 +3,13 @@ import ReactDOM from 'react-dom';
 import { Icon } from '../components/Icon';
 import { flags } from '../flags';
 import { WidgetGrid, PipelineSnapshotWidget, ClosingCountdownWidget, RateWatchWidget, ConditionsTrackerWidget, QuickActionsWidget, RecentActivityWidget,
-         FilesAtRiskWidget, ReadyForUWWidget, LockClockWidget, WaitingOnBorrowerWidget } from './WidgetGrid';
+         FilesAtRiskWidget, ReadyForUWWidget, LockClockWidget, WaitingOnBorrowerWidget,
+         FilesNeedingActionWidget } from './WidgetGrid';
 import { AIInsightsBanner } from './Pipeline';
+import { AIInsightsCards } from './AIInsightsCards';
 import { LoanHealthMonitorWidget } from './LoanHealthMonitor';
 import { LOANS } from '../data/loans';
+import { loadPrefs, PREFS_EVENT } from '../components/PreferencesModal';
 
 // ─── Data ─────────────────────────────────────────────────────────────────────
 
@@ -87,6 +90,8 @@ const LB_DATA = {
 };
 
 const RANK_MEDALS = ['🥇', '🥈', '🥉', '', '', ''];
+// Medal-colored rank badges used when flags.lessEmoji is ON.
+const RANK_COLORS = ['#D4A93B', '#9CA3AF', '#B45309'];
 
 // ─── Leaderboard widget ───────────────────────────────────────────────────────
 const LB_METRICS = [
@@ -181,8 +186,13 @@ function Leaderboard() {
       {/* ── Header ───────────────────────────────── */}
       <div style={{ padding: '14px 18px 0', borderBottom: '1px solid #F3F4F6' }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-            <span style={{ fontSize: 14, fontWeight: 700, color: '#111827' }}>🏆 Leaderboard</span>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+            {flags.consistentCardHeaders && (
+              <div style={{ width: 22, height: 22, borderRadius: 6, background: '#7E68FA18', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                <Icon name="trendingUp" size={12} color="#7E68FA"/>
+              </div>
+            )}
+            <span style={{ fontSize: 14, fontWeight: 700, color: '#111827' }}>{flags.lessEmoji ? 'Leaderboard' : '🏆 Leaderboard'}</span>
             <span style={{ fontSize: 11, color: '#9CA3AF', fontWeight: 500 }}>Branch-wide</span>
           </div>
           {/* Period pills */}
@@ -242,7 +252,10 @@ function Leaderboard() {
                 {/* Rank */}
                 <div style={{ width: 22, flexShrink: 0, textAlign: 'center' }}>
                   {i < 3
-                    ? <span style={{ fontSize: 15 }}>{RANK_MEDALS[i]}</span>
+                    ? (flags.lessEmoji
+                        ? <span style={{ fontSize: 12, fontWeight: 800, color: RANK_COLORS[i] }}>#{i+1}</span>
+                        : <span style={{ fontSize: 15 }}>{RANK_MEDALS[i]}</span>
+                      )
                     : <span style={{ fontSize: 12, fontWeight: 700, color: '#D1D5DB' }}>#{i+1}</span>
                   }
                 </div>
@@ -1201,6 +1214,23 @@ export function HomeView({ onNavigate, onOpenLoan }) {
   const [doneAI, setDoneAI]       = React.useState(new Set());
   const [impactToast, setImpactToast] = React.useState(null);
   const [celebration, setCelebration] = React.useState(null);
+
+  // Prefs-driven layout: re-read on the custom event PreferencesModal
+  // dispatches when the user saves changes.
+  const [prefs, setPrefs] = React.useState(loadPrefs);
+  React.useEffect(() => {
+    const onChange = () => setPrefs(loadPrefs());
+    window.addEventListener(PREFS_EVENT, onChange);
+    return () => window.removeEventListener(PREFS_EVENT, onChange);
+  }, []);
+  const showYourDay = !flags.yourDayCustomizable || prefs.show_your_day_sidebar !== false;
+  const hiddenWidgetIds = [
+    ...(flags.yourDayCustomizable && prefs.show_loan_health_monitor === false ? ['loan-health-monitor'] : []),
+    // When aiInsightsUnderScorecard is ON, the AI Coach brief is rendered
+    // directly under the ScorecardStrip — hide the WidgetGrid copy so it
+    // doesn't appear twice.
+    ...(flags.aiInsightsUnderScorecard ? ['ai-coach-brief'] : []),
+  ];
   const visibleTasks = TASKS.filter(t => !doneTasks.has(t.id));
   const visibleAI    = AI_ACTIONS.filter(a => !doneAI.has(a.id));
   const urgentCount  = visibleTasks.filter(t => t.urgent).length;
@@ -1254,7 +1284,7 @@ export function HomeView({ onNavigate, onOpenLoan }) {
             </span>
             <span style={{ width: 3, height: 3, borderRadius: 999, background: 'rgba(255,255,255,0.25)' }}/>
             <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
-              <span>{WEATHER.icon}</span>
+              {!flags.lessEmoji && <span>{WEATHER.icon}</span>}
               <span style={{ color: 'rgba(255,255,255,0.85)', fontWeight: 600 }}>{WEATHER.temp}°</span>
               <span>{WEATHER.condition}</span>
             </span>
@@ -1384,14 +1414,32 @@ export function HomeView({ onNavigate, onOpenLoan }) {
           {flags.heroFlowing && (
             <div style={{ margin: '-24px -28px 24px' }}>{hero}</div>
           )}
-          {/* 01 · Today's priorities — operational triage */}
-          <SectionHeader
-            number={1}
-            eyebrow="Today's priorities"
-            title="Files that need a decision"
-            sublede="Risks to resolve, locks to extend, and borrowers to chase."
-          />
-          <WidgetGrid renderWidget={(id) => {
+          {/* 01 · Today's priorities — hidden behind hideTodaysPrioritiesHeader flag.
+              The WidgetGrid below carries its own "Your dashboard" label. */}
+          {!flags.hideTodaysPrioritiesHeader && (
+            <SectionHeader
+              number={1}
+              eyebrow="Today's priorities"
+              title="Files that need a decision"
+              sublede="Risks to resolve, locks to extend, and borrowers to chase."
+            />
+          )}
+          {/* homeReorderV1: Your dashboard → ScorecardStrip → Leaderboard
+              → loan-level WidgetGrid → Lakeside Feed.
+              When OFF, fall back to the original ordering. */}
+          {flags.homeReorderV1 && (
+            <div style={{ fontSize: 12, fontWeight: 700, letterSpacing: '0.07em', textTransform: 'uppercase', color: '#9CA3AF', marginBottom: 18 }}>
+              Your dashboard
+            </div>
+          )}
+          {flags.homeReorderV1 && <ScorecardStrip/>}
+          {flags.homeReorderV1 && <div style={{ height: 14 }}/>}
+          {flags.homeReorderV1 && flags.aiInsightsUnderScorecard && <AIInsightsCards onOpenLoan={onOpenLoan}/>}
+          {flags.homeReorderV1 && flags.aiInsightsUnderScorecard && <div style={{ height: 14 }}/>}
+          {flags.homeReorderV1 && <Leaderboard/>}
+          {flags.homeReorderV1 && <div style={{ height: 14 }}/>}
+
+          <WidgetGrid hiddenIds={hiddenWidgetIds} hideSectionLabel={flags.homeReorderV1} renderWidget={(id) => {
             if (id === 'leaderboard')       return <Leaderboard/>;
             if (id === 'company-feed')      return <CompanyFeedWidget feed={FEED}/>;
             if (id === 'ai-actions')        return <AIActionsWidget actions={visibleAI} onOpen={onOpenLoan} onDismiss={(aid) => setDoneAI(prev => new Set([...prev, aid]))}/>;
@@ -1402,37 +1450,60 @@ export function HomeView({ onNavigate, onOpenLoan }) {
             if (id === 'quick-actions')     return <QuickActionsWidget/>;
             if (id === 'recent-activity')   return <RecentActivityWidget/>;
             // Ported from old prototype
-            if (id === 'ai-coach-brief')      return <AIInsightsBanner      loans={LOANS} onOpenLoan={onOpenLoan}/>;
+            if (id === 'ai-coach-brief')      return <AIInsightsCards       onOpenLoan={onOpenLoan}/>;
             if (id === 'loan-health-monitor') return <LoanHealthMonitorWidget onOpenLoan={onOpenLoan}/>;
             if (id === 'files-at-risk')       return <FilesAtRiskWidget       onOpenLoan={onOpenLoan}/>;
             if (id === 'ready-for-uw')        return <ReadyForUWWidget        onOpenLoan={onOpenLoan}/>;
             if (id === 'lock-clock')          return <LockClockWidget         onOpenLoan={onOpenLoan}/>;
             if (id === 'waiting-on-borrower') return <WaitingOnBorrowerWidget onOpenLoan={onOpenLoan}/>;
+            if (id === 'files-needing-action') return <FilesNeedingActionWidget onOpenLoan={onOpenLoan}/>;
             return null;
           }}/>
 
-          {/* 02 · Performance — personal scorecard + branch leaderboard */}
-          <SectionHeader
-            number={2}
-            eyebrow="Performance"
-            title="Where you stand"
-            sublede="Your monthly progress and how you compare across the branch."
-          />
-          <ScorecardStrip/>
-          <div style={{ height: 14 }}/>
-          <Leaderboard/>
+          {/* 02 · Performance — hidden behind hidePerformanceHeader flag */}
+          {!flags.hidePerformanceHeader && !flags.homeReorderV1 && (
+            <SectionHeader
+              number={2}
+              eyebrow="Performance"
+              title="Where you stand"
+              sublede="Your monthly progress and how you compare across the branch."
+            />
+          )}
+          {!flags.homeReorderV1 && <ScorecardStrip/>}
+          {!flags.homeReorderV1 && <div style={{ height: 14 }}/>}
+          {!flags.homeReorderV1 && <Leaderboard/>}
 
-          {/* 03 · From your team — culture / company feed */}
-          <SectionHeader
-            number={3}
-            eyebrow="From your team"
-            title="What's happening at Lakeside"
-            sublede="Announcements, wins, and updates from across the company."
-          />
-          <CompanyFeedWidget feed={FEED}/>
+          {/* 03 · From your team — when lakesideFeedCard is ON, the
+              SectionHeader is replaced with a single card titled
+              "Lakeside Feed" wrapping the company feed. */}
+          {flags.lakesideFeedCard ? (
+            <div style={{ background: '#fff', border: '1px solid #E5E7EB', borderRadius: 14, marginTop: 24, overflow: 'hidden' }}>
+              {/* Matches the WidgetShell header model: icon tile + title + subtle border-bottom line. */}
+              <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '14px 18px', borderBottom: '1px solid #F3F4F6' }}>
+                <div style={{ width: 22, height: 22, borderRadius: 6, background: '#7E68FA18', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                  <Icon name="bell" size={12} color="#7E68FA"/>
+                </div>
+                <span style={{ fontSize: 13, fontWeight: 700, color: '#111827' }}>Lakeside Feed</span>
+              </div>
+              <div style={{ padding: '14px 18px' }}>
+                <CompanyFeedWidget feed={FEED}/>
+              </div>
+            </div>
+          ) : (
+            <>
+              <SectionHeader
+                number={3}
+                eyebrow="From your team"
+                title="What's happening at Lakeside"
+                sublede="Announcements, wins, and updates from across the company."
+              />
+              <CompanyFeedWidget feed={FEED}/>
+            </>
+          )}
         </div>
 
-        {/* ── Right Rail ── */}
+        {/* ── Right Rail ── (hideable via Preferences → Appearance → Home layout) */}
+        {showYourDay && (
         <div style={{ width: 316, flexShrink: 0, borderLeft: '1px solid #E5E7EB', background: '#fff', overflowY: 'auto', display: 'flex', flexDirection: 'column' }}>
 
           {/* Header */}
@@ -1535,6 +1606,7 @@ export function HomeView({ onNavigate, onOpenLoan }) {
           </div>
 
         </div>
+        )}
       </div>
     </div>
 
