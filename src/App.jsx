@@ -13,6 +13,7 @@ import { LoanEstimateView } from './views/LoanEstimateView';
 import { AIFeedView } from './views/AIFeed';
 import { LargeDepositReviewView } from './views/LargeDepositReview';
 import { PreferencesModal } from './components/PreferencesModal';
+import { flags } from './flags';
 
 // ── Standalone URLA window (opened via window.open) ──────────────────────────
 function StandaloneURLA() {
@@ -68,10 +69,15 @@ export default function App() {
   if (window.location.search.includes('view=urla')) return <StandaloneURLA/>;
   if (window.location.search.includes('view=le'))   return <StandaloneLoanEstimate/>;
 
-  // Auth gate — login is shown until the user authenticates (or until they've
-  // authenticated once on this device). Pass ?login to force-show login again.
+  // Auth gate — login is shown until the user authenticates. When
+  // flags.alwaysStartOnLogin is ON, every page load starts unauthed so the
+  // experience always begins on LoginScreen (ignores prior los-authed). Pass
+  // ?login to force-show login again.
   const forceLogin = window.location.search.includes('login');
-  const [authed, setAuthed] = React.useState(() => !forceLogin && localStorage.getItem('los-authed') === '1');
+  const [authed, setAuthed] = React.useState(() => {
+    if (flags.alwaysStartOnLogin) return false;
+    return !forceLogin && localStorage.getItem('los-authed') === '1';
+  });
 
   // All remaining hooks are declared above the auth early-return so the
   // hook order stays stable across renders (Rules of Hooks).
