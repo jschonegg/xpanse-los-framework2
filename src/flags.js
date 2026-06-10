@@ -10,6 +10,7 @@ const defaults = {
   logoToLogin: true,
   alwaysStartOnLogin: true,
   loginGoesHome: true,
+  leaderboardBranchStats: true,
 };
 
 function readOverrides() {
