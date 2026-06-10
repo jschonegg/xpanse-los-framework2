@@ -14,6 +14,7 @@ const defaults = {
   leftNavPolish: true,
   imsBrand: true,
   yourDayCustomizable: true,
+  lessEmoji: true,
 };
 
 function readOverrides() {
