@@ -63,11 +63,22 @@ function SectionTitle({ children }) {
   );
 }
 
+// Renders form labels in sentence case while preserving all-caps acronyms
+// like ZIP, SSN, FHA, etc.
+function toSentenceCase(label) {
+  if (typeof label !== 'string' || !label) return label;
+  return label.split(' ').map((word, i) => {
+    if (word.length >= 2 && /[A-Z]/.test(word) && word === word.toUpperCase()) return word;
+    if (i === 0) return word.charAt(0).toUpperCase() + word.slice(1).toLowerCase();
+    return word.toLowerCase();
+  }).join(' ');
+}
+
 function Field({ label, hint, children }) {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 5 }}>
-      <label style={{ fontSize: 12.5, fontWeight: 600, color: 'var(--text-secondary)' }}>
-        {label}
+      <label style={{ fontSize: 12.5, fontWeight: 500, color: 'var(--text-secondary)' }}>
+        {toSentenceCase(label)}
         {hint && <span style={{ fontWeight: 400, color: 'var(--text-tertiary)', marginLeft: 6 }}>{hint}</span>}
       </label>
       {children}
@@ -131,9 +142,15 @@ function SegmentControl({ value, onChange, options }) {
 
 function SelectInput({ value, onChange, options }) {
   return (
-    <select value={value} onChange={e => onChange(e.target.value)} style={{ ...inputStyle, cursor: 'pointer' }}>
-      {options.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
-    </select>
+    <div style={{ position: 'relative' }}>
+      <select value={value} onChange={e => onChange(e.target.value)}
+        style={{ ...inputStyle, paddingRight: 30, cursor: 'pointer', appearance: 'none', WebkitAppearance: 'none', MozAppearance: 'none' }}>
+        {options.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
+      </select>
+      <span style={{ position: 'absolute', right: 10, top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none', color: 'var(--text-tertiary)', display: 'flex' }}>
+        <Icon name="chevronDown" size={13}/>
+      </span>
+    </div>
   );
 }
 

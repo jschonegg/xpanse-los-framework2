@@ -541,7 +541,7 @@ const DEFAULT_NAV_CONFIG = {
   sections: [
     {
       id: 'sec-forms', label: 'Forms', items: [
-        { id: 'borrowerSummary', label: 'Borrower Summary', icon: 'doc' },
+        { id: 'borrowerSummary', label: 'Borrower Info', icon: 'doc' },
         { id: 'urla1003',        label: '1003',             icon: 'doc' },
       ],
     },
@@ -2939,15 +2939,11 @@ function LoanDetailView({ loanId, tab, onTab, persona = 'LO' }) {
 function BorrowerSummaryView({ loanId, apps, setApps, activeApp, setActiveApp, onUpdateApp }) {
   const app = apps && apps[activeApp];
   if (!app) return null;
-  const addr = app.currentAddress || {};
-  const subtitle = [addr.street, [addr.city, addr.state].filter(Boolean).join(', ')]
-    .filter(Boolean).join(' · ');
   return (
     <div style={{ display: 'flex', flexDirection: 'column' }}>
       <PageHeader
         icon="doc"
-        title="Borrower Summary"
-        subtitle={subtitle || 'Mirrors Section 1 of the 1003'}
+        title="Borrower Info"
         actions={<>
           <button className="btn btn-outline btn-sm"><Icon name="download" size={13}/> Export PDF</button>
           <button className="btn btn-primary btn-sm"><Icon name="doc" size={13}/> Save</button>

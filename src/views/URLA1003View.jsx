@@ -199,10 +199,22 @@ function appTabTitle(app) {
   return app.borrower.name;
 }
 
+// Renders form labels in sentence case while preserving all-caps acronyms
+// like ZIP, SSN, FHA, etc.
+function toSentenceCase(label) {
+  if (typeof label !== 'string' || !label) return label;
+  return label.split(' ').map((word, i) => {
+    if (word.length >= 2 && /[A-Z]/.test(word) && word === word.toUpperCase()) return word;
+    if (i === 0) return word.charAt(0).toUpperCase() + word.slice(1).toLowerCase();
+    return word.toLowerCase();
+  }).join(' ');
+}
+
 // ─── Editable field ─────────────────────────────────────────────────────────
 // `onCommit(nextValue)` fires on blur when the value changed — used by the
 // linked Borrower Summary tab to push edits back to shared app state.
-function URLAField({ label, value, prefix = '', suffix = '', readOnly = false, mono = false, onCommit }) {
+// When `options` is passed, renders a select; commits immediately on change.
+function URLAField({ label, hint, value, prefix = '', suffix = '', readOnly = false, mono = false, options, onCommit }) {
   const [focused, setFocused] = React.useState(false);
   const [localVal, setLocalVal] = React.useState(value);
   React.useEffect(() => { setLocalVal(value); }, [value]);
@@ -210,10 +222,15 @@ function URLAField({ label, value, prefix = '', suffix = '', readOnly = false, m
     setFocused(false);
     if (onCommit && localVal !== value) onCommit(localVal);
   };
+  const isSelect = Array.isArray(options);
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-      <label style={{ fontSize: 10.5, fontWeight: 600, color: 'var(--text-tertiary)', textTransform: 'uppercase', letterSpacing: '0.06em' }}>{label}</label>
+      <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', gap: 8 }}>
+        <label style={{ fontSize: 12, fontWeight: 500, color: 'var(--text-secondary)' }}>{toSentenceCase(label)}</label>
+        {hint && <span style={{ fontSize: 11.5, color: 'var(--text-tertiary)' }}>{hint}</span>}
+      </div>
       <div style={{
+        position: 'relative',
         display: 'flex', alignItems: 'center', gap: 0,
         background: focused ? 'var(--bg-surface)' : 'var(--bg-muted)',
         border: `1px solid ${focused ? 'var(--text-primary)' : 'var(--border-subtle)'}`,
@@ -222,20 +239,90 @@ function URLAField({ label, value, prefix = '', suffix = '', readOnly = false, m
         transition: 'border-color 0.12s, box-shadow 0.12s',
       }}>
         {prefix && <span style={{ padding: '0 8px', fontSize: 13, color: 'var(--text-secondary)', borderRight: '1px solid var(--border-subtle)', background: 'var(--bg-muted)', height: 32, display: 'flex', alignItems: 'center', flexShrink: 0 }}>{prefix}</span>}
-        <input
-          value={localVal ?? ''} readOnly={readOnly}
-          onChange={e => setLocalVal(e.target.value)}
-          onFocus={() => setFocused(true)} onBlur={handleBlur}
-          style={{
-            flex: 1, height: 32, border: 'none', outline: 'none', background: 'transparent',
-            fontSize: 13, fontWeight: 400, fontFamily: mono ? 'DM Mono, monospace' : 'inherit',
-            color: 'var(--text-primary)', padding: '0 10px', cursor: readOnly ? 'default' : 'text', minWidth: 0,
-          }}
-        />
+        {isSelect ? (
+          <>
+            <select
+              value={localVal ?? ''} disabled={readOnly}
+              onChange={e => { setLocalVal(e.target.value); onCommit && onCommit(e.target.value); }}
+              onFocus={() => setFocused(true)} onBlur={() => setFocused(false)}
+              style={{
+                flex: 1, height: 32, border: 'none', outline: 'none', background: 'transparent',
+                fontSize: 13, fontWeight: 400, fontFamily: 'inherit',
+                color: 'var(--text-primary)', padding: '0 28px 0 10px', cursor: readOnly ? 'default' : 'pointer', minWidth: 0,
+                appearance: 'none', WebkitAppearance: 'none', MozAppearance: 'none',
+              }}
+            >
+              {options.map(opt => <option key={opt} value={opt}>{opt || '—'}</option>)}
+            </select>
+            <span style={{ position: 'absolute', right: 10, top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none', color: 'var(--text-tertiary)', display: 'flex' }}>
+              <Icon name="chevronDown" size={12}/>
+            </span>
+          </>
+        ) : (
+          <input
+            value={localVal ?? ''} readOnly={readOnly}
+            onChange={e => setLocalVal(e.target.value)}
+            onFocus={() => setFocused(true)} onBlur={handleBlur}
+            style={{
+              flex: 1, height: 32, border: 'none', outline: 'none', background: 'transparent',
+              fontSize: 13, fontWeight: 400, fontFamily: mono ? 'DM Mono, monospace' : 'inherit',
+              color: 'var(--text-primary)', padding: '0 10px', cursor: readOnly ? 'default' : 'text', minWidth: 0,
+            }}
+          />
+        )}
         {suffix && <span style={{ padding: '0 8px', fontSize: 13, color: 'var(--text-tertiary)', borderLeft: '1px solid var(--border-subtle)', background: 'var(--bg-muted)', height: 32, display: 'flex', alignItems: 'center', flexShrink: 0 }}>{suffix}</span>}
       </div>
     </div>
   );
+}
+
+const NAME_SUFFIXES = ['', 'Jr.', 'Sr.', 'II', 'III', 'IV', 'V'];
+const MARITAL_STATUSES = ['Single', 'Married', 'Separated', 'Divorced', 'Widowed', 'Domestic Partnership'];
+const US_STATES = [
+  '', 'AL','AK','AZ','AR','CA','CO','CT','DE','DC','FL','GA','HI','ID','IL','IN','IA','KS','KY','LA','ME','MD','MA','MI','MN','MS','MO',
+  'MT','NE','NV','NH','NJ','NM','NY','NC','ND','OH','OK','OR','PA','RI','SC','SD','TN','TX','UT','VT','VA','WA','WV','WI','WY',
+];
+
+// Compute integer years between a date string and today. Accepts MM/DD/YYYY,
+// YYYY-MM-DD, or any string Date can parse. Returns null when unparseable.
+function calcAge(dobStr) {
+  if (!dobStr || typeof dobStr !== 'string') return null;
+  let d = null;
+  const mdy = dobStr.trim().match(/^(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{2}|\d{4})$/);
+  if (mdy) {
+    let [, mm, dd, yy] = mdy;
+    if (yy.length === 2) yy = (parseInt(yy, 10) > 30 ? '19' : '20') + yy;
+    d = new Date(parseInt(yy, 10), parseInt(mm, 10) - 1, parseInt(dd, 10));
+  } else {
+    const parsed = new Date(dobStr);
+    if (!isNaN(parsed.getTime())) d = parsed;
+  }
+  if (!d || isNaN(d.getTime())) return null;
+  const now = new Date();
+  let age = now.getFullYear() - d.getFullYear();
+  const m = now.getMonth() - d.getMonth();
+  if (m < 0 || (m === 0 && now.getDate() < d.getDate())) age -= 1;
+  if (age < 0 || age > 130) return null;
+  return age;
+}
+
+// Parse a full name string into first/middle/last/suffix parts. Treats a
+// trailing token matching NAME_SUFFIXES as the suffix; everything between
+// first and last becomes the middle name (so "James M O'Connor" yields
+// firstName: "James", middleName: "M", lastName: "O'Connor").
+function splitName(name) {
+  if (!name || typeof name !== 'string') return { firstName: '', middleName: '', lastName: '', suffix: '' };
+  const parts = name.trim().split(/\s+/);
+  let suffix = '';
+  if (parts.length >= 2 && NAME_SUFFIXES.includes(parts[parts.length - 1])) suffix = parts.pop();
+  if (parts.length === 0) return { firstName: '', middleName: '', lastName: '', suffix };
+  if (parts.length === 1) return { firstName: parts[0], middleName: '', lastName: '', suffix };
+  if (parts.length === 2) return { firstName: parts[0], middleName: '', lastName: parts[1], suffix };
+  return { firstName: parts[0], middleName: parts.slice(1, -1).join(' '), lastName: parts[parts.length - 1], suffix };
+}
+
+function joinName({ firstName, middleName, lastName, suffix }) {
+  return [firstName, middleName, lastName, suffix].filter(s => s && String(s).trim()).join(' ');
 }
 
 function SectionHead({ label, sub, accent = false }) {
@@ -368,14 +455,22 @@ function YesNoRow({ label, value, coValue, showCoColumn }) {
 // `onChange(field, value)` (optional) — fires when a field is edited.
 function PersonalInfoFields({ person, onChange }) {
   const commit = (field) => onChange ? (v) => onChange(field, v) : undefined;
+  const nameParts = splitName(person.name || '');
+  const commitName = (key) => (v) => onChange && onChange('name', joinName({ ...nameParts, [key]: v }));
   return (
     <div style={{ padding: '16px 14px', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '14px 18px', background: 'var(--bg-surface)' }}>
-      <URLAField label="Full Name"       value={person.name}           onCommit={commit('name')}/>
+      <URLAField label="First Name"      value={nameParts.firstName}   onCommit={commitName('firstName')}/>
+      <URLAField label="Middle Name"     value={nameParts.middleName}  onCommit={commitName('middleName')}/>
+      <URLAField label="Last Name"       value={nameParts.lastName}    onCommit={commitName('lastName')}/>
+      <URLAField label="Suffix"          value={nameParts.suffix} options={NAME_SUFFIXES} onCommit={commitName('suffix')}/>
       <URLAField label="Social Security" value={person.ssn} mono       onCommit={commit('ssn')}/>
-      <URLAField label="Date of Birth"   value={person.dob} mono       onCommit={commit('dob')}/>
+      <URLAField label="Date of Birth"   value={person.dob} mono       onCommit={commit('dob')}
+        hint={calcAge(person.dob) != null ? `Age ${calcAge(person.dob)}` : null}/>
       <URLAField label="Citizenship"     value={person.citizenship}    onCommit={commit('citizenship')}/>
-      <URLAField label="Marital Status"  value={person.maritalStatus}  onCommit={commit('maritalStatus')}/>
-      <URLAField label="Dependents"      value={person.dependents != null ? `${person.dependents}${person.dependentsAges ? ` (ages ${person.dependentsAges})` : ''}` : '—'}/>
+      <URLAField label="Marital Status"  value={person.maritalStatus} options={MARITAL_STATUSES} onCommit={commit('maritalStatus')}/>
+      <URLAField label="# of Dependents" value={person.dependents != null ? String(person.dependents) : ''}
+        onCommit={onChange ? (v) => onChange('dependents', v === '' ? null : parseInt(v, 10) || 0) : undefined}/>
+      <URLAField label="Dependent Ages"  value={person.dependentsAges || ''} onCommit={commit('dependentsAges')} hint="Comma-separated"/>
       <URLAField label="Home Phone"      value={person.phoneHome || '—'} onCommit={commit('phoneHome')}/>
       <URLAField label="Cell Phone"      value={person.phoneCell || '—'} onCommit={commit('phoneCell')}/>
       <div style={{ gridColumn: '1 / -1' }}>
@@ -395,8 +490,6 @@ export function SectionBorrowerInfo({ app, onAddCo, onRemoveCo, onUpdateApp }) {
   const onCoborrowerChange = mkSubChange('coborrower');
   const onAddressChange    = mkSubChange('currentAddress');
   const onCoAddressChange  = mkSubChange('coborrowerAddress');
-  const onEmploymentChange = mkSubChange('employment');
-  const onCoEmploymentChange = mkSubChange('coborrowerEmployment');
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
       {/* 1a — Personal (anchor for "1. Borrower Info") */}
@@ -449,13 +542,8 @@ export function SectionBorrowerInfo({ app, onAddCo, onRemoveCo, onUpdateApp }) {
         )}
       </div>
 
-      {/* 1b — Employment (paired when co-borrower present) */}
-      <div style={{ display: 'grid', gridTemplateColumns: hasCo ? '1fr 1fr' : '1fr', gap: 16, alignItems: 'flex-start' }}>
-        <EmploymentCard sub="Borrower" employment={app.employment} additional={app.additionalIncome} narrow={hasCo} onChange={onEmploymentChange}/>
-        {hasCo && (
-          <EmploymentCard sub="Co-Borrower" employment={app.coborrowerEmployment || app.employment} additional={app.coborrowerAdditionalIncome} narrow onChange={onCoEmploymentChange}/>
-        )}
-      </div>
+      {/* 1b — Employment & Income (unified table for both borrowers) */}
+      <IncomeTable app={app} onUpdateApp={onUpdateApp}/>
     </div>
   );
 }
@@ -513,7 +601,10 @@ function AddressCard({ sub, address, narrow, sameAsPrimary, onToggleSameAsPrimar
             <>
               <div style={{ gridColumn: '1 / -1' }}><URLAField label="Street" value={address.street} onCommit={commit('street')}/></div>
               <URLAField label="City"  value={address.city}  onCommit={commit('city')}/>
-              <URLAField label="State / ZIP" value={`${address.state} ${address.zip}`} mono/>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0 12px' }}>
+                <URLAField label="State" options={US_STATES} value={address.state} onCommit={commit('state')}/>
+                <URLAField label="ZIP"   value={address.zip} mono onCommit={commit('zip')}/>
+              </div>
               <URLAField label="Years at Address" value={`${address.yearsAtAddress} yrs`}/>
               <URLAField label="Housing" value={address.housing} onCommit={commit('housing')}/>
             </>
@@ -521,7 +612,7 @@ function AddressCard({ sub, address, narrow, sameAsPrimary, onToggleSameAsPrimar
             <>
               <URLAField label="Street" value={address.street} onCommit={commit('street')}/>
               <URLAField label="City"   value={address.city}   onCommit={commit('city')}/>
-              <URLAField label="State"  value={address.state}  onCommit={commit('state')}/>
+              <URLAField label="State"  options={US_STATES} value={address.state} onCommit={commit('state')}/>
               <URLAField label="ZIP"    value={address.zip} mono onCommit={commit('zip')}/>
               <URLAField label="Years at Address" value={`${address.yearsAtAddress} yrs`}/>
               <URLAField label="Housing" value={address.housing} onCommit={commit('housing')}/>
@@ -533,28 +624,183 @@ function AddressCard({ sub, address, narrow, sameAsPrimary, onToggleSameAsPrimar
   );
 }
 
-function EmploymentCard({ sub, employment, additional, narrow, onChange }) {
-  if (!employment) return null;
-  const commit = (field) => onChange ? (v) => onChange(field, v) : undefined;
+const INCOME_TYPES = ['Base Employment', 'Self-Employment', 'Bonus', 'Commission', 'Overtime', 'Rental', 'Investment', 'Social Security', 'Pension', 'Other'];
+
+// Build an income list from the legacy per-borrower employment/additional
+// income shape. Used as a fallback when an app hasn't migrated to the unified
+// `incomes` array yet.
+function deriveIncomesFromLegacy(app) {
+  const out = [];
+  let id = 1;
+  if (app.employment && app.employment.monthlyIncome) {
+    out.push({
+      id: id++, owner: 'borrower',
+      type: app.employment.selfEmployed ? 'Self-Employment' : 'Base Employment',
+      source: app.employment.employer || 'Employer',
+      monthlyAmount: app.employment.monthlyIncome,
+    });
+  }
+  if (app.additionalIncome && app.additionalIncome.monthlyAmt) {
+    out.push({
+      id: id++, owner: 'borrower', type: 'Other',
+      source: app.additionalIncome.source || 'Other income',
+      monthlyAmount: app.additionalIncome.monthlyAmt,
+    });
+  }
+  if (app.coborrower && app.coborrowerEmployment && app.coborrowerEmployment.monthlyIncome) {
+    out.push({
+      id: id++, owner: 'coborrower',
+      type: app.coborrowerEmployment.selfEmployed ? 'Self-Employment' : 'Base Employment',
+      source: app.coborrowerEmployment.employer || 'Employer',
+      monthlyAmount: app.coborrowerEmployment.monthlyIncome,
+    });
+  }
+  if (app.coborrowerAdditionalIncome && app.coborrowerAdditionalIncome.monthlyAmt) {
+    out.push({
+      id: id++, owner: 'coborrower', type: 'Other',
+      source: app.coborrowerAdditionalIncome.source || 'Other income',
+      monthlyAmount: app.coborrowerAdditionalIncome.monthlyAmt,
+    });
+  }
+  return out;
+}
+
+function ownerLabel(owner, app) {
+  const p = owner === 'coborrower' ? app.coborrower : app.borrower;
+  const parts = splitName((p && p.name) || '');
+  return parts.firstName || (owner === 'coborrower' ? 'Co-borrower' : 'Borrower');
+}
+
+function IncomeTable({ app, onUpdateApp }) {
+  const hasCo = !!app.coborrower;
+  const incomes = app.incomes || deriveIncomesFromLegacy(app);
+  const ownerOptions = hasCo
+    ? [{ value: 'borrower', label: ownerLabel('borrower', app) }, { value: 'coborrower', label: ownerLabel('coborrower', app) }]
+    : [{ value: 'borrower', label: ownerLabel('borrower', app) }];
+
+  const persist = (next) => onUpdateApp && onUpdateApp({ incomes: next });
+  const updateRow = (id, patch) => persist(incomes.map(inc => inc.id === id ? { ...inc, ...patch } : inc));
+  const deleteRow = (id) => persist(incomes.filter(inc => inc.id !== id));
+  const addRow = () => {
+    const nextId = incomes.reduce((max, inc) => Math.max(max, inc.id || 0), 0) + 1;
+    persist([...incomes, { id: nextId, owner: 'borrower', type: 'Base Employment', source: '', monthlyAmount: 0 }]);
+  };
+
+  const borrowerTotal = incomes.filter(i => i.owner === 'borrower').reduce((s, i) => s + (Number(i.monthlyAmount) || 0), 0);
+  const coTotal = incomes.filter(i => i.owner === 'coborrower').reduce((s, i) => s + (Number(i.monthlyAmount) || 0), 0);
+  const combined = borrowerTotal + coTotal;
+
+  const cellTd = { padding: '8px 10px', borderBottom: '1px solid var(--border-subtle)', verticalAlign: 'middle' };
+  const cellInput = {
+    width: '100%', height: 30, padding: '0 8px', border: '1px solid var(--border-subtle)',
+    borderRadius: 6, background: 'var(--bg-surface)', fontSize: 13, fontFamily: 'inherit',
+    color: 'var(--text-primary)', outline: 'none', boxSizing: 'border-box',
+  };
+  const cellSelect = { ...cellInput, paddingRight: 26, cursor: 'pointer', appearance: 'none', WebkitAppearance: 'none', MozAppearance: 'none' };
+  const chevronWrap = { position: 'absolute', right: 8, top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none', color: 'var(--text-tertiary)', display: 'flex' };
+
   return (
     <div style={{ border: '1px solid var(--border-subtle)', borderRadius: 10, overflow: 'hidden' }}>
-      <SectionHead label="1b · Current Employment & Income" sub={sub}/>
-      <div style={{ padding: '16px 14px', display: 'grid', gridTemplateColumns: narrow ? '1fr 1fr' : '2fr 1fr 1fr', gap: '14px 18px', background: 'var(--bg-surface)' }}>
-        <div style={{ gridColumn: narrow ? '1 / -1' : 'auto' }}>
-          <URLAField label="Employer" value={employment.employer} onCommit={commit('employer')}/>
-        </div>
-        <URLAField label="Position / Title" value={employment.position}    onCommit={commit('position')}/>
-        <URLAField label="Start Date"       value={employment.startDate} mono onCommit={commit('startDate')}/>
-        <URLAField label="Years in Line of Work" value={`${employment.yearsInLine} yrs`}/>
-        <URLAField label="Monthly Income"   value={fmtK(employment.monthlyIncome)} mono prefix="$"/>
-        <URLAField label="Self-Employed"    value={employment.selfEmployed ? 'Yes' : 'No'}/>
+      <SectionHead label="1b · Current Employment & Income"/>
+      <div style={{ background: 'var(--bg-surface)', overflowX: 'auto' }}>
+        <table style={{ width: '100%', borderCollapse: 'collapse', tableLayout: 'fixed' }}>
+          <colgroup>
+            <col style={{ width: '18%' }}/>
+            <col style={{ width: '22%' }}/>
+            <col style={{ width: '32%' }}/>
+            <col style={{ width: '20%' }}/>
+            <col style={{ width: '8%' }}/>
+          </colgroup>
+          <thead>
+            <tr style={{ background: 'var(--bg-muted)' }}>
+              <th style={{ ...cellTd, fontSize: 11.5, fontWeight: 600, color: 'var(--text-tertiary)', textAlign: 'left' }}>Borrower</th>
+              <th style={{ ...cellTd, fontSize: 11.5, fontWeight: 600, color: 'var(--text-tertiary)', textAlign: 'left' }}>Type</th>
+              <th style={{ ...cellTd, fontSize: 11.5, fontWeight: 600, color: 'var(--text-tertiary)', textAlign: 'left' }}>Source / Employer</th>
+              <th style={{ ...cellTd, fontSize: 11.5, fontWeight: 600, color: 'var(--text-tertiary)', textAlign: 'right' }}>Monthly amount</th>
+              <th style={{ ...cellTd }}/>
+            </tr>
+          </thead>
+          <tbody>
+            {incomes.length === 0 ? (
+              <tr>
+                <td colSpan={5} style={{ padding: '20px 14px', textAlign: 'center', fontSize: 13, color: 'var(--text-tertiary)' }}>
+                  No income entries — click <strong>Add income</strong> to start.
+                </td>
+              </tr>
+            ) : incomes.map(inc => (
+              <tr key={inc.id}>
+                <td style={cellTd}>
+                  <div style={{ position: 'relative' }}>
+                    <select value={inc.owner} onChange={e => updateRow(inc.id, { owner: e.target.value })} style={cellSelect}>
+                      {ownerOptions.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
+                    </select>
+                    <span style={chevronWrap}><Icon name="chevronDown" size={12}/></span>
+                  </div>
+                </td>
+                <td style={cellTd}>
+                  <div style={{ position: 'relative' }}>
+                    <select value={inc.type} onChange={e => updateRow(inc.id, { type: e.target.value })} style={cellSelect}>
+                      {INCOME_TYPES.map(t => <option key={t} value={t}>{t}</option>)}
+                    </select>
+                    <span style={chevronWrap}><Icon name="chevronDown" size={12}/></span>
+                  </div>
+                </td>
+                <td style={cellTd}>
+                  <input value={inc.source || ''} onChange={e => updateRow(inc.id, { source: e.target.value })} placeholder="Employer or source" style={cellInput}/>
+                </td>
+                <td style={cellTd}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 4, justifyContent: 'flex-end' }}>
+                    <span style={{ fontSize: 13, color: 'var(--text-tertiary)' }}>$</span>
+                    <input type="number" min="0" step="100" value={inc.monthlyAmount || 0}
+                      onChange={e => updateRow(inc.id, { monthlyAmount: parseFloat(e.target.value) || 0 })}
+                      style={{ ...cellInput, fontFamily: 'DM Mono, monospace', textAlign: 'right' }}/>
+                  </div>
+                </td>
+                <td style={{ ...cellTd, textAlign: 'center' }}>
+                  <button onClick={() => deleteRow(inc.id)} aria-label="Delete income"
+                    style={{ width: 26, height: 26, borderRadius: 6, border: '1px solid var(--border-subtle)', background: 'var(--bg-surface)', cursor: 'pointer', color: 'var(--text-tertiary)', display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}
+                    onMouseEnter={e => { e.currentTarget.style.background = 'var(--card-red-bg)'; e.currentTarget.style.color = 'var(--status-red)'; e.currentTarget.style.borderColor = 'var(--status-red)'; }}
+                    onMouseLeave={e => { e.currentTarget.style.background = 'var(--bg-surface)'; e.currentTarget.style.color = 'var(--text-tertiary)'; e.currentTarget.style.borderColor = 'var(--border-subtle)'; }}>
+                    <Icon name="x" size={12}/>
+                  </button>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+          <tfoot>
+            <tr style={{ background: 'var(--bg-muted)' }}>
+              <td colSpan={3} style={{ ...cellTd, fontSize: 12, fontWeight: 600, color: 'var(--text-secondary)' }}>
+                {ownerLabel('borrower', app)} total
+              </td>
+              <td style={{ ...cellTd, textAlign: 'right', fontFamily: 'DM Mono, monospace', fontWeight: 700 }}>{fmtK(borrowerTotal)}</td>
+              <td style={cellTd}/>
+            </tr>
+            {hasCo && (
+              <tr style={{ background: 'var(--bg-muted)' }}>
+                <td colSpan={3} style={{ ...cellTd, fontSize: 12, fontWeight: 600, color: 'var(--text-secondary)' }}>
+                  {ownerLabel('coborrower', app)} total
+                </td>
+                <td style={{ ...cellTd, textAlign: 'right', fontFamily: 'DM Mono, monospace', fontWeight: 700 }}>{fmtK(coTotal)}</td>
+                <td style={cellTd}/>
+              </tr>
+            )}
+            <tr style={{ background: 'var(--bg-muted)', borderTop: '2px solid var(--border-strong)' }}>
+              <td colSpan={3} style={{ ...cellTd, borderBottom: 'none', fontSize: 12.5, fontWeight: 700, color: 'var(--text-primary)' }}>
+                Combined monthly income
+              </td>
+              <td style={{ ...cellTd, borderBottom: 'none', textAlign: 'right', fontFamily: 'DM Mono, monospace', fontWeight: 800, fontSize: 14 }}>{fmtK(combined)}</td>
+              <td style={{ ...cellTd, borderBottom: 'none' }}/>
+            </tr>
+          </tfoot>
+        </table>
       </div>
-      {additional && (
-        <div style={{ padding: '10px 14px', background: 'var(--bg-muted)', borderTop: '1px solid var(--border-subtle)', display: 'flex', alignItems: 'center', gap: 14, flexWrap: 'wrap' }}>
-          <span style={{ fontSize: 11, fontWeight: 700, color: 'var(--text-tertiary)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Other Income</span>
-          <span style={{ fontSize: 13, color: 'var(--text-primary)' }}>{additional.source}: <strong>{fmtK(additional.monthlyAmt)}/mo</strong></span>
-        </div>
-      )}
+      <div style={{ padding: '10px 14px', borderTop: '1px solid var(--border-subtle)', background: 'var(--bg-surface)' }}>
+        <button onClick={addRow}
+          className="btn btn-outline btn-sm"
+          style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+          <Icon name="plus" size={12}/> Add income
+        </button>
+      </div>
     </div>
   );
 }
@@ -927,7 +1173,7 @@ export function URLA1003View({ loanId = 'LN-2024-0234', apps: appsProp, setApps:
       <PageHeader
         icon="doc"
         title="Uniform Residential Loan Application"
-        subtitle={`Form 1003 · ${ld.property.street}, ${ld.property.city} ${ld.property.state}`}
+        subtitle="Form 1003"
         actions={<>
           <button className="btn btn-outline btn-sm"><Icon name="download" size={13}/> Export PDF</button>
           <button className="btn btn-primary btn-sm" onClick={handleSave} style={{ minWidth: 80 }}>

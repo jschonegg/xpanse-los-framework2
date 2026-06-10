@@ -94,6 +94,17 @@ const fmt = (n) => '$' + Number(n).toLocaleString('en-US', { minimumFractionDigi
 const fmtK = (n) => '$' + Number(n).toLocaleString('en-US', { maximumFractionDigits: 0 });
 const pct = (n) => Number(n).toFixed(3) + '%';
 
+// Renders form labels in sentence case while preserving all-caps acronyms
+// like ZIP, SSN, FHA, etc.
+function toSentenceCase(label) {
+  if (typeof label !== 'string' || !label) return label;
+  return label.split(' ').map((word, i) => {
+    if (word.length >= 2 && /[A-Z]/.test(word) && word === word.toUpperCase()) return word;
+    if (i === 0) return word.charAt(0).toUpperCase() + word.slice(1).toLowerCase();
+    return word.toLowerCase();
+  }).join(' ');
+}
+
 // ─── Editable field component ─────────────────────────────────────────────────
 function LEField({ label, value, onChange, prefix = '', suffix = '', readOnly = false, highlight = false, wide = false, mono = false }) {
   const [focused, setFocused] = React.useState(false);
@@ -108,7 +119,7 @@ function LEField({ label, value, onChange, prefix = '', suffix = '', readOnly = 
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-      <label style={{ fontSize: 10.5, fontWeight: 600, color: 'var(--text-tertiary)', textTransform: 'uppercase', letterSpacing: '0.06em' }}>{label}</label>
+      <label style={{ fontSize: 12, fontWeight: 500, color: 'var(--text-secondary)' }}>{toSentenceCase(label)}</label>
       <div style={{
         display: 'flex', alignItems: 'center', gap: 0,
         background: focused ? 'var(--bg-surface)' : 'var(--bg-muted)',
