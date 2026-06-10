@@ -233,7 +233,9 @@ function AdminGlobalRail({ onExit, onHome, onOpenCategory, expanded, adminPage, 
       background: 'linear-gradient(180deg, #0C0E2A 0%, #131638 60%, #1A1A45 100%)',
       borderRight: '1px solid rgba(255,255,255,0.04)',
       display: 'flex', flexDirection: 'column', alignItems: expanded ? 'stretch' : 'center',
-      padding: expanded ? '14px 10px' : '14px 0', gap: 4, overflowY: 'auto',
+      padding: expanded ? '14px 10px' : '14px 0', gap: 4,
+      // No overflow clipping so the minimized-rail hover tooltips can escape
+      // the 44px rail and render to the right.
       transition: 'width 0.16s ease',
     }}>
       {/* Brand / home */}
