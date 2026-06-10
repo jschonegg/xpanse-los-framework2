@@ -826,7 +826,7 @@ function CatalogDrawer({ activeIds, onAdd, onClose }) {
 }
 
 // ─── Main WidgetGrid ──────────────────────────────────────────────────────────
-export function WidgetGrid({ renderWidget, hiddenIds }) {
+export function WidgetGrid({ renderWidget, hiddenIds, hideSectionLabel }) {
   const [layout,   setLayout]   = React.useState(loadLayout);
   const [editMode, setEditMode] = React.useState(false);
   const [catalog,  setCatalog]  = React.useState(false);
@@ -886,7 +886,7 @@ export function WidgetGrid({ renderWidget, hiddenIds }) {
       {/* Toolbar */}
       <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 18 }}>
         <span style={{ fontSize: 12, fontWeight: 700, letterSpacing: '0.07em', textTransform: 'uppercase', color: '#9CA3AF', flex: 1 }}>
-          {editMode ? '✦ Drag to reorder · click × to remove' : 'Your dashboard'}
+          {editMode ? '✦ Drag to reorder · click × to remove' : (hideSectionLabel ? '' : 'Your dashboard')}
         </span>
         {editMode && (
           <button onClick={() => { setCatalog(true); }} style={{
