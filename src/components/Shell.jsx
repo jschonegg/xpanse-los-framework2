@@ -1,8 +1,14 @@
 import React from 'react';
 import { Icon } from './Icon';
 import { flags } from '../flags';
+import { IMSLogoMonogram } from './IMSLogo';
 
 export function LogoMark({ size = 32 }) {
+  // When imsBrand is ON, render the IMS monogram (Intelligent Mortgage Solutions).
+  // Otherwise fall back to the previous sparkle-on-purple-tile mark.
+  if (flags.imsBrand) {
+    return <IMSLogoMonogram size={size}/>;
+  }
   return (
     <div style={{
       width: size, height: size, borderRadius: 8,

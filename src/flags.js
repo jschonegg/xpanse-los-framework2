@@ -12,6 +12,7 @@ const defaults = {
   loginGoesHome: true,
   leaderboardBranchStats: true,
   leftNavPolish: true,
+  imsBrand: true,
 };
 
 function readOverrides() {
