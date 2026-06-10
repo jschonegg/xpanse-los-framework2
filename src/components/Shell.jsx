@@ -3,11 +3,32 @@ import { Icon } from './Icon';
 import { flags } from '../flags';
 import { IMSLogoMonogram } from './IMSLogo';
 
+// Xpanse primary X mark — inlined SVG from the design system
+// (Logo/Xpanse_Primary.svg). Used in the LeftNav rail.
+function XpanseMark({ size = 28, color = '#5166FE' }) {
+  return (
+    <svg
+      width={size}
+      height={Math.round(size * (24 / 35))}
+      viewBox="0 0 35 24"
+      fill="none"
+      xmlns="http://www.w3.org/2000/svg"
+      aria-label="Xpanse"
+      style={{ display: 'block' }}
+    >
+      <path
+        d="M5.14261 2.41701H10.7277L16.3731 9.16225C16.5633 9.44871 16.8926 9.61432 17.2405 9.61432H27.5107L34.5106 1.25326C34.9374 0.751958 34.5663 0 33.8937 0H22.7792L18.3724 5.25923C17.8436 5.89034 16.8416 5.89034 16.3128 5.25923L11.9152 0H0.80072C0.128099 0 -0.243003 0.751958 0.179125 1.25326L8.50107 11.1809C8.89537 11.6509 8.89537 12.3267 8.50107 12.7967L0.179125 22.7467C-0.243003 23.2525 0.128099 24 0.80072 24H11.9152L16.3174 18.7363C16.8462 18.1052 17.8482 18.1052 18.377 18.7363L22.7838 23.9955H33.903C34.5756 24 34.9467 23.248 34.5246 22.7467L27.52 14.3812H17.389C17.0039 14.3812 16.6282 14.5379 16.387 14.8288C16.387 14.8288 16.387 14.8288 16.3823 14.8333L10.737 21.5785H5.14725C4.83645 21.5785 4.66481 21.2294 4.85964 20.9966L10.7787 13.9291C11.725 12.8012 11.725 11.1854 10.7787 10.0574L4.855 2.99888C4.66017 2.76613 4.83181 2.41701 5.14261 2.41701ZM20.4505 6.61544L23.9667 2.41701H29.5564C29.8672 2.41701 30.0389 2.76613 29.844 2.99888L26.3279 7.19731H20.7381C20.4273 7.19731 20.2557 6.84819 20.4505 6.61544ZM20.7381 16.7982H26.3279L29.844 20.9966C30.0389 21.2294 29.8672 21.5785 29.5564 21.5785H23.9667L20.4505 17.3801C20.2557 17.1473 20.4273 16.7982 20.7381 16.7982Z"
+        fill={color}
+      />
+    </svg>
+  );
+}
+
 export function LogoMark({ size = 32 }) {
-  // When imsBrand is ON, render the IMS monogram (Intelligent Mortgage Solutions).
-  // Otherwise fall back to the previous sparkle-on-purple-tile mark.
+  // imsBrand ON  → Xpanse X-mark (white, no tile)
+  // imsBrand OFF → legacy sparkle-on-purple-tile mark
   if (flags.imsBrand) {
-    return <IMSLogoMonogram size={size}/>;
+    return <XpanseMark size={size}/>;
   }
   return (
     <div style={{
