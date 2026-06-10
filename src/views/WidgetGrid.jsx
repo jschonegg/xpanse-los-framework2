@@ -27,11 +27,12 @@ import { Icon } from '../components/Icon';
 // still in the catalog if a user re-adds them.
 // v9: Lock Clock + Waiting on Borrower + Ready for UW merged into one
 //     tabbed "Files needing action" card behind the mergedActionCard flag.
-const STORAGE_KEY = 'los-widget-layout-v9';
+// v10: Loan Health Monitor removed from the default layout. Still in the
+//      catalog so users can add it back through the dashboard customizer.
+const STORAGE_KEY = 'los-widget-layout-v10';
 
 const DEFAULT_LAYOUT = [
   { id: 'ai-coach-brief',       width: 'full' },
-  { id: 'loan-health-monitor',  width: 'full' },
   { id: 'files-needing-action', width: 'full' },
 ];
 

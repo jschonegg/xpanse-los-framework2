@@ -16,6 +16,7 @@ const defaults = {
   yourDayCustomizable: true,
   lessEmoji: true,
   mergedActionCard: true,
+  aiCoachBrand: true,
 };
 
 function readOverrides() {

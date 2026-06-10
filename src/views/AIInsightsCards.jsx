@@ -1,6 +1,9 @@
 import React from 'react';
 import { Icon } from '../components/Icon';
 import { LOANS } from '../data/loans';
+import { flags } from '../flags';
+
+const COACH_NAME = flags.aiCoachBrand ? 'AI Coach' : 'Halo';
 
 // ── AI Insights (Halo) ──────────────────────────────────────────────────────
 // Four-column layout: Halo identity card on the left, then 3 insight cards
@@ -84,7 +87,7 @@ export function AIInsightsCards({ onOpenLoan }) {
             <Icon name="sparkle" size={18} strokeWidth={1.6}/>
           </div>
           <div style={{ lineHeight: 1.2 }}>
-            <div style={{ fontSize: 13, fontWeight: 800, color: '#111827' }}>Halo <span style={{ color: '#6B7280', fontWeight: 600 }}>· your AI supervisor</span></div>
+            <div style={{ fontSize: 13, fontWeight: 800, color: '#111827' }}>{COACH_NAME} <span style={{ color: '#6B7280', fontWeight: 600 }}>· your AI supervisor</span></div>
             <div style={{ fontSize: 11, color: '#9CA3AF', marginTop: 2 }}>Updated 4 minutes ago</div>
           </div>
         </div>
@@ -98,7 +101,7 @@ export function AIInsightsCards({ onOpenLoan }) {
             fontSize: 13, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit',
             display: 'inline-flex', alignItems: 'center', gap: 6,
           }}>
-            Open in Halo <Icon name="arrowRight" size={12} strokeWidth={2.4}/>
+            Open in {COACH_NAME} <Icon name="arrowRight" size={12} strokeWidth={2.4}/>
           </button>
           <button style={{
             background: '#fff', color: '#374151', border: '1px solid #E5E7EB',
