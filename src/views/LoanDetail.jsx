@@ -28,6 +28,9 @@ import { URLAView } from './URLAView';
 import { LOANS } from '../data/loans';
 import { DocumentsTool } from '../components/DocumentsTool';
 import { IncomeTool } from '../components/IncomeTool';
+import { useWorkflows } from '../workflows/WorkflowContext';
+import { FIXED_SYSTEM_LINKS, PAGE_CONTENT_TAB, getPage } from '../workflows/workflowModel';
+import { PreviewContextSwitcher } from './AdminWorkflows';
 
 // ─── Property intelligence data per loan ─────────────────────────────────────
 const PROPERTY_INTEL = {
@@ -656,7 +659,26 @@ function LeftRail({ tab, onTab, onOpenURLA, dataSubTab, onDataSubTab, onOpenDocs
   const [draftNav, setDraftNav]           = React.useState(DEFAULT_NAV_CONFIG);
   const [editingSectionId, setEditingSectionId] = React.useState(null);
   const [sectionMenuOpenId, setSectionMenuOpenId] = React.useState(null);
-  const activeNav = configMode ? draftNav : committedNav;
+  const [ctxOpen, setCtxOpen] = React.useState(false);
+
+  // The loan nav is now driven by the active, rule-matched workflow configured
+  // in the Admin console (see WorkflowProvider). Fixed system links stay pinned
+  // at the top; each configured page maps onto the existing content-tab id so
+  // the content router and the 1003 sub-nav keep working unchanged.
+  const { resolvedWorkflow } = useWorkflows();
+  const activeNav = React.useMemo(() => ({
+    fixed: FIXED_SYSTEM_LINKS.map(l => ({ id: l.tab, label: l.label, icon: l.icon })),
+    sections: (resolvedWorkflow?.sections || []).map(s => ({
+      id: s.id,
+      label: s.title,
+      items: s.pages.map(p => ({
+        id: PAGE_CONTENT_TAB[p.id] || p.id,
+        label: p.label,
+        icon: p.icon,
+        badge: getPage(p.id)?.badge,
+      })),
+    })),
+  }), [resolvedWorkflow]);
 
   const enterConfig = () => { setDraftNav(committedNav); setConfigMode(true); };
   const saveConfig  = () => { setCommittedNav(draftNav); setConfigMode(false); setEditingSectionId(null); setSectionMenuOpenId(null); };
@@ -1027,43 +1049,43 @@ function LeftRail({ tab, onTab, onOpenURLA, dataSubTab, onDataSubTab, onOpenDocs
         )}
       </div>
 
-      {/* Footer — Config View toggle (off) OR Save/Cancel (on) */}
+      {/* Footer — applied-workflow indicator + mock preview-context control.
+          The nav above is configured centrally in the Admin console; this
+          shows which workflow currently applies and lets you test matching. */}
       <div style={{
         borderTop: '1px solid var(--border-subtle)',
         padding: '10px 12px',
-        background: configMode ? 'var(--bg-muted)' : 'var(--bg-surface)',
-        display: 'flex', alignItems: 'center', gap: 8,
-        flexShrink: 0,
+        background: 'var(--bg-surface)',
+        flexShrink: 0, position: 'relative',
       }}>
-        {configMode ? (
-          <>
-            <button
-              onClick={cancelConfig}
-              className="btn btn-outline btn-sm"
-              style={{ flex: 1, height: 28, fontSize: 11.5 }}
-            >Cancel</button>
-            <button
-              onClick={saveConfig}
-              className="btn btn-primary btn-sm"
-              style={{ flex: 1, height: 28, fontSize: 11.5 }}
-            >Save</button>
-          </>
-        ) : (
-          <label style={{
-            display: 'flex', alignItems: 'center', gap: 8,
-            cursor: 'pointer', width: '100%', fontSize: 11.5,
-            color: 'var(--text-secondary)', fontWeight: 500,
+        {ctxOpen && (
+          <div style={{
+            position: 'absolute', left: 8, right: 8, bottom: 'calc(100% + 6px)', zIndex: 40,
+            background: 'var(--bg-surface)', border: '1px solid var(--border-subtle)', borderRadius: 10,
+            boxShadow: '0 10px 32px rgba(0,0,0,0.16)', padding: 12, maxHeight: 400, overflowY: 'auto',
           }}>
-            <input
-              type="checkbox"
-              checked={configMode}
-              onChange={enterConfig}
-              style={{ accentColor: 'var(--text-primary)', cursor: 'pointer' }}
-            />
-            <Icon name="settings" size={12} strokeWidth={1.7}/>
-            <span>Config View</span>
-          </label>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 10 }}>
+              <span style={{ fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em', color: 'var(--text-tertiary)' }}>Preview context</span>
+              <div style={{ flex: 1 }}/>
+              <button onClick={() => setCtxOpen(false)} aria-label="Close preview context" style={{ border: 'none', background: 'transparent', cursor: 'pointer', color: 'var(--text-tertiary)', display: 'flex' }}><Icon name="x" size={14}/></button>
+            </div>
+            <div style={{ fontSize: 11, color: 'var(--text-tertiary)', lineHeight: 1.45, marginBottom: 10 }}>
+              Mock user + loan attributes that determine which workflow this loan view uses.
+            </div>
+            <PreviewContextSwitcher compact/>
+          </div>
         )}
+        <button onClick={() => setCtxOpen(o => !o)} title="Preview context — change mock role / loan attributes"
+          style={{ display: 'flex', alignItems: 'center', gap: 9, width: '100%', border: 'none', background: 'transparent', cursor: 'pointer', fontFamily: 'inherit', padding: 0, textAlign: 'left' }}>
+          <span style={{ width: 24, height: 24, borderRadius: 6, background: 'var(--bg-muted)', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, color: 'var(--text-secondary)' }}>
+            <Icon name="workflow" size={13}/>
+          </span>
+          <span style={{ minWidth: 0, flex: 1 }}>
+            <span style={{ display: 'block', fontSize: 9, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em', color: 'var(--text-tertiary)' }}>Workflow</span>
+            <span style={{ display: 'block', fontSize: 12, fontWeight: 600, color: 'var(--text-primary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{resolvedWorkflow?.name || 'Default'}</span>
+          </span>
+          <Icon name="sliders" size={14} color="var(--text-tertiary)"/>
+        </button>
       </div>
 
     </aside>

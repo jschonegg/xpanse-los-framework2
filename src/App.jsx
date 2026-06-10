@@ -13,6 +13,8 @@ import { LoanEstimateView } from './views/LoanEstimateView';
 import { AIFeedView } from './views/AIFeed';
 import { LargeDepositReviewView } from './views/LargeDepositReview';
 import { PreferencesModal } from './components/PreferencesModal';
+import { AdminWorkflowsView } from './views/AdminWorkflows';
+import { WorkflowProvider } from './workflows/WorkflowContext';
 
 // ── Standalone URLA window (opened via window.open) ──────────────────────────
 function StandaloneURLA() {
@@ -139,8 +141,22 @@ export default function App() {
   const activeCount = LOANS.filter(l => l.status !== 'Funded').length;
   const attentionCount = LOANS.filter(l => l.flag || l.lockStatus === 'Expiring' || (l.conditionsOpen / (l.conditionsTotal || 1)) > 0.5).length;
 
+  const isAdmin = route === 'admin';
+
+  // The Admin Console is a parallel app: full-screen, with its own dark global
+  // rail and navigation, completely replacing the LOS shell.
+  if (isAdmin) {
+    return (
+      <WorkflowProvider>
+        <AdminWorkflowsView onExit={() => navigate('home')}/>
+        {cmdOpen && <CommandPalette onClose={() => setCmdOpen(false)} onNavigate={navigate} onOpenLoan={openLoan} onOpenAi={openAiWith} onOpenURLA={(name) => { setCmdOpen(false); openURLA(name); }}/>}
+        {prefsOpen && <PreferencesModal onClose={() => setPrefsOpen(false)}/>}
+      </WorkflowProvider>
+    );
+  }
+
   return (
-    <>
+    <WorkflowProvider>
       <LeftNav route={route} onNavigate={navigate} onOpenCmd={() => setCmdOpen(true)} onOpenPrefs={() => setPrefsOpen(true)}/>
       <div style={{ flex: 1, display: 'flex', flexDirection: 'column', minHeight: 0, paddingBottom: 36, paddingLeft: 44 }}>
         {route === 'deposit-review' && <LargeDepositReviewView onBack={() => navigate('home')}/>}
@@ -160,6 +176,6 @@ export default function App() {
       {aiOpen && <AIAssistantPanel ctx={ctx} onClose={toggleAi} onOpenLoan={openLoan} persona={persona}/>}
       {cmdOpen && <CommandPalette onClose={() => setCmdOpen(false)} onNavigate={navigate} onOpenLoan={openLoan} onOpenAi={openAiWith} onOpenURLA={(name) => { setCmdOpen(false); openURLA(name); }}/>}
       {prefsOpen && <PreferencesModal onClose={() => setPrefsOpen(false)}/>}
-    </>
+    </WorkflowProvider>
   );
 }

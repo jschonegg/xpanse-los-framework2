@@ -66,6 +66,7 @@ export function LeftNav({ route, onNavigate, onOpenCmd, onOpenPrefs }) {
     { id: 'search',   icon: 'search',   label: 'Search (⌘K)', kind: 'action' },
   ];
   const bottomItems = [
+    { id: 'admin',    icon: 'sliders',  label: 'Admin Console', kind: 'route' },
     { id: 'settings', icon: 'settings', label: 'Settings', kind: 'action' },
   ];
 
@@ -111,7 +112,7 @@ export function LeftNav({ route, onNavigate, onOpenCmd, onOpenPrefs }) {
           key={item.id}
           icon={item.icon}
           label={item.label}
-          active={false}
+          active={item.kind === 'route' && route === item.id}
           disabled={item.kind === 'disabled'}
           onClick={() => handle(item)}
         />
