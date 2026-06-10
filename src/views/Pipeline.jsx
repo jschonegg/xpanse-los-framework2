@@ -513,6 +513,11 @@ const COLUMN_DEFS = [
     render: (l) => l.product
       ? <span style={{ fontSize: 13, color: 'var(--text-secondary)' }}>{l.product}</span>
       : <span style={{ fontSize: 13, color: 'var(--text-tertiary)' }}>—</span> },
+  { id: 'loanPurpose', label: 'Purpose', width: 140, editType: 'select',
+    options: ['Purchase','Rate/term refi','Cash-out refi','Streamline refi'],
+    render: (l) => l.loanPurpose
+      ? <span style={{ fontSize: 13, color: 'var(--text-secondary)' }}>{l.loanPurpose}</span>
+      : <span style={{ fontSize: 13, color: 'var(--text-tertiary)' }}>—</span> },
   { id: 'rate', label: 'Rate', width: 80, align: 'right', editType: 'number', step: 0.125, suffix: '%',
     render: (l) => <span style={{ fontFamily: 'DM Mono', fontSize: 12.5 }}>{l.rate.toFixed(3)}%</span> },
   { id: 'status', label: 'Status', width: 150, editType: 'select',
@@ -760,7 +765,7 @@ function initialsFor(name) {
 }
 
 // LO default: borrower-first, closing urgency, risk signals — no noise columns
-const DEFAULT_COLUMN_ORDER = ['borrower','property','amount','product','status','milestone','days','assignee','aiStatus'];
+const DEFAULT_COLUMN_ORDER = ['borrower','property','amount','product','loanPurpose','status','milestone','days','assignee','aiStatus'];
 const PROCESSOR_COLUMN_ORDER = ['borrower','status','conditions','lock','closingDate','milestone','nextAction','disclosures','aus','days','health'];
 const ALL_COLUMN_IDS = COLUMN_DEFS.map(c => c.id);
 
@@ -1336,14 +1341,18 @@ export function PipelineView({ onOpenLoan, persona = 'LO', intent }) {
                       onDrop={() => handleHeaderDrop(col.id)}
                       onClick={() => handleSort(col.id)}
                       style={{
+                        position: 'relative', background: 'var(--bg-muted)',
                         textAlign: col.align || 'left', fontSize: 11.5, fontWeight: 600,
                         color: 'var(--text-tertiary)', textTransform: 'uppercase', letterSpacing: '0.05em',
-                        padding: '12px 16px', borderBottom: '1px solid var(--border-subtle)',
-                        borderLeft: isDraggedOver ? '2px solid var(--ai-primary)' : '2px solid transparent',
+                        padding: '12px 14px', borderBottom: '1px solid var(--border-subtle)',
+                        boxShadow: isDraggedOver ? 'inset 2px 0 0 var(--ai-primary)' : 'none',
                         cursor: 'grab', whiteSpace: 'nowrap', userSelect: 'none', width: col.width,
                       }}>
+                      <span style={{
+                        position: 'absolute', left: 2, top: '50%', transform: 'translateY(-50%)',
+                        color: 'var(--text-tertiary)', opacity: 0.5, display: 'inline-flex', pointerEvents: 'none',
+                      }}><Icon name="moreV" size={11}/></span>
                       <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, justifyContent: col.align === 'right' ? 'flex-end' : 'flex-start' }}>
-                        <span style={{ color: 'var(--text-tertiary)', opacity: 0.5, display: 'inline-flex' }}><Icon name="moreV" size={11}/></span>
                         {col.label}
                         {sortIcon && <Icon name={sortIcon} size={12} strokeWidth={2.2}/>}
                       </span>
