@@ -19,6 +19,7 @@ const defaults = {
   aiCoachBrand: true,
   hideTodaysPrioritiesHeader: true,
   hidePerformanceHeader: true,
+  lakesideFeedCard: true,
 };
 
 function readOverrides() {
