@@ -6,8 +6,8 @@
 // Clear: localStorage.removeItem('xlos-flags')
 
 const defaults = {
-  heroFlowing: false,
-  logoToLogin: false,
+  heroFlowing: true,
+  logoToLogin: true,
 };
 
 function readOverrides() {
