@@ -20,6 +20,7 @@ const defaults = {
   hideTodaysPrioritiesHeader: true,
   hidePerformanceHeader: true,
   lakesideFeedCard: true,
+  consistentCardHeaders: true,
 };
 
 function readOverrides() {
