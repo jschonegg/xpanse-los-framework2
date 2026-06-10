@@ -25,16 +25,14 @@ import { Icon } from '../components/Icon';
 // Leaderboard + Company Feed pulled out of the grid into their own
 // numbered sections (02 · Performance, 03 · From your team) — they're
 // still in the catalog if a user re-adds them.
-const STORAGE_KEY = 'los-widget-layout-v8';
+// v9: Lock Clock + Waiting on Borrower + Ready for UW merged into one
+//     tabbed "Files needing action" card behind the mergedActionCard flag.
+const STORAGE_KEY = 'los-widget-layout-v9';
 
 const DEFAULT_LAYOUT = [
   { id: 'ai-coach-brief',       width: 'full' },
-  // Loan Health Monitor is the anchor — full multi-loan triage with
-  // stage / completeness / risks / AI / next-action all on one row.
   { id: 'loan-health-monitor',  width: 'full' },
-  { id: 'lock-clock',           width: 'half' },
-  { id: 'waiting-on-borrower',  width: 'half' },
-  { id: 'ready-for-uw',         width: 'full' },
+  { id: 'files-needing-action', width: 'full' },
 ];
 
 function loadLayout() {
@@ -445,6 +443,56 @@ export function WaitingOnBorrowerWidget({ onOpenLoan }) {
 // The previous AICoachBriefWidget + NEXT_MOVE_QUEUE was removed when we adopted
 // Melissa's banner for cross-screen consistency.
 
+// ── Files needing action (merged tabbed card) ───────────────────────────────
+// Combines Ready for UW + Lock Clock + Waiting on Borrower into one card with
+// tabs. Each tab body just renders the existing widget so its internal header
+// (counts, status pills) and rows stay intact.
+export function FilesNeedingActionWidget({ onOpenLoan }) {
+  const TABS = [
+    { id: 'ready-for-uw',        label: 'Ready for UW',        count: 3, Body: ReadyForUWWidget },
+    { id: 'lock-clock',          label: 'Locks expiring',      count: 3, Body: LockClockWidget },
+    { id: 'waiting-on-borrower', label: 'Waiting on borrower', count: 5, Body: WaitingOnBorrowerWidget },
+  ];
+  const [active, setActive] = React.useState(TABS[0].id);
+  const ActiveBody = TABS.find(t => t.id === active).Body;
+  return (
+    <div>
+      <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', marginBottom: 10 }}>
+        <div style={{ fontSize: 14, fontWeight: 700, color: '#111827' }}>Files needing action</div>
+        <span style={{ fontSize: 11, color: '#9CA3AF' }}>
+          {TABS.reduce((s, t) => s + t.count, 0)} across {TABS.length} queues
+        </span>
+      </div>
+      {/* Tab strip */}
+      <div style={{ display: 'flex', gap: 0, borderBottom: '1px solid #F3F4F6', marginBottom: 12 }}>
+        {TABS.map(t => {
+          const isActive = t.id === active;
+          return (
+            <button key={t.id} onClick={() => setActive(t.id)} style={{
+              padding: '7px 14px', fontSize: 12, fontWeight: 600,
+              border: 'none', borderBottom: isActive ? '2px solid #111827' : '2px solid transparent',
+              background: 'transparent', color: isActive ? '#111827' : '#6B7280',
+              cursor: 'pointer', fontFamily: 'inherit', marginBottom: -1,
+              display: 'inline-flex', alignItems: 'center', gap: 6,
+              transition: 'color 0.12s, border-color 0.12s',
+            }}>
+              {t.label}
+              <span style={{
+                fontSize: 10, fontWeight: 700,
+                background: isActive ? '#111827' : '#F3F4F6',
+                color: isActive ? '#fff' : '#6B7280',
+                padding: '1px 6px', borderRadius: 999,
+              }}>{t.count}</span>
+            </button>
+          );
+        })}
+      </div>
+      {/* Active tab body */}
+      <ActiveBody onOpenLoan={onOpenLoan}/>
+    </div>
+  );
+}
+
 export const WIDGET_REGISTRY = [
   {
     id: 'leaderboard',
@@ -455,6 +503,15 @@ export const WIDGET_REGISTRY = [
     defaultWidth: 'full',
     category: 'Performance',
     chromeless: true, // widget renders its own header + card; skip shell title
+  },
+  {
+    id: 'files-needing-action',
+    label: 'Files needing action',
+    desc: 'Ready for UW, locks expiring, and waiting on borrower — in one tabbed card.',
+    icon: 'listCheck',
+    color: '#7E68FA',
+    defaultWidth: 'full',
+    category: 'Pipeline',
   },
   {
     id: 'pipeline-snapshot',
