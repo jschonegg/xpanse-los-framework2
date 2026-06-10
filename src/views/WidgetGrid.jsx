@@ -772,7 +772,7 @@ function CatalogDrawer({ activeIds, onAdd, onClose }) {
 }
 
 // ─── Main WidgetGrid ──────────────────────────────────────────────────────────
-export function WidgetGrid({ renderWidget }) {
+export function WidgetGrid({ renderWidget, hiddenIds }) {
   const [layout,   setLayout]   = React.useState(loadLayout);
   const [editMode, setEditMode] = React.useState(false);
   const [catalog,  setCatalog]  = React.useState(false);
@@ -781,6 +781,10 @@ export function WidgetGrid({ renderWidget }) {
   const dragIdx = React.useRef(null);
   const [dropIdx, setDropIdx] = React.useState(null);
 
+  // Filter out widgets the caller wants hidden (e.g. from user prefs).
+  // Persisted layout stays intact — we just don't render the hidden ones.
+  const hidden = hiddenIds instanceof Set ? hiddenIds : new Set(hiddenIds || []);
+  const visibleLayout = hidden.size > 0 ? layout.filter(w => !hidden.has(w.id)) : layout;
   const activeIds = layout.map(w => w.id);
 
   const handleAdd = (id) => {
@@ -860,7 +864,7 @@ export function WidgetGrid({ renderWidget }) {
         gap: 16,
         alignItems: 'start',
       }}>
-        {layout.map((item, idx) => {
+        {visibleLayout.map((item, idx) => {
           const meta = WIDGET_REGISTRY.find(w => w.id === item.id);
           if (!meta) return null;
           const isDropTarget = dropIdx === idx;
