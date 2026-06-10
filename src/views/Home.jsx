@@ -189,7 +189,12 @@ function Leaderboard() {
       {/* ── Header ───────────────────────────────── */}
       <div style={{ padding: '14px 18px 0', borderBottom: '1px solid #F3F4F6' }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+            {flags.consistentCardHeaders && (
+              <div style={{ width: 22, height: 22, borderRadius: 6, background: '#7E68FA18', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                <Icon name="trendingUp" size={12} color="#7E68FA"/>
+              </div>
+            )}
             <span style={{ fontSize: 14, fontWeight: 700, color: '#111827' }}>{flags.lessEmoji ? 'Leaderboard' : '🏆 Leaderboard'}</span>
             <span style={{ fontSize: 11, color: '#9CA3AF', fontWeight: 500 }}>Branch-wide</span>
           </div>
@@ -1456,11 +1461,17 @@ export function HomeView({ onNavigate, onOpenLoan }) {
               SectionHeader is replaced with a single card titled
               "Lakeside Feed" wrapping the company feed. */}
           {flags.lakesideFeedCard ? (
-            <div style={{ background: '#fff', border: '1px solid #E5E7EB', borderRadius: 14, padding: '16px 18px', marginTop: 24 }}>
-              <div style={{ fontSize: 14, fontWeight: 800, color: '#111827', letterSpacing: '-0.01em', marginBottom: 12 }}>
-                Lakeside Feed
+            <div style={{ background: '#fff', border: '1px solid #E5E7EB', borderRadius: 14, marginTop: 24, overflow: 'hidden' }}>
+              {/* Matches the WidgetShell header model: icon tile + title + subtle border-bottom line. */}
+              <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '14px 18px', borderBottom: '1px solid #F3F4F6' }}>
+                <div style={{ width: 22, height: 22, borderRadius: 6, background: '#7E68FA18', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                  <Icon name="bell" size={12} color="#7E68FA"/>
+                </div>
+                <span style={{ fontSize: 13, fontWeight: 700, color: '#111827' }}>Lakeside Feed</span>
               </div>
-              <CompanyFeedWidget feed={FEED}/>
+              <div style={{ padding: '14px 18px' }}>
+                <CompanyFeedWidget feed={FEED}/>
+              </div>
             </div>
           ) : (
             <>
