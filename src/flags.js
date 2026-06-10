@@ -9,6 +9,7 @@ const defaults = {
   heroFlowing: true,
   logoToLogin: true,
   alwaysStartOnLogin: true,
+  loginGoesHome: true,
 };
 
 function readOverrides() {
