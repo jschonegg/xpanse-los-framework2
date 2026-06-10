@@ -112,11 +112,11 @@ export function LeftNav({ route, onNavigate, onOpenCmd, onOpenPrefs, onLogoClick
             cursor: 'pointer', fontFamily: 'inherit',
           }}
         >
-          <LogoMark size={22}/>
+          <LogoMark size={flags.imsBrand ? 28 : 22}/>
         </button>
       ) : (
         <div style={{ height: 32, display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 6 }}>
-          <LogoMark size={22}/>
+          <LogoMark size={flags.imsBrand ? 28 : 22}/>
         </div>
       )}
 
