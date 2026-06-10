@@ -8,6 +8,7 @@ import { AIInsightsBanner } from './Pipeline';
 import { AIInsightsCards } from './AIInsightsCards';
 import { LoanHealthMonitorWidget } from './LoanHealthMonitor';
 import { LOANS } from '../data/loans';
+import { loadPrefs, PREFS_EVENT } from '../components/PreferencesModal';
 
 // ─── Data ─────────────────────────────────────────────────────────────────────
 
@@ -1205,6 +1206,16 @@ export function HomeView({ onNavigate, onOpenLoan }) {
   const [doneAI, setDoneAI]       = React.useState(new Set());
   const [impactToast, setImpactToast] = React.useState(null);
   const [celebration, setCelebration] = React.useState(null);
+
+  // Prefs-driven layout: re-read on the custom event PreferencesModal
+  // dispatches when the user saves changes.
+  const [prefs, setPrefs] = React.useState(loadPrefs);
+  React.useEffect(() => {
+    const onChange = () => setPrefs(loadPrefs());
+    window.addEventListener(PREFS_EVENT, onChange);
+    return () => window.removeEventListener(PREFS_EVENT, onChange);
+  }, []);
+  const showYourDay = !flags.yourDayCustomizable || prefs.show_your_day_sidebar !== false;
   const visibleTasks = TASKS.filter(t => !doneTasks.has(t.id));
   const visibleAI    = AI_ACTIONS.filter(a => !doneAI.has(a.id));
   const urgentCount  = visibleTasks.filter(t => t.urgent).length;
@@ -1436,7 +1447,8 @@ export function HomeView({ onNavigate, onOpenLoan }) {
           <CompanyFeedWidget feed={FEED}/>
         </div>
 
-        {/* ── Right Rail ── */}
+        {/* ── Right Rail ── (hideable via Preferences → Appearance → Home layout) */}
+        {showYourDay && (
         <div style={{ width: 316, flexShrink: 0, borderLeft: '1px solid #E5E7EB', background: '#fff', overflowY: 'auto', display: 'flex', flexDirection: 'column' }}>
 
           {/* Header */}
@@ -1539,6 +1551,7 @@ export function HomeView({ onNavigate, onOpenLoan }) {
           </div>
 
         </div>
+        )}
       </div>
     </div>
 

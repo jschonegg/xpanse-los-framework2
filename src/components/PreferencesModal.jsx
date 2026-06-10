@@ -39,6 +39,7 @@ const DEFAULTS = {
   // Appearance
   density:                  'comfortable', // compact | comfortable
   theme:                    'light',
+  show_your_day_sidebar:    true,   // home page right-rail "Your day" panel
 
   // Language
   language:                 'en',
@@ -53,7 +54,11 @@ function load() {
 
 function save(prefs) {
   localStorage.setItem('los-prefs', JSON.stringify(prefs));
+  // Notify same-tab listeners (storage events only fire across tabs).
+  window.dispatchEvent(new Event('los-prefs-changed'));
 }
+
+export const PREFS_EVENT = 'los-prefs-changed';
 
 // ─── Small reusable pieces ────────────────────────────────────────────────────
 function SectionTitle({ children }) {
@@ -366,6 +371,22 @@ function AppearancePanel({ prefs, set }) {
           { value: 'system',label: '⬡ System' },
         ]}/>
       </Field>
+
+      {flags.yourDayCustomizable && (
+        <>
+          <div style={{ height: 1, background: 'var(--border-subtle)' }}/>
+          <SectionTitle>Home layout</SectionTitle>
+          <Field label="‘Your day’ sidebar">
+            <SegmentControl value={prefs.show_your_day_sidebar ? 'show' : 'hide'} onChange={v => set('show_your_day_sidebar', v === 'show')} options={[
+              { value: 'show', label: 'Shown' },
+              { value: 'hide', label: 'Hidden' },
+            ]}/>
+            <div style={{ fontSize: 11.5, color: 'var(--text-tertiary)', marginTop: 5 }}>
+              The right-rail panel on Home with tasks and active teammates.
+            </div>
+          </Field>
+        </>
+      )}
 
       <div style={{ height: 1, background: 'var(--border-subtle)' }}/>
       <SectionTitle>Keyboard shortcuts</SectionTitle>

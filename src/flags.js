@@ -13,6 +13,7 @@ const defaults = {
   leaderboardBranchStats: true,
   leftNavPolish: true,
   imsBrand: true,
+  yourDayCustomizable: true,
 };
 
 function readOverrides() {
