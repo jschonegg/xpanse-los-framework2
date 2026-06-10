@@ -39,7 +39,7 @@ const DEFAULTS = {
   // Appearance
   density:                  'comfortable', // compact | comfortable
   theme:                    'light',
-  show_your_day_sidebar:    true,   // home page right-rail "Your day" panel
+  show_your_day_sidebar:    false,  // home page right-rail "Your day" panel — hidden by default; toggle in Preferences → Appearance → Home layout
   show_loan_health_monitor: true,   // home page Loan Health Monitor widget
 
   // Language
