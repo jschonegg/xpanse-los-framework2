@@ -18,6 +18,7 @@ const defaults = {
   mergedActionCard: true,
   aiCoachBrand: true,
   hideTodaysPrioritiesHeader: true,
+  hidePerformanceHeader: true,
 };
 
 function readOverrides() {
