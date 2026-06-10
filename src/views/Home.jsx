@@ -92,6 +92,8 @@ const LB_DATA = {
 };
 
 const RANK_MEDALS = ['🥇', '🥈', '🥉', '', '', ''];
+// Medal-colored rank badges used when flags.lessEmoji is ON.
+const RANK_COLORS = ['#D4A93B', '#9CA3AF', '#B45309'];
 
 // ─── Leaderboard widget ───────────────────────────────────────────────────────
 const LB_METRICS = [
@@ -187,7 +189,7 @@ function Leaderboard() {
       <div style={{ padding: '14px 18px 0', borderBottom: '1px solid #F3F4F6' }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-            <span style={{ fontSize: 14, fontWeight: 700, color: '#111827' }}>🏆 Leaderboard</span>
+            <span style={{ fontSize: 14, fontWeight: 700, color: '#111827' }}>{flags.lessEmoji ? 'Leaderboard' : '🏆 Leaderboard'}</span>
             <span style={{ fontSize: 11, color: '#9CA3AF', fontWeight: 500 }}>Branch-wide</span>
           </div>
           {/* Period pills */}
@@ -247,7 +249,10 @@ function Leaderboard() {
                 {/* Rank */}
                 <div style={{ width: 22, flexShrink: 0, textAlign: 'center' }}>
                   {i < 3
-                    ? <span style={{ fontSize: 15 }}>{RANK_MEDALS[i]}</span>
+                    ? (flags.lessEmoji
+                        ? <span style={{ fontSize: 12, fontWeight: 800, color: RANK_COLORS[i] }}>#{i+1}</span>
+                        : <span style={{ fontSize: 15 }}>{RANK_MEDALS[i]}</span>
+                      )
                     : <span style={{ fontSize: 12, fontWeight: 700, color: '#D1D5DB' }}>#{i+1}</span>
                   }
                 </div>
@@ -1272,7 +1277,7 @@ export function HomeView({ onNavigate, onOpenLoan }) {
             </span>
             <span style={{ width: 3, height: 3, borderRadius: 999, background: 'rgba(255,255,255,0.25)' }}/>
             <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
-              <span>{WEATHER.icon}</span>
+              {!flags.lessEmoji && <span>{WEATHER.icon}</span>}
               <span style={{ color: 'rgba(255,255,255,0.85)', fontWeight: 600 }}>{WEATHER.temp}°</span>
               <span>{WEATHER.condition}</span>
             </span>
