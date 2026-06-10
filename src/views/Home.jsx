@@ -1439,13 +1439,15 @@ export function HomeView({ onNavigate, onOpenLoan }) {
             return null;
           }}/>
 
-          {/* 02 · Performance — personal scorecard + branch leaderboard */}
-          <SectionHeader
-            number={2}
-            eyebrow="Performance"
-            title="Where you stand"
-            sublede="Your monthly progress and how you compare across the branch."
-          />
+          {/* 02 · Performance — hidden behind hidePerformanceHeader flag */}
+          {!flags.hidePerformanceHeader && (
+            <SectionHeader
+              number={2}
+              eyebrow="Performance"
+              title="Where you stand"
+              sublede="Your monthly progress and how you compare across the branch."
+            />
+          )}
           <ScorecardStrip/>
           <div style={{ height: 14 }}/>
           <Leaderboard/>
