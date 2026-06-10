@@ -115,6 +115,9 @@ export default function App() {
     return <LoginScreen onLogin={() => {
       localStorage.setItem('los-authed', '1');
       localStorage.setItem('los-route', 'home');
+      // When loginGoesHome is ON, also reset the in-memory route so the user
+      // lands on home regardless of what their last route was before logout.
+      if (flags.loginGoesHome) setRoute('home');
       if (forceLogin) window.history.replaceState({}, '', window.location.pathname);
       setAuthed(true);
     }}/>;
