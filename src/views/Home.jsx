@@ -1216,6 +1216,9 @@ export function HomeView({ onNavigate, onOpenLoan }) {
     return () => window.removeEventListener(PREFS_EVENT, onChange);
   }, []);
   const showYourDay = !flags.yourDayCustomizable || prefs.show_your_day_sidebar !== false;
+  const hiddenWidgetIds = (flags.yourDayCustomizable && prefs.show_loan_health_monitor === false)
+    ? ['loan-health-monitor']
+    : [];
   const visibleTasks = TASKS.filter(t => !doneTasks.has(t.id));
   const visibleAI    = AI_ACTIONS.filter(a => !doneAI.has(a.id));
   const urgentCount  = visibleTasks.filter(t => t.urgent).length;
@@ -1406,7 +1409,7 @@ export function HomeView({ onNavigate, onOpenLoan }) {
             title="Files that need a decision"
             sublede="Risks to resolve, locks to extend, and borrowers to chase."
           />
-          <WidgetGrid renderWidget={(id) => {
+          <WidgetGrid hiddenIds={hiddenWidgetIds} renderWidget={(id) => {
             if (id === 'leaderboard')       return <Leaderboard/>;
             if (id === 'company-feed')      return <CompanyFeedWidget feed={FEED}/>;
             if (id === 'ai-actions')        return <AIActionsWidget actions={visibleAI} onOpen={onOpenLoan} onDismiss={(aid) => setDoneAI(prev => new Set([...prev, aid]))}/>;

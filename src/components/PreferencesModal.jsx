@@ -40,6 +40,7 @@ const DEFAULTS = {
   density:                  'comfortable', // compact | comfortable
   theme:                    'light',
   show_your_day_sidebar:    true,   // home page right-rail "Your day" panel
+  show_loan_health_monitor: true,   // home page Loan Health Monitor widget
 
   // Language
   language:                 'en',
@@ -383,6 +384,15 @@ function AppearancePanel({ prefs, set }) {
             ]}/>
             <div style={{ fontSize: 11.5, color: 'var(--text-tertiary)', marginTop: 5 }}>
               The right-rail panel on Home with tasks and active teammates.
+            </div>
+          </Field>
+          <Field label="Loan Health Monitor">
+            <SegmentControl value={prefs.show_loan_health_monitor ? 'show' : 'hide'} onChange={v => set('show_loan_health_monitor', v === 'show')} options={[
+              { value: 'show', label: 'Shown' },
+              { value: 'hide', label: 'Hidden' },
+            ]}/>
+            <div style={{ fontSize: 11.5, color: 'var(--text-tertiary)', marginTop: 5 }}>
+              The risk-sorted loan list widget on Home.
             </div>
           </Field>
         </>
