@@ -4,7 +4,7 @@ import { Avatar } from '../components/Shell';
 import { useWorkflows } from '../workflows/WorkflowContext';
 import {
   AVAILABLE_PAGES, getPage, RULE_FIELD_DEFS, getFieldDef, OPERATORS, getOperator,
-  CONTEXT_FIELDS, SECTION_NAME_SUGGESTIONS, appliesToSummary,
+  CONTEXT_FIELDS, SECTION_NAME_SUGGESTIONS, appliesToSummary, ALL_VALUE,
   makeCondition, makeGroup, makeSection, newId,
 } from '../workflows/workflowModel';
 
@@ -698,7 +698,7 @@ export function PreviewContextSwitcher({ compact }) {
         {CONTEXT_FIELDS.map(f => (
           <div key={f.id}>
             <div style={{ fontSize: 10.5, fontWeight: 600, color: 'var(--text-tertiary)', marginBottom: 3 }}>{f.label}</div>
-            <AdminSelect value={previewContext[f.id]} options={f.values} onChange={(v) => setPreviewContext({ [f.id]: v })} size="sm"/>
+            <AdminSelect value={previewContext[f.id]} options={[{ value: ALL_VALUE, label: f.allLabel }, ...f.values]} onChange={(v) => setPreviewContext({ [f.id]: v })} size="sm"/>
           </div>
         ))}
       </div>
@@ -880,7 +880,9 @@ export function AdminWorkflowsView({ onExit }) {
 
           <div style={{ width: 288, flexShrink: 0, display: 'flex', flexDirection: 'column', gap: 14, overflowY: 'auto', paddingRight: 2 }}>
             <LoanNavPreview workflow={editing}/>
+            {/* Preview-context switcher temporarily removed — keep for later revival.
             <PreviewContextSwitcher/>
+            */}
           </div>
         </div>
       </div>

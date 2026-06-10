@@ -30,7 +30,7 @@ import { DocumentsTool } from '../components/DocumentsTool';
 import { IncomeTool } from '../components/IncomeTool';
 import { useWorkflows } from '../workflows/WorkflowContext';
 import { FIXED_SYSTEM_LINKS, PAGE_CONTENT_TAB, getPage } from '../workflows/workflowModel';
-import { PreviewContextSwitcher } from './AdminWorkflows';
+// import { PreviewContextSwitcher } from './AdminWorkflows'; // preview-context switcher (removed for now)
 
 // ─── Property intelligence data per loan ─────────────────────────────────────
 const PROPERTY_INTEL = {
@@ -659,7 +659,7 @@ function LeftRail({ tab, onTab, onOpenURLA, dataSubTab, onDataSubTab, onOpenDocs
   const [draftNav, setDraftNav]           = React.useState(DEFAULT_NAV_CONFIG);
   const [editingSectionId, setEditingSectionId] = React.useState(null);
   const [sectionMenuOpenId, setSectionMenuOpenId] = React.useState(null);
-  const [ctxOpen, setCtxOpen] = React.useState(false);
+  // const [ctxOpen, setCtxOpen] = React.useState(false); // preview-context switcher (removed for now)
 
   // The loan nav is now driven by the active, rule-matched workflow configured
   // in the Admin console (see WorkflowProvider). Fixed system links stay pinned
@@ -1049,15 +1049,15 @@ function LeftRail({ tab, onTab, onOpenURLA, dataSubTab, onDataSubTab, onOpenDocs
         )}
       </div>
 
-      {/* Footer — applied-workflow indicator + mock preview-context control.
-          The nav above is configured centrally in the Admin console; this
-          shows which workflow currently applies and lets you test matching. */}
+      {/* Footer — applied-workflow indicator. Shows which workflow (configured
+          in the Admin console) currently drives this loan nav. */}
       <div style={{
         borderTop: '1px solid var(--border-subtle)',
         padding: '10px 12px',
         background: 'var(--bg-surface)',
         flexShrink: 0, position: 'relative',
       }}>
+        {/* Preview-context switcher temporarily removed — keep for later revival.
         {ctxOpen && (
           <div style={{
             position: 'absolute', left: 8, right: 8, bottom: 'calc(100% + 6px)', zIndex: 40,
@@ -1075,8 +1075,8 @@ function LeftRail({ tab, onTab, onOpenURLA, dataSubTab, onDataSubTab, onOpenDocs
             <PreviewContextSwitcher compact/>
           </div>
         )}
-        <button onClick={() => setCtxOpen(o => !o)} title="Preview context — change mock role / loan attributes"
-          style={{ display: 'flex', alignItems: 'center', gap: 9, width: '100%', border: 'none', background: 'transparent', cursor: 'pointer', fontFamily: 'inherit', padding: 0, textAlign: 'left' }}>
+        */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 9, width: '100%' }}>
           <span style={{ width: 24, height: 24, borderRadius: 6, background: 'var(--bg-muted)', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, color: 'var(--text-secondary)' }}>
             <Icon name="workflow" size={13}/>
           </span>
@@ -1084,8 +1084,7 @@ function LeftRail({ tab, onTab, onOpenURLA, dataSubTab, onDataSubTab, onOpenDocs
             <span style={{ display: 'block', fontSize: 9, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em', color: 'var(--text-tertiary)' }}>Workflow</span>
             <span style={{ display: 'block', fontSize: 12, fontWeight: 600, color: 'var(--text-primary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{resolvedWorkflow?.name || 'Default'}</span>
           </span>
-          <Icon name="sliders" size={14} color="var(--text-tertiary)"/>
-        </button>
+        </div>
       </div>
 
     </aside>

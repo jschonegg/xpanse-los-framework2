@@ -49,17 +49,24 @@ export const SECTION_NAME_SUGGESTIONS = [
   'Forms', 'Workspaces', 'Review', 'Closing', 'Intake', 'Processing', 'Decisioning', 'Audit',
 ];
 
+// Wildcard sentinel for the mock preview context. When a context field is set
+// to this value, the attribute is treated as unspecified: a workflow that
+// requires a specific value for that field will NOT match, so an all-wildcard
+// context falls back to the Default Workflow.
+export const ALL_VALUE = '__all__';
+
 // ─── Rule builder field + operator definitions ──────────────────────────────
+// `allLabel` is the catchall option shown in the preview-context switcher.
 export const RULE_FIELD_DEFS = [
-  { id: 'role',        label: 'Role',         values: ['Sales', 'Processor', 'Underwriter', 'Closer', 'Admin'] },
-  { id: 'loanStatus',  label: 'Loan Status',  values: ['New', 'Processing', 'Underwriting', 'Conditional Approval', 'Clear to Close', 'Closing', 'Funded'] },
-  { id: 'milestone',   label: 'Milestone',    values: ['Application Started', 'Disclosures Sent', 'Credit Pulled', 'Submitted to Underwriting', 'Conditions Requested', 'Conditions Cleared', 'Docs Out', 'Closing Scheduled'] },
-  { id: 'loanPurpose', label: 'Loan Purpose', values: ['Purchase', 'Rate/Term Refinance', 'Cash-out Refinance'] },
-  { id: 'channel',     label: 'Channel',      values: ['Retail', 'Wholesale', 'Correspondent'] },
-  { id: 'productType', label: 'Product Type', values: ['Conventional', 'FHA', 'VA', 'Jumbo'] },
-  { id: 'state',       label: 'State',        values: ['CA', 'TN', 'MA', 'TX', 'FL'] },
-  { id: 'investor',    label: 'Investor',     values: ['Default', 'Investor A', 'Investor B'] },
-  { id: 'branch',      label: 'Branch',       values: ['Nashville', 'Boston', 'Irvine', 'Remote'] },
+  { id: 'role',        label: 'Role',         allLabel: 'All Roles',          values: ['Sales', 'Processor', 'Underwriter', 'Closer', 'Admin'] },
+  { id: 'loanStatus',  label: 'Loan Status',  allLabel: 'All Loan Statuses',  values: ['New', 'Processing', 'Underwriting', 'Conditional Approval', 'Clear to Close', 'Closing', 'Funded'] },
+  { id: 'milestone',   label: 'Milestone',    allLabel: 'All Milestones',     values: ['Application Started', 'Disclosures Sent', 'Credit Pulled', 'Submitted to Underwriting', 'Conditions Requested', 'Conditions Cleared', 'Docs Out', 'Closing Scheduled'] },
+  { id: 'loanPurpose', label: 'Loan Purpose', allLabel: 'All Loan Purposes',  values: ['Purchase', 'Rate/Term Refinance', 'Cash-out Refinance'] },
+  { id: 'channel',     label: 'Channel',      allLabel: 'All Channels',       values: ['Retail', 'Wholesale', 'Correspondent'] },
+  { id: 'productType', label: 'Product Type', allLabel: 'All Product Types',  values: ['Conventional', 'FHA', 'VA', 'Jumbo'] },
+  { id: 'state',       label: 'State',        allLabel: 'All States',         values: ['CA', 'TN', 'MA', 'TX', 'FL'] },
+  { id: 'investor',    label: 'Investor',     allLabel: 'All Investors',      values: ['Default', 'Investor A', 'Investor B'] },
+  { id: 'branch',      label: 'Branch',       allLabel: 'All Branches',       values: ['Nashville', 'Boston', 'Irvine', 'Remote'] },
 ];
 
 const FIELD_BY_ID = RULE_FIELD_DEFS.reduce((m, f) => { m[f.id] = f; return m; }, {});

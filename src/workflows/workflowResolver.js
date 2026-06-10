@@ -1,6 +1,7 @@
 // ─── Workflow resolver ──────────────────────────────────────────────────────
 // Pure functions that decide which workflow applies to a given user + loan
 // context. No React, no storage — easy to unit test and to move server-side.
+import { ALL_VALUE } from './workflowModel';
 
 function isEmpty(v) {
   if (v == null) return true;
@@ -13,6 +14,11 @@ export function evaluateCondition(condition, context) {
   if (!condition || !condition.field) return true;
   const actual = context[condition.field];
   const { operator, value } = condition;
+  // Wildcard ("All …") context value: the attribute is unspecified for this
+  // preview, so a workflow's requirement on this field is NOT satisfied — the
+  // targeted workflow won't claim the loan (it falls back toward Default).
+  // Only an explicit emptiness check is considered met.
+  if (actual === ALL_VALUE) return operator === 'is_empty';
   switch (operator) {
     case 'is':
       return actual === value;
