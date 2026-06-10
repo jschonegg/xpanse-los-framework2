@@ -21,6 +21,7 @@ const defaults = {
   hidePerformanceHeader: true,
   lakesideFeedCard: true,
   consistentCardHeaders: true,
+  homeReorderV1: true,
 };
 
 function readOverrides() {

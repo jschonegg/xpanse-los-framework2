@@ -1423,7 +1423,20 @@ export function HomeView({ onNavigate, onOpenLoan }) {
               sublede="Risks to resolve, locks to extend, and borrowers to chase."
             />
           )}
-          <WidgetGrid hiddenIds={hiddenWidgetIds} renderWidget={(id) => {
+          {/* homeReorderV1: Your dashboard → ScorecardStrip → Leaderboard
+              → loan-level WidgetGrid → Lakeside Feed.
+              When OFF, fall back to the original ordering. */}
+          {flags.homeReorderV1 && (
+            <div style={{ fontSize: 12, fontWeight: 700, letterSpacing: '0.07em', textTransform: 'uppercase', color: '#9CA3AF', marginBottom: 18 }}>
+              Your dashboard
+            </div>
+          )}
+          {flags.homeReorderV1 && <ScorecardStrip/>}
+          {flags.homeReorderV1 && <div style={{ height: 14 }}/>}
+          {flags.homeReorderV1 && <Leaderboard/>}
+          {flags.homeReorderV1 && <div style={{ height: 14 }}/>}
+
+          <WidgetGrid hiddenIds={hiddenWidgetIds} hideSectionLabel={flags.homeReorderV1} renderWidget={(id) => {
             if (id === 'leaderboard')       return <Leaderboard/>;
             if (id === 'company-feed')      return <CompanyFeedWidget feed={FEED}/>;
             if (id === 'ai-actions')        return <AIActionsWidget actions={visibleAI} onOpen={onOpenLoan} onDismiss={(aid) => setDoneAI(prev => new Set([...prev, aid]))}/>;
@@ -1445,7 +1458,7 @@ export function HomeView({ onNavigate, onOpenLoan }) {
           }}/>
 
           {/* 02 · Performance — hidden behind hidePerformanceHeader flag */}
-          {!flags.hidePerformanceHeader && (
+          {!flags.hidePerformanceHeader && !flags.homeReorderV1 && (
             <SectionHeader
               number={2}
               eyebrow="Performance"
@@ -1453,9 +1466,9 @@ export function HomeView({ onNavigate, onOpenLoan }) {
               sublede="Your monthly progress and how you compare across the branch."
             />
           )}
-          <ScorecardStrip/>
-          <div style={{ height: 14 }}/>
-          <Leaderboard/>
+          {!flags.homeReorderV1 && <ScorecardStrip/>}
+          {!flags.homeReorderV1 && <div style={{ height: 14 }}/>}
+          {!flags.homeReorderV1 && <Leaderboard/>}
 
           {/* 03 · From your team — when lakesideFeedCard is ON, the
               SectionHeader is replaced with a single card titled
