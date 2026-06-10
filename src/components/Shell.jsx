@@ -61,11 +61,14 @@ function LeftNavItem({ icon, label, active, onClick, disabled, iconSize = 19, st
 
 export function LeftNav({ route, onNavigate, onOpenCmd, onOpenPrefs, onLogoClick }) {
   const logoInteractive = flags.logoToLogin && typeof onLogoClick === 'function';
+  // Polished icon set (flag: leftNavPolish):
+  //   pipeline: 'pipeline' (bar chart) → 'listCheck' (list of files in pipeline)
+  //   feed:     'bell'     (alerts)    → 'sparkle' (AI insights feed)
   const topItems = [
-    { id: 'home',     icon: 'home',     label: 'Home',     kind: 'route' },
-    { id: 'pipeline', icon: 'pipeline', label: 'Pipeline', kind: 'route' },
-    { id: 'feed',     icon: 'bell',     label: 'Feed',     kind: 'route' },
-    { id: 'search',   icon: 'search',   label: 'Search (⌘K)', kind: 'action' },
+    { id: 'home',     icon: 'home', label: 'Home', kind: 'route' },
+    { id: 'pipeline', icon: flags.leftNavPolish ? 'listCheck' : 'pipeline', label: 'Pipeline', kind: 'route' },
+    { id: 'feed',     icon: flags.leftNavPolish ? 'sparkle'   : 'bell',     label: 'Feed',     kind: 'route' },
+    { id: 'search',   icon: 'search', label: 'Search (⌘K)', kind: 'action' },
   ];
   const bottomItems = [
     { id: 'settings', icon: 'settings', label: 'Settings', kind: 'action' },

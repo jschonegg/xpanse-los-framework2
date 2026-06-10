@@ -11,6 +11,7 @@ const defaults = {
   alwaysStartOnLogin: true,
   loginGoesHome: true,
   leaderboardBranchStats: true,
+  leftNavPolish: true,
 };
 
 function readOverrides() {
