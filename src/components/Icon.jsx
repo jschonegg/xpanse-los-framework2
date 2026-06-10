@@ -277,6 +277,12 @@ const ICONS = {
       <path d="M5 15H4A2 2 0 0 1 2 13V4A2 2 0 0 1 4 2H13A2 2 0 0 1 15 4V5" />
     </>
   ),
+  eye: (
+    <>
+      <path d="M2 12S5 5 12 5S22 12 22 12S19 19 12 19S2 12 2 12Z" />
+      <circle cx="12" cy="12" r="3" />
+    </>
+  ),
 };
 
 export function Icon({ name, size = 16, color, strokeWidth = 1.75, style, ...rest }) {

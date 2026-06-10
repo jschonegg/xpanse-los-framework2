@@ -1,6 +1,9 @@
 import React from 'react';
+import ReactDOM from 'react-dom';
 import { Icon } from '../components/Icon';
 import { Avatar } from '../components/Shell';
+import { LoanDetailView } from './LoanDetail';
+import { LOANS } from '../data/loans';
 import { useWorkflows } from '../workflows/WorkflowContext';
 import {
   AVAILABLE_PAGES, getPage, RULE_FIELD_DEFS, getFieldDef, OPERATORS, getOperator,
@@ -16,6 +19,59 @@ function fmtDate(iso) {
   if (isNaN(d.getTime())) return '—';
   return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
 }
+
+// ─── Admin console categories ───────────────────────────────────────────────
+// Each category is a top-level destination in the navy global rail. Selecting
+// one opens its (always-maximized) white sub-nav listing its pages. Only
+// Loan Configuration → Workflows is built today; the rest are placeholders.
+const ADMIN_CATEGORIES = [
+  {
+    id: 'loan-config', label: 'Loan Configuration', icon: 'settings', ready: true,
+    desc: 'Configure loan-level navigation and workflows — how pages appear by role, status, milestone, purpose, and more.',
+    pages: [{ id: 'workflows', label: 'Workflows', icon: 'workflow' }],
+  },
+  {
+    id: 'organization', label: 'Organization', icon: 'building',
+    desc: 'Manage org hierarchy, users, contacts, environments, licensing, and billing.',
+    pages: [
+      { id: 'org-hierarchy', label: 'Hierarchy', icon: 'pipeline' },
+      { id: 'org-users', label: 'User Management', icon: 'command' },
+      { id: 'org-contacts', label: 'Contact Management', icon: 'mail' },
+      { id: 'org-environment', label: 'Environment', icon: 'settings' },
+      { id: 'org-license', label: 'License & Entitlement', icon: 'checkCircle' },
+      { id: 'org-thirdparty', label: 'Third Party Management', icon: 'externalLink' },
+      { id: 'org-billing', label: 'Billing', icon: 'dollar' },
+    ],
+  },
+  {
+    id: 'dashboard', label: 'Dashboard', icon: 'trendingUp',
+    desc: 'Configure branding, announcements, and the pipeline dashboard.',
+    pages: [
+      { id: 'dash-branding', label: 'Branding', icon: 'sparkle' },
+      { id: 'dash-announcements', label: 'Announcements', icon: 'bell' },
+      { id: 'dash-pipeline', label: 'Pipeline', icon: 'pipeline' },
+    ],
+  },
+  { id: 'conditions', label: 'Conditions', icon: 'listCheck', desc: 'Manage condition templates and libraries.', pages: [] },
+  { id: 'rules',      label: 'Rules',      icon: 'filter',    desc: 'Define business rules and automation logic.', pages: [] },
+  { id: 'tasks',      label: 'Tasks',      icon: 'target',    desc: 'Configure task templates and assignment.', pages: [] },
+  {
+    id: 'documents', label: 'Documents', icon: 'doc',
+    desc: 'Manage document taxonomy, hierarchy, automation, and work queues.',
+    pages: [
+      { id: 'doc-taxonomy', label: 'Taxonomy', icon: 'book' },
+      { id: 'doc-hierarchy', label: 'Hierarchy', icon: 'pipeline' },
+      { id: 'doc-automation', label: 'Automation', icon: 'zap' },
+      { id: 'doc-workqueues', label: 'Work Queues', icon: 'listCheck' },
+    ],
+  },
+];
+
+// Default page to open when a category is selected (its first page, or itself
+// for single-page/standalone categories).
+const defaultPageOf = (cat) => (cat.pages.length ? cat.pages[0].id : cat.id);
+// Resolve which category a page id belongs to.
+const categoryForPage = (pageId) => ADMIN_CATEGORIES.find(c => c.id === pageId || c.pages.some(p => p.id === pageId));
 
 // ─── Small shared form controls ─────────────────────────────────────────────
 function AdminSelect({ value, options, onChange, placeholder, disabled, width, size = 'md' }) {
@@ -142,97 +198,137 @@ const cardStyle = {
 
 // ─── Admin global rail ──────────────────────────────────────────────────────
 // The Admin Console runs as a parallel app with its own dark global rail,
-// replacing the LOS rail entirely. Top-level admin navigation lives here.
-function AdminRailItem({ icon, label, active, onClick }) {
+// replacing the LOS rail entirely. It is expanded (with labels) on the admin
+// home page and minimizes to an icon rail once you open a tool page.
+function NavyRailItem({ icon, label, active, onClick, expanded }) {
+  const base = {
+    border: 'none', fontFamily: 'inherit', cursor: onClick ? 'pointer' : 'default',
+    background: active ? 'rgba(255,255,255,0.10)' : 'transparent',
+    color: active ? '#fff' : 'rgba(225,228,245,0.62)',
+    transition: 'background 0.12s, color 0.12s',
+  };
+  const enter = e => { if (!active) { e.currentTarget.style.background = 'rgba(255,255,255,0.06)'; e.currentTarget.style.color = '#fff'; } };
+  const leave = e => { if (!active) { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = 'rgba(225,228,245,0.62)'; } };
+  if (expanded) {
+    return (
+      <button onClick={onClick} aria-label={label} onMouseEnter={enter} onMouseLeave={leave}
+        style={{ ...base, display: 'flex', alignItems: 'center', gap: 11, width: '100%', height: 38, padding: '0 12px', borderRadius: 9, fontSize: 13, fontWeight: active ? 600 : 500, textAlign: 'left' }}>
+        <Icon name={icon} size={18} strokeWidth={1.8}/>
+        <span style={{ flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{label}</span>
+      </button>
+    );
+  }
   return (
-    <button data-tooltip={label} aria-label={label} title={label} onClick={onClick}
-      style={{
-        width: 38, height: 38, borderRadius: 9, border: 'none', padding: 0,
-        background: active ? 'rgba(255,255,255,0.10)' : 'transparent',
-        color: active ? '#fff' : 'rgba(225,228,245,0.62)',
-        display: 'flex', alignItems: 'center', justifyContent: 'center',
-        cursor: onClick ? 'pointer' : 'default', transition: 'background 0.12s, color 0.12s',
-      }}
-      onMouseEnter={e => { if (!active) { e.currentTarget.style.background = 'rgba(255,255,255,0.06)'; e.currentTarget.style.color = '#fff'; } }}
-      onMouseLeave={e => { if (!active) { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = 'rgba(225,228,245,0.62)'; } }}>
+    <button data-tooltip={label} aria-label={label} title={label} onClick={onClick} onMouseEnter={enter} onMouseLeave={leave}
+      style={{ ...base, width: 38, height: 38, borderRadius: 9, padding: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
       <Icon name={icon} size={19} strokeWidth={1.8}/>
     </button>
   );
 }
 
-function AdminGlobalRail({ onExit }) {
+function AdminGlobalRail({ onExit, onHome, onOpenCategory, expanded, adminPage, activeCatId }) {
   return (
     <aside style={{
-      width: 44, flexShrink: 0,
+      width: expanded ? 212 : 44, flexShrink: 0,
       background: 'linear-gradient(180deg, #0C0E2A 0%, #131638 60%, #1A1A45 100%)',
       borderRight: '1px solid rgba(255,255,255,0.04)',
-      display: 'flex', flexDirection: 'column', alignItems: 'center',
-      padding: '14px 0', gap: 4,
+      display: 'flex', flexDirection: 'column', alignItems: expanded ? 'stretch' : 'center',
+      padding: expanded ? '14px 10px' : '14px 0', gap: 4, overflowY: 'auto',
+      transition: 'width 0.16s ease',
     }}>
-      <div style={{ height: 32, display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 6 }}>
-        <div style={{ width: 26, height: 26, borderRadius: 8, background: 'linear-gradient(135deg, #5B7BFF 0%, #8E5BF6 100%)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.18)' }}>
-          <Icon name="sliders" size={15} strokeWidth={1.7}/>
+      {/* Brand / home */}
+      <button onClick={onHome} aria-label="Admin home" title="Admin home"
+        style={{ display: 'flex', alignItems: 'center', gap: 10, background: 'transparent', border: 'none', cursor: 'pointer', marginBottom: 6, padding: expanded ? '4px 6px 10px' : 0, justifyContent: expanded ? 'flex-start' : 'center', flexShrink: 0 }}>
+        <div style={{ width: 28, height: 28, borderRadius: 8, background: 'linear-gradient(135deg, #5B7BFF 0%, #8E5BF6 100%)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.18)', flexShrink: 0 }}>
+          <Icon name="sliders" size={16} strokeWidth={1.7}/>
         </div>
-      </div>
-      <AdminRailItem icon="workflow" label="Workflows" active/>
-      <div style={{ flex: 1 }}/>
-      <AdminRailItem icon="arrowLeft" label="Back to LOS" onClick={onExit}/>
-      <div style={{ marginTop: 8, padding: '12px 0 0', borderTop: '1px solid rgba(255,255,255,0.06)', width: 28, display: 'flex', justifyContent: 'center' }}>
+        {expanded && (
+          <span style={{ minWidth: 0, textAlign: 'left' }}>
+            <span style={{ display: 'block', fontSize: 13, fontWeight: 700, color: '#fff', letterSpacing: '-0.01em' }}>Admin Console</span>
+            <span style={{ display: 'block', fontSize: 10.5, color: 'rgba(225,228,245,0.5)' }}>Configuration</span>
+          </span>
+        )}
+      </button>
+
+      <NavyRailItem icon="home" label="Admin Home" active={adminPage === 'home'} onClick={onHome} expanded={expanded}/>
+      {ADMIN_CATEGORIES.map(cat => (
+        <NavyRailItem key={cat.id} icon={cat.icon} label={cat.label} active={activeCatId === cat.id} onClick={() => onOpenCategory(cat)} expanded={expanded}/>
+      ))}
+
+      <div style={{ flex: 1, minHeight: 8 }}/>
+
+      <NavyRailItem icon="arrowLeft" label="Back to LOS" onClick={onExit} expanded={expanded}/>
+
+      <div style={{ marginTop: 8, borderTop: '1px solid rgba(255,255,255,0.06)', display: 'flex', alignItems: 'center', gap: 10, justifyContent: expanded ? 'flex-start' : 'center', padding: expanded ? '12px 8px 0' : '12px 0 0', flexShrink: 0 }}>
         <Avatar initials="J" size={30} color="#3D49E6"/>
+        {expanded && <span style={{ fontSize: 12.5, fontWeight: 600, color: 'rgba(255,255,255,0.85)' }}>Jordan</span>}
       </div>
     </aside>
   );
 }
 
 // ─── Admin sidebar (secondary nav) ──────────────────────────────────────────
-function AdminSidebar({ onExit }) {
-  const items = [
-    { id: 'workflows', label: 'Workflows', icon: 'workflow', active: true },
-  ];
-  const soon = [
-    { id: 'roles', label: 'Roles & Access', icon: 'building' },
-    { id: 'templates', label: 'Document Templates', icon: 'doc' },
-    { id: 'integrations', label: 'Integrations', icon: 'zap' },
-  ];
+// Expanded on the landing page; collapses to an icon-only rail on tool pages.
+function SidebarNavItem({ icon, label, active, collapsed, disabled, soon, onClick }) {
+  if (collapsed) {
+    return (
+      <button onClick={disabled ? undefined : onClick} title={soon ? `${label} — coming soon` : label} aria-label={label}
+        style={{
+          width: 38, height: 38, margin: '0 auto', borderRadius: 8, border: 'none',
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          background: active ? 'var(--text-primary)' : 'transparent',
+          color: active ? '#fff' : disabled ? 'var(--text-tertiary)' : 'var(--text-secondary)',
+          opacity: disabled ? 0.6 : 1, cursor: disabled ? 'default' : 'pointer', transition: 'background 0.12s',
+        }}
+        onMouseEnter={e => { if (!active && !disabled) e.currentTarget.style.background = 'var(--bg-muted)'; }}
+        onMouseLeave={e => { if (!active && !disabled) e.currentTarget.style.background = 'transparent'; }}>
+        <Icon name={icon} size={16} strokeWidth={1.7}/>
+      </button>
+    );
+  }
+  return (
+    <button onClick={disabled ? undefined : onClick} title={soon ? 'Coming soon' : undefined} aria-label={label}
+      style={{
+        display: 'flex', alignItems: 'center', gap: 10, height: 36, width: '100%', padding: '0 12px',
+        borderRadius: 8, fontSize: 13, fontWeight: active ? 600 : 500, border: 'none', fontFamily: 'inherit',
+        background: active ? 'var(--text-primary)' : 'transparent',
+        color: active ? '#fff' : disabled ? 'var(--text-tertiary)' : 'var(--text-secondary)',
+        opacity: disabled ? 0.7 : 1, cursor: disabled ? 'default' : 'pointer', textAlign: 'left', transition: 'background 0.12s',
+      }}
+      onMouseEnter={e => { if (!active && !disabled) e.currentTarget.style.background = 'var(--bg-muted)'; }}
+      onMouseLeave={e => { if (!active && !disabled) e.currentTarget.style.background = 'transparent'; }}>
+      <Icon name={icon} size={15} strokeWidth={1.7}/>
+      <span style={{ flex: 1 }}>{label}</span>
+      {soon && <span style={{ fontSize: 9.5, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.04em', color: 'var(--text-tertiary)', background: 'var(--bg-muted)', padding: '1px 6px', borderRadius: 4 }}>Soon</span>}
+    </button>
+  );
+}
+
+// Always-maximized secondary nav for the active category. Shown on tool pages
+// only (hidden on the admin home page). Houses just the links for its category.
+function AdminSidebar({ category, adminPage, onNavigate, onExit }) {
+  // Standalone categories (no sub-pages) get a single self-link.
+  const items = category.pages.length ? category.pages : [{ id: category.id, label: category.label, icon: category.icon }];
+
   return (
     <aside style={{
       width: 224, flexShrink: 0, background: 'var(--bg-surface)',
-      borderRight: '1px solid var(--border-subtle)', display: 'flex', flexDirection: 'column',
-      minHeight: 0,
+      borderRight: '1px solid var(--border-subtle)', display: 'flex', flexDirection: 'column', minHeight: 0,
     }}>
       <div style={{ padding: '18px 16px 14px', borderBottom: '1px solid var(--border-subtle)', display: 'flex', alignItems: 'center', gap: 10 }}>
         <div style={{ width: 30, height: 30, borderRadius: 8, background: 'var(--text-primary)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-          <Icon name="sliders" size={16} color="#fff"/>
+          <Icon name={category.icon} size={16} color="#fff"/>
         </div>
         <div>
-          <div style={{ fontSize: 13.5, fontWeight: 700, letterSpacing: '-0.01em' }}>Admin Console</div>
-          <div style={{ fontSize: 11, color: 'var(--text-tertiary)' }}>Configuration</div>
+          <div style={{ fontSize: 13.5, fontWeight: 700, letterSpacing: '-0.01em' }}>{category.label}</div>
+          <div style={{ fontSize: 11, color: 'var(--text-tertiary)' }}>Admin Console</div>
         </div>
       </div>
 
-      <div style={{ flex: 1, overflowY: 'auto', padding: '12px 10px' }}>
-        <div style={{ fontSize: 10.5, fontWeight: 700, color: 'var(--text-tertiary)', textTransform: 'uppercase', letterSpacing: '0.06em', padding: '4px 8px 8px' }}>Loan Configuration</div>
+      <div style={{ flex: 1, overflowY: 'auto', padding: '12px 10px', display: 'flex', flexDirection: 'column', gap: 2 }}>
         {items.map(it => (
-          <div key={it.id} style={{
-            display: 'flex', alignItems: 'center', gap: 10, height: 36, padding: '0 12px',
-            borderRadius: 8, fontSize: 13, fontWeight: 600,
-            background: it.active ? 'var(--text-primary)' : 'transparent',
-            color: it.active ? '#fff' : 'var(--text-secondary)', cursor: 'pointer',
-          }}>
-            <Icon name={it.icon} size={15} strokeWidth={1.7}/>
-            {it.label}
-          </div>
-        ))}
-        <div style={{ fontSize: 10.5, fontWeight: 700, color: 'var(--text-tertiary)', textTransform: 'uppercase', letterSpacing: '0.06em', padding: '16px 8px 8px' }}>More</div>
-        {soon.map(it => (
-          <div key={it.id} title="Coming soon" style={{
-            display: 'flex', alignItems: 'center', gap: 10, height: 34, padding: '0 12px',
-            borderRadius: 8, fontSize: 13, color: 'var(--text-tertiary)', cursor: 'default', opacity: 0.7,
-          }}>
-            <Icon name={it.icon} size={15} strokeWidth={1.7}/>
-            <span style={{ flex: 1 }}>{it.label}</span>
-            <span style={{ fontSize: 9.5, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.04em', color: 'var(--text-tertiary)', background: 'var(--bg-muted)', padding: '1px 6px', borderRadius: 4 }}>Soon</span>
-          </div>
+          <SidebarNavItem key={it.id} icon={it.icon} label={it.label} collapsed={false}
+            active={adminPage === it.id} onClick={() => onNavigate(it.id)}/>
         ))}
       </div>
 
@@ -245,68 +341,117 @@ function AdminSidebar({ onExit }) {
   );
 }
 
-// ─── Workflow list ──────────────────────────────────────────────────────────
-function WorkflowList({ workflows, selectedId, onSelect, onNew, onDelete }) {
+// Generic placeholder shown for not-yet-built category pages.
+function AdminPlaceholderPage({ category, pageId }) {
+  const page = category.pages.find(p => p.id === pageId);
+  const title = page ? page.label : category.label;
+  return (
+    <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', minHeight: 0 }}>
+      <div style={{ padding: '20px 28px 16px', borderBottom: '1px solid var(--border-subtle)', background: 'var(--bg-surface)' }}>
+        <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--text-tertiary)', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 4 }}>{category.label}</div>
+        <h1 style={{ margin: 0, fontSize: 20, fontWeight: 700, letterSpacing: '-0.015em' }}>{title}</h1>
+      </div>
+      <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 28 }}>
+        <div style={{ textAlign: 'center', maxWidth: 360 }}>
+          <div style={{ width: 54, height: 54, borderRadius: 14, background: 'var(--bg-muted)', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', marginBottom: 14 }}>
+            <Icon name={page ? page.icon : category.icon} size={24} color="var(--text-tertiary)" strokeWidth={1.5}/>
+          </div>
+          <div style={{ fontSize: 15, fontWeight: 700, marginBottom: 6 }}>{title}</div>
+          <div style={{ fontSize: 13, color: 'var(--text-tertiary)', lineHeight: 1.5 }}>
+            This section is a placeholder. Configuration for {title.toLowerCase()} will live here.
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ─── Workflow list (table) ──────────────────────────────────────────────────
+function WorkflowTable({ workflows, onEdit, onPreview, onNew, onDuplicate, onDelete }) {
   const [menuId, setMenuId] = React.useState(null);
   const sorted = [...workflows].sort((a, b) => (a.priority ?? 999) - (b.priority ?? 999));
+  const th = { textAlign: 'left', fontSize: 11, fontWeight: 600, color: 'var(--text-tertiary)', textTransform: 'uppercase', letterSpacing: '0.05em', padding: '10px 14px', borderBottom: '1px solid var(--border-subtle)', whiteSpace: 'nowrap' };
+  const td = { padding: '12px 14px', borderBottom: '1px solid var(--border-subtle)', verticalAlign: 'middle', fontSize: 13 };
+  const iconBtn = { width: 30, height: 30, borderRadius: 7, border: '1px solid var(--border-subtle)', background: 'var(--bg-surface)', cursor: 'pointer', color: 'var(--text-secondary)', display: 'inline-flex', alignItems: 'center', justifyContent: 'center' };
+
   return (
-    <div style={{ width: 296, flexShrink: 0, display: 'flex', flexDirection: 'column', minHeight: 0 }}>
-      <div style={{ display: 'flex', alignItems: 'center', marginBottom: 12 }}>
-        <h3 style={{ margin: 0, fontSize: 14, fontWeight: 700 }}>Workflows</h3>
-        <span style={{ marginLeft: 8, fontSize: 11.5, color: 'var(--text-tertiary)' }}>{workflows.length}</span>
-        <div style={{ flex: 1 }}/>
-        <button onClick={onNew} className="btn btn-primary btn-sm" style={{ gap: 6 }}>
+    <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', minHeight: 0 }}>
+      {/* Page header */}
+      <div style={{ padding: '20px 28px 16px', borderBottom: '1px solid var(--border-subtle)', background: 'var(--bg-surface)', display: 'flex', alignItems: 'flex-start', gap: 16 }}>
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <h1 style={{ margin: 0, fontSize: 20, fontWeight: 700, letterSpacing: '-0.015em' }}>Workflow Navigation</h1>
+          <p style={{ margin: '4px 0 0', fontSize: 13, color: 'var(--text-tertiary)', maxWidth: 760, lineHeight: 1.5 }}>
+            Configure which pages appear in the loan navigation based on role, loan status, milestone, purpose, and other loan attributes.
+          </p>
+        </div>
+        <button onClick={onNew} className="btn btn-primary btn-sm" style={{ gap: 6, flexShrink: 0, marginTop: 2 }}>
           <Icon name="plus" size={13} strokeWidth={2}/> New Workflow
         </button>
       </div>
-      <div style={{ flex: 1, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: 8, paddingRight: 2 }}>
-        {sorted.map(wf => {
-          const selected = wf.id === selectedId;
-          return (
-            <div key={wf.id} onClick={() => onSelect(wf.id)} style={{
-              border: `1px solid ${selected ? 'var(--text-primary)' : 'var(--border-subtle)'}`,
-              borderRadius: 11, background: selected ? 'var(--bg-muted)' : 'var(--bg-surface)',
-              padding: '12px 13px', cursor: 'pointer', position: 'relative',
-              boxShadow: selected ? '0 0 0 1px var(--text-primary)' : 'none',
-              transition: 'border-color 0.12s',
-            }}>
-              <div style={{ display: 'flex', alignItems: 'flex-start', gap: 8 }}>
-                <div style={{ flex: 1, minWidth: 0 }}>
-                  <div style={{ fontSize: 13.5, fontWeight: 600, color: 'var(--text-primary)', lineHeight: 1.3 }}>{wf.name}</div>
-                  <div style={{ fontSize: 11.5, color: 'var(--text-tertiary)', marginTop: 3, lineHeight: 1.4, overflow: 'hidden', textOverflow: 'ellipsis', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical' }}>
-                    {appliesToSummary(wf)}
-                  </div>
-                </div>
-                <div style={{ position: 'relative', flexShrink: 0 }}>
-                  <button onClick={(e) => { e.stopPropagation(); setMenuId(menuId === wf.id ? null : wf.id); }}
-                    aria-label="Workflow options"
-                    style={{ width: 24, height: 24, borderRadius: 5, border: 'none', background: 'transparent', cursor: 'pointer', color: 'var(--text-tertiary)', display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}
-                    onMouseEnter={e => e.currentTarget.style.background = 'var(--border-subtle)'}
+
+      {/* Table */}
+      <div style={{ flex: 1, overflowY: 'auto', padding: '18px 24px 24px' }}>
+        <div className="card" style={{ overflow: 'visible', border: '1px solid var(--border-subtle)', borderRadius: 12, background: 'var(--bg-surface)' }}>
+          <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+            <thead>
+              <tr style={{ background: 'var(--bg-muted)' }}>
+                <th style={{ ...th, borderTopLeftRadius: 12 }}>Workflow</th>
+                <th style={th}>Applies to</th>
+                <th style={th}>Status</th>
+                <th style={th}>Priority</th>
+                <th style={th}>Updated</th>
+                <th style={{ ...th, borderTopRightRadius: 12, textAlign: 'right' }}>Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {sorted.map((wf, i) => {
+                const last = i === sorted.length - 1;
+                const cellStyle = last ? { ...td, borderBottom: 'none' } : td;
+                return (
+                  <tr key={wf.id} onClick={() => onEdit(wf.id)} style={{ cursor: 'pointer' }}
+                    onMouseEnter={e => e.currentTarget.style.background = 'var(--bg-muted)'}
                     onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>
-                    <Icon name="moreV" size={14}/>
-                  </button>
-                  {menuId === wf.id && (
-                    <div onMouseLeave={() => setMenuId(null)} style={{ position: 'absolute', top: '100%', right: 0, marginTop: 4, zIndex: 30, background: 'var(--bg-surface)', border: '1px solid var(--border-subtle)', borderRadius: 8, boxShadow: '0 6px 24px rgba(0,0,0,0.12)', padding: 4, minWidth: 150 }}>
-                      <button disabled={wf.id === 'default'} onClick={(e) => { e.stopPropagation(); setMenuId(null); if (wf.id !== 'default') onDelete(wf.id); }}
-                        title={wf.id === 'default' ? 'The Default Workflow cannot be deleted' : 'Delete workflow'}
-                        style={{ display: 'flex', alignItems: 'center', gap: 8, width: '100%', padding: '7px 10px', border: 'none', background: 'transparent', cursor: wf.id === 'default' ? 'not-allowed' : 'pointer', fontFamily: 'inherit', fontSize: 12.5, color: wf.id === 'default' ? 'var(--text-tertiary)' : 'var(--status-red)', opacity: wf.id === 'default' ? 0.55 : 1, borderRadius: 5, textAlign: 'left' }}>
-                        <Icon name="trash" size={13}/> Delete
-                      </button>
-                    </div>
-                  )}
-                </div>
-              </div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 10 }}>
-                <StatusBadge status={wf.status}/>
-                <span style={{ fontSize: 10.5, fontWeight: 600, color: 'var(--text-secondary)', background: 'var(--bg-app)', border: '1px solid var(--border-subtle)', borderRadius: 5, padding: '1px 7px' }}>
-                  {wf.id === 'default' ? 'Fallback' : `Priority ${wf.priority}`}
-                </span>
-                <div style={{ flex: 1 }}/>
-                <span style={{ fontSize: 10.5, color: 'var(--text-tertiary)' }}>{fmtDate(wf.updatedAt)}</span>
-              </div>
-            </div>
-          );
-        })}
+                    <td style={cellStyle}>
+                      <div style={{ fontSize: 13.5, fontWeight: 600, color: 'var(--text-primary)' }}>{wf.name}</div>
+                      {wf.description && <div style={{ fontSize: 11.5, color: 'var(--text-tertiary)', marginTop: 2, maxWidth: 320, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{wf.description}</div>}
+                    </td>
+                    <td style={{ ...cellStyle, color: 'var(--text-secondary)', fontSize: 12.5, maxWidth: 280 }}>{appliesToSummary(wf)}</td>
+                    <td style={cellStyle}><StatusBadge status={wf.status}/></td>
+                    <td style={cellStyle}>
+                      <span style={{ fontSize: 11.5, fontWeight: 600, color: 'var(--text-secondary)', background: 'var(--bg-app)', border: '1px solid var(--border-subtle)', borderRadius: 5, padding: '1px 8px' }}>
+                        {wf.id === 'default' ? 'Fallback' : wf.priority}
+                      </span>
+                    </td>
+                    <td style={{ ...cellStyle, color: 'var(--text-tertiary)', fontSize: 12, whiteSpace: 'nowrap' }}>{fmtDate(wf.updatedAt)}</td>
+                    <td style={{ ...cellStyle, textAlign: 'right' }} onClick={e => e.stopPropagation()}>
+                      <div style={{ display: 'inline-flex', alignItems: 'center', gap: 6, position: 'relative' }}>
+                        <button title="Preview in loan view" aria-label="Preview" onClick={() => onPreview(wf)} style={iconBtn}
+                          onMouseEnter={e => { e.currentTarget.style.background = 'var(--bg-muted)'; e.currentTarget.style.color = 'var(--text-primary)'; }}
+                          onMouseLeave={e => { e.currentTarget.style.background = 'var(--bg-surface)'; e.currentTarget.style.color = 'var(--text-secondary)'; }}>
+                          <Icon name="eye" size={14}/>
+                        </button>
+                        <button onClick={() => onEdit(wf.id)} className="btn btn-outline btn-sm">Edit</button>
+                        <button title="More" aria-label="More options" onClick={() => setMenuId(menuId === wf.id ? null : wf.id)} style={iconBtn}
+                          onMouseEnter={e => { e.currentTarget.style.background = 'var(--bg-muted)'; e.currentTarget.style.color = 'var(--text-primary)'; }}
+                          onMouseLeave={e => { e.currentTarget.style.background = 'var(--bg-surface)'; e.currentTarget.style.color = 'var(--text-secondary)'; }}>
+                          <Icon name="moreV" size={15}/>
+                        </button>
+                        {menuId === wf.id && (
+                          <div onMouseLeave={() => setMenuId(null)} style={{ position: 'absolute', top: '100%', right: 0, marginTop: 4, zIndex: 30, background: 'var(--bg-surface)', border: '1px solid var(--border-subtle)', borderRadius: 8, boxShadow: '0 6px 24px rgba(0,0,0,0.12)', padding: 4, minWidth: 150, textAlign: 'left' }}>
+                            <button onClick={() => { setMenuId(null); onDuplicate(wf); }} style={menuItemStyle()}><Icon name="copy" size={13}/> Duplicate</button>
+                            <button disabled={wf.id === 'default'} onClick={() => { setMenuId(null); if (wf.id !== 'default') onDelete(wf.id); }}
+                              title={wf.id === 'default' ? 'The Default Workflow cannot be deleted' : 'Delete workflow'}
+                              style={menuItemStyle(wf.id === 'default' ? 'disabled' : 'danger')}><Icon name="trash" size={13}/> Delete</button>
+                          </div>
+                        )}
+                      </div>
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
       </div>
     </div>
   );
@@ -613,7 +758,16 @@ function NavigationBuilder({ sections, onChange }) {
 
       {/* Available pages tray */}
       <div style={{ marginTop: 18 }}>
-        <FieldLabel hint="Drag a page into a section above. Drag a page here to remove it from the workflow.">Available Pages</FieldLabel>
+        <div style={{ display: 'flex', alignItems: 'baseline', gap: 8, marginBottom: 5 }}>
+          <span style={{ fontSize: 11.5, fontWeight: 600, color: 'var(--text-secondary)' }}>Available Pages</span>
+          <span style={{ fontSize: 11, color: 'var(--text-tertiary)' }}>Drag a page into a section above. Drag a page here to remove it from the workflow.</span>
+          <div style={{ flex: 1 }}/>
+          {/* Placeholder — custom page creation coming later. */}
+          <button type="button" title="Create a custom page (coming soon)"
+            style={{ display: 'inline-flex', alignItems: 'center', gap: 5, border: 'none', background: 'transparent', cursor: 'pointer', fontFamily: 'inherit', fontSize: 12, fontWeight: 600, color: 'var(--ai-primary)', padding: 0, whiteSpace: 'nowrap', flexShrink: 0 }}>
+            <Icon name="plus" size={12} strokeWidth={2.2}/> Create Page
+          </button>
+        </div>
         <div
           onDragOver={(e) => { if (dragRef.current?.type === 'page') { e.preventDefault(); setDropHint('tray'); } }}
           onDrop={(e) => { if (dragRef.current?.type === 'page') { e.preventDefault(); dropPageToTray(); } }}
@@ -712,12 +866,21 @@ export function PreviewContextSwitcher({ compact }) {
 }
 
 // ─── Workflow editor ────────────────────────────────────────────────────────
-function WorkflowEditor({ editing, setEditing, dirty, onSave, onPublish, onSaveDraft, onDuplicate, onCancel }) {
+function WorkflowEditor({ editing, setEditing, dirty, onBack, onPreview, onSave, onPublish, onSaveDraft, onDuplicate, onCancel }) {
   const isDefault = editing.id === 'default';
   const patch = (p) => setEditing(prev => ({ ...prev, ...p }));
 
   return (
     <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', gap: 14, overflowY: 'auto', paddingRight: 4 }}>
+      {/* Breadcrumb */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 12, color: 'var(--text-tertiary)' }}>
+        <button onClick={onBack} style={{ display: 'inline-flex', alignItems: 'center', gap: 5, border: 'none', background: 'transparent', cursor: 'pointer', fontFamily: 'inherit', fontSize: 12, color: 'var(--text-secondary)', padding: 0, fontWeight: 600 }}>
+          <Icon name="arrowLeft" size={13}/> Workflows
+        </button>
+        <Icon name="chevronRight" size={12}/>
+        <span style={{ color: 'var(--text-primary)', fontWeight: 600, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{editing.name || 'Untitled workflow'}</span>
+      </div>
+
       {/* Action bar */}
       <div style={{ display: 'flex', alignItems: 'center', gap: 8, position: 'sticky', top: 0, zIndex: 5, background: 'var(--bg-app)', paddingBottom: 4 }}>
         <div style={{ minWidth: 0 }}>
@@ -728,6 +891,7 @@ function WorkflowEditor({ editing, setEditing, dirty, onSave, onPublish, onSaveD
           </div>
         </div>
         <div style={{ flex: 1 }}/>
+        <button onClick={() => onPreview(editing)} className="btn btn-outline btn-sm" style={{ gap: 6 }}><Icon name="eye" size={13}/> Preview</button>
         <button onClick={onCancel} disabled={!dirty} className="btn btn-ghost btn-sm" style={{ opacity: dirty ? 1 : 0.5 }}>Cancel</button>
         <button onClick={onDuplicate} className="btn btn-outline btn-sm" style={{ gap: 6 }}><Icon name="copy" size={13}/> Duplicate</button>
         <button onClick={onSaveDraft} className="btn btn-outline btn-sm">Save as Draft</button>
@@ -807,19 +971,87 @@ function Toast({ message }) {
 }
 
 // ─── Root ───────────────────────────────────────────────────────────────────
-export function AdminWorkflowsView({ onExit }) {
+// ─── Workflow Navigation tool page ──────────────────────────────────────────
+// Full-screen preview: renders the real loan view with the given workflow's
+// navigation applied, on a sample loan whose attributes match the workflow's
+// rules (purpose / status) so the preview feels coherent.
+const PREVIEW_LOAN_ID = 'LN-2024-0341';
+// Rule-vocabulary → loan-data vocabulary.
+const PURPOSE_TO_LOAN = { 'Purchase': 'Purchase', 'Rate/Term Refinance': 'Rate/term refi', 'Cash-out Refinance': 'Cash-out refi' };
+const STATUS_TO_LOAN = { 'New': 'Application', 'Processing': 'Processing', 'Underwriting': 'Underwriting', 'Conditional Approval': 'Approval', 'Clear to Close': 'Approval', 'Closing': 'Closing', 'Funded': 'Funded' };
+
+// Pull the first concrete value targeted by a rule for a given field.
+function ruleTarget(rules, field) {
+  const conds = [...(rules?.conditions || []), ...((rules?.groups || []).flatMap(g => g.conditions || []))];
+  const c = conds.find(c => c.field === field && (c.operator === 'is' || c.operator === 'one_of'));
+  if (!c) return null;
+  return Array.isArray(c.value) ? c.value[0] : c.value;
+}
+
+// Choose the sample loan that best matches the workflow's purpose/status rules.
+function pickPreviewLoan(workflow) {
+  const wantPurpose = PURPOSE_TO_LOAN[ruleTarget(workflow.rules, 'loanPurpose')] || null;
+  const wantStatus = STATUS_TO_LOAN[ruleTarget(workflow.rules, 'loanStatus')] || null;
+  const fallback = LOANS.find(l => l.id === PREVIEW_LOAN_ID) || LOANS[0];
+  if (!wantPurpose && !wantStatus) return fallback;
+  let best = fallback, bestScore = 0;
+  for (const l of LOANS) {
+    let score = 0;
+    if (wantPurpose && l.loanPurpose === wantPurpose) score += 1;
+    if (wantStatus && l.status === wantStatus) score += 1;
+    if (score > bestScore) { bestScore = score; best = l; }
+  }
+  return best;
+}
+
+function LoanPreviewOverlay({ workflow, onClose }) {
+  const [tab, setTab] = React.useState('now');
+  const loan = React.useMemo(() => pickPreviewLoan(workflow), [workflow]);
+  React.useEffect(() => {
+    const onKey = (e) => { if (e.key === 'Escape') onClose(); };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [onClose]);
+
+  return ReactDOM.createPortal(
+    <div style={{ position: 'fixed', inset: 0, zIndex: 2000, background: 'var(--bg-app)', display: 'flex', flexDirection: 'column' }}>
+      {/* Preview top bar */}
+      <div style={{ height: 48, flexShrink: 0, background: '#16181d', display: 'flex', alignItems: 'center', gap: 10, padding: '0 16px', borderBottom: '1px solid rgba(255,255,255,0.08)' }}>
+        <Icon name="eye" size={15} color="#b8a9fc"/>
+        <span style={{ fontSize: 13.5, fontWeight: 600, color: '#fff' }}>Loan preview</span>
+        <span style={{ color: 'rgba(255,255,255,0.3)' }}>·</span>
+        <span style={{ fontSize: 12.5, color: 'rgba(255,255,255,0.72)' }}>{workflow.name}</span>
+        <span style={{ fontSize: 10.5, fontWeight: 700, letterSpacing: '0.04em', textTransform: 'uppercase', padding: '2px 8px', borderRadius: 999, background: 'rgba(126,104,250,0.22)', color: '#b8a9fc' }}>Sample data</span>
+        <span style={{ fontSize: 11.5, color: 'rgba(255,255,255,0.5)' }}>{loan.borrower} · {loan.loanPurpose} · {loan.status}</span>
+        <div style={{ flex: 1 }}/>
+        <span style={{ fontSize: 11.5, color: 'rgba(255,255,255,0.4)' }}>Click any page in the nav to preview it</span>
+        <button onClick={onClose} style={{ display: 'inline-flex', alignItems: 'center', gap: 6, height: 30, padding: '0 12px', borderRadius: 7, border: '1px solid rgba(255,255,255,0.15)', background: 'rgba(255,255,255,0.06)', color: '#fff', cursor: 'pointer', fontFamily: 'inherit', fontSize: 12.5 }}
+          onMouseEnter={e => e.currentTarget.style.background = 'rgba(255,255,255,0.12)'}
+          onMouseLeave={e => e.currentTarget.style.background = 'rgba(255,255,255,0.06)'}>
+          <Icon name="x" size={14}/> Close preview
+        </button>
+      </div>
+      {/* Real loan view, forced to this workflow + a matching sample loan */}
+      <div style={{ flex: 1, minHeight: 0, display: 'flex' }}>
+        <LoanDetailView loanId={loan.id} tab={tab} onTab={setTab} previewWorkflow={workflow}/>
+      </div>
+    </div>,
+    document.body,
+  );
+}
+
+// ─── Workflow Navigation tool page — two-step: table list → edit screen ──────
+function WorkflowNavPage() {
   const {
     workflows, saveWorkflow, publishWorkflow, saveWorkflowAsDraft,
-    duplicateWorkflow, deleteWorkflow, createWorkflow, resolvedWorkflow,
+    duplicateWorkflow, deleteWorkflow, createWorkflow,
   } = useWorkflows();
 
-  const [selectedId, setSelectedId] = React.useState(() => {
-    const sorted = [...workflows].sort((a, b) => (a.priority ?? 999) - (b.priority ?? 999));
-    return sorted[0]?.id;
-  });
-  const selected = workflows.find(w => w.id === selectedId) || workflows[0];
-  const [editing, setEditing] = React.useState(() => (selected ? clone(selected) : null));
+  const [mode, setMode] = React.useState('list');          // 'list' | 'edit'
+  const [editingId, setEditingId] = React.useState(null);
+  const [editing, setEditing] = React.useState(null);      // working draft
   const [toast, setToast] = React.useState(null);
+  const [previewWf, setPreviewWf] = React.useState(null);  // full-preview overlay
   const toastTimer = React.useRef(null);
 
   const showToast = (msg) => {
@@ -828,66 +1060,119 @@ export function AdminWorkflowsView({ onExit }) {
     toastTimer.current = setTimeout(() => setToast(null), 3000);
   };
 
-  // Reset the editing draft whenever the selected workflow identity changes
-  // (selection change, or the stored workflow was replaced after a save).
+  const selected = workflows.find(w => w.id === editingId) || null;
+
+  // Refresh the draft when the stored workflow identity changes after a save.
   React.useEffect(() => {
-    if (selected) setEditing(clone(selected));
-  }, [selectedId, selected]); // selected ref changes only when workflows array changes
+    if (mode === 'edit' && selected) setEditing(clone(selected));
+  }, [editingId, selected, mode]);
 
-  if (!editing) {
-    return <div style={{ padding: 40 }}>No workflows.</div>;
-  }
+  const openEdit = (id) => {
+    const wf = workflows.find(w => w.id === id);
+    if (!wf) return;
+    setEditingId(id); setEditing(clone(wf)); setMode('edit');
+  };
+  const backToList = () => { setMode('list'); setEditingId(null); setEditing(null); };
 
-  const dirty = JSON.stringify(editing) !== JSON.stringify(selected);
+  const dirty = editing && selected ? JSON.stringify(editing) !== JSON.stringify(selected) : false;
 
   const handleSave = () => { saveWorkflow(editing); showToast('Workflow saved. Loan navigation will update for matching loans.'); };
-  const handlePublish = () => { const saved = publishWorkflow(editing); setEditing(clone(saved)); showToast('Workflow published. It can now apply to matching loans.'); };
-  const handleSaveDraft = () => { const saved = saveWorkflowAsDraft(editing); setEditing(clone(saved)); showToast('Saved as draft. Draft workflows don’t apply to the loan view.'); };
-  const handleDuplicate = () => { const copy = duplicateWorkflow(editing); setSelectedId(copy.id); showToast('Workflow duplicated as a draft copy.'); };
+  const handlePublish = () => { const s = publishWorkflow(editing); setEditing(clone(s)); showToast('Workflow published. It can now apply to matching loans.'); };
+  const handleSaveDraft = () => { const s = saveWorkflowAsDraft(editing); setEditing(clone(s)); showToast('Saved as draft. Draft workflows don’t apply to the loan view.'); };
+  const handleDuplicate = () => { const copy = duplicateWorkflow(editing); setEditingId(copy.id); setEditing(clone(copy)); showToast('Workflow duplicated as a draft copy.'); };
   const handleCancel = () => { if (selected) setEditing(clone(selected)); };
-  const handleNew = () => { const wf = createWorkflow(); setSelectedId(wf.id); showToast('New workflow created.'); };
-  const handleDelete = (id) => {
-    deleteWorkflow(id);
-    if (id === selectedId) {
-      const remaining = workflows.filter(w => w.id !== id).sort((a, b) => (a.priority ?? 999) - (b.priority ?? 999));
-      setSelectedId(remaining[0]?.id);
-    }
-    showToast('Workflow deleted.');
-  };
+  const handleNew = () => { const wf = createWorkflow(); setEditingId(wf.id); setEditing(clone(wf)); setMode('edit'); showToast('New workflow created.'); };
+  const handleDuplicateFromList = (wf) => { const copy = duplicateWorkflow(wf); setEditingId(copy.id); setEditing(clone(copy)); setMode('edit'); showToast('Workflow duplicated as a draft copy.'); };
+  const handleDelete = (id) => { deleteWorkflow(id); showToast('Workflow deleted.'); };
 
   return (
-    <div style={{ display: 'flex', flex: 1, minHeight: 0, height: '100%', background: 'var(--bg-app)' }}>
-      <AdminGlobalRail onExit={onExit}/>
-      <AdminSidebar onExit={onExit}/>
-
-      <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', minHeight: 0 }}>
-        {/* Header */}
-        <div style={{ padding: '20px 28px 16px', borderBottom: '1px solid var(--border-subtle)', background: 'var(--bg-surface)' }}>
-          <h1 style={{ margin: 0, fontSize: 20, fontWeight: 700, letterSpacing: '-0.015em' }}>Workflow Navigation</h1>
-          <p style={{ margin: '4px 0 0', fontSize: 13, color: 'var(--text-tertiary)', maxWidth: 760, lineHeight: 1.5 }}>
-            Configure which pages appear in the loan navigation based on role, loan status, milestone, purpose, and other loan attributes.
-          </p>
-        </div>
-
-        {/* Body: list · editor · preview */}
+    <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', minHeight: 0 }}>
+      {mode === 'list' ? (
+        <WorkflowTable workflows={workflows} onEdit={openEdit} onPreview={setPreviewWf} onNew={handleNew} onDuplicate={handleDuplicateFromList} onDelete={handleDelete}/>
+      ) : editing ? (
         <div style={{ flex: 1, minHeight: 0, display: 'flex', gap: 18, padding: '18px 24px 24px', overflow: 'hidden' }}>
-          <WorkflowList workflows={workflows} selectedId={selectedId} onSelect={setSelectedId} onNew={handleNew} onDelete={handleDelete}/>
-
           <WorkflowEditor
             editing={editing} setEditing={setEditing} dirty={dirty}
+            onBack={backToList} onPreview={setPreviewWf}
             onSave={handleSave} onPublish={handlePublish} onSaveDraft={handleSaveDraft}
             onDuplicate={handleDuplicate} onCancel={handleCancel}/>
 
-          <div style={{ width: 288, flexShrink: 0, display: 'flex', flexDirection: 'column', gap: 14, overflowY: 'auto', paddingRight: 2 }}>
+          <div style={{ width: 288, flexShrink: 0, display: 'flex', flexDirection: 'column', gap: 12, overflowY: 'auto', paddingRight: 2 }}>
             <LoanNavPreview workflow={editing}/>
-            {/* Preview-context switcher temporarily removed — keep for later revival.
-            <PreviewContextSwitcher/>
-            */}
+            <button onClick={() => setPreviewWf(editing)} className="btn btn-outline btn-sm" style={{ gap: 6, justifyContent: 'center' }}>
+              <Icon name="eye" size={13}/> Full loan preview
+            </button>
           </div>
         </div>
-      </div>
+      ) : null}
 
       <Toast message={toast}/>
+      {previewWf && <LoanPreviewOverlay workflow={previewWf} onClose={() => setPreviewWf(null)}/>}
+    </div>
+  );
+}
+
+// ─── Admin landing (placeholder) ────────────────────────────────────────────
+function AdminLanding({ onOpen }) {
+  return (
+    <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', minHeight: 0, overflowY: 'auto' }}>
+      <div style={{ padding: '20px 28px 16px', borderBottom: '1px solid var(--border-subtle)', background: 'var(--bg-surface)' }}>
+        <h1 style={{ margin: 0, fontSize: 20, fontWeight: 700, letterSpacing: '-0.015em' }}>Admin Console</h1>
+        <p style={{ margin: '4px 0 0', fontSize: 13, color: 'var(--text-tertiary)', maxWidth: 760, lineHeight: 1.5 }}>
+          Configure platform-wide settings for your loan origination system. Select a category to begin.
+        </p>
+      </div>
+      <div style={{ padding: 28, flex: 1 }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: 16, maxWidth: 960 }}>
+          {ADMIN_CATEGORIES.map(cat => (
+            <button key={cat.id} onClick={() => onOpen(cat)}
+              style={{
+                textAlign: 'left', border: '1px solid var(--border-subtle)', borderRadius: 12,
+                background: 'var(--bg-surface)', padding: 18, fontFamily: 'inherit', cursor: 'pointer',
+                display: 'flex', flexDirection: 'column', gap: 10, minHeight: 132,
+                transition: 'border-color 0.12s, box-shadow 0.12s',
+              }}
+              onMouseEnter={e => { e.currentTarget.style.borderColor = 'var(--text-primary)'; e.currentTarget.style.boxShadow = '0 1px 3px rgba(0,0,0,0.06)'; }}
+              onMouseLeave={e => { e.currentTarget.style.borderColor = 'var(--border-subtle)'; e.currentTarget.style.boxShadow = 'none'; }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                <div style={{ width: 38, height: 38, borderRadius: 10, background: 'var(--bg-muted)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                  <Icon name={cat.icon} size={18} color="var(--text-secondary)" strokeWidth={1.6}/>
+                </div>
+                <div style={{ fontSize: 14.5, fontWeight: 700 }}>{cat.label}</div>
+                {!cat.ready && <span style={{ marginLeft: 'auto', fontSize: 9.5, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.04em', color: 'var(--text-tertiary)', background: 'var(--bg-muted)', padding: '2px 7px', borderRadius: 999 }}>Placeholder</span>}
+              </div>
+              <div style={{ fontSize: 12.5, color: 'var(--text-tertiary)', lineHeight: 1.5 }}>{cat.desc}</div>
+              <div style={{ marginTop: 'auto', display: 'flex', alignItems: 'center', gap: 5, fontSize: 12.5, fontWeight: 600, color: 'var(--text-primary)' }}>Open <Icon name="arrowRight" size={13}/></div>
+            </button>
+          ))}
+        </div>
+        <div style={{ marginTop: 24, fontSize: 12, color: 'var(--text-tertiary)', fontStyle: 'italic' }}>
+          Most console modules are placeholders for now — Loan Configuration is the live one.
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ─── Root: Admin Console shell ──────────────────────────────────────────────
+export function AdminWorkflowsView({ onExit }) {
+  // Land on the overview. The navy global rail is expanded on home and
+  // minimizes to icons on tool pages; the white sub-nav stays maximized but
+  // only appears on tool pages.
+  const [adminPage, setAdminPage] = React.useState('home');
+  const isHome = adminPage === 'home';
+  const activeCat = isHome ? null : categoryForPage(adminPage);
+
+  let main;
+  if (isHome) main = <AdminLanding onOpen={(cat) => setAdminPage(defaultPageOf(cat))}/>;
+  else if (adminPage === 'workflows') main = <WorkflowNavPage/>;
+  else if (activeCat) main = <AdminPlaceholderPage category={activeCat} pageId={adminPage}/>;
+
+  return (
+    <div style={{ display: 'flex', flex: 1, minHeight: 0, height: '100%', background: 'var(--bg-app)' }}>
+      <AdminGlobalRail onExit={onExit} onHome={() => setAdminPage('home')} onOpenCategory={(cat) => setAdminPage(defaultPageOf(cat))} expanded={isHome} adminPage={adminPage} activeCatId={activeCat?.id}/>
+      {!isHome && activeCat && <AdminSidebar category={activeCat} adminPage={adminPage} onNavigate={setAdminPage} onExit={onExit}/>}
+      {main}
     </div>
   );
 }

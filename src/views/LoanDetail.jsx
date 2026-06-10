@@ -564,7 +564,7 @@ const DEFAULT_NAV_CONFIG = {
   ],
 };
 
-function LeftRail({ tab, onTab, onOpenURLA, dataSubTab, onDataSubTab, onOpenDocs }) {
+function LeftRail({ tab, onTab, onOpenURLA, dataSubTab, onDataSubTab, onOpenDocs, previewWorkflow }) {
   // Groups state: open/closed + doc ordering per group
   const [groups, setGroups] = React.useState(
     DOC_GROUPS.map(g => ({ ...g, open: g.defaultOpen, docs: [...g.docs] }))
@@ -665,10 +665,13 @@ function LeftRail({ tab, onTab, onOpenURLA, dataSubTab, onDataSubTab, onOpenDocs
   // in the Admin console (see WorkflowProvider). Fixed system links stay pinned
   // at the top; each configured page maps onto the existing content-tab id so
   // the content router and the 1003 sub-nav keep working unchanged.
+  // When `previewWorkflow` is supplied (full-preview overlay from the Admin
+  // console), render that workflow's nav instead of the rule-matched one.
   const { resolvedWorkflow } = useWorkflows();
+  const activeWorkflow = previewWorkflow || resolvedWorkflow;
   const activeNav = React.useMemo(() => ({
     fixed: FIXED_SYSTEM_LINKS.map(l => ({ id: l.tab, label: l.label, icon: l.icon })),
-    sections: (resolvedWorkflow?.sections || []).map(s => ({
+    sections: (activeWorkflow?.sections || []).map(s => ({
       id: s.id,
       label: s.title,
       items: s.pages.map(p => ({
@@ -678,7 +681,7 @@ function LeftRail({ tab, onTab, onOpenURLA, dataSubTab, onDataSubTab, onOpenDocs
         badge: getPage(p.id)?.badge,
       })),
     })),
-  }), [resolvedWorkflow]);
+  }), [activeWorkflow]);
 
   const enterConfig = () => { setDraftNav(committedNav); setConfigMode(true); };
   const saveConfig  = () => { setCommittedNav(draftNav); setConfigMode(false); setEditingSectionId(null); setSectionMenuOpenId(null); };
@@ -1082,7 +1085,7 @@ function LeftRail({ tab, onTab, onOpenURLA, dataSubTab, onDataSubTab, onOpenDocs
           </span>
           <span style={{ minWidth: 0, flex: 1 }}>
             <span style={{ display: 'block', fontSize: 9, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em', color: 'var(--text-tertiary)' }}>Workflow</span>
-            <span style={{ display: 'block', fontSize: 12, fontWeight: 600, color: 'var(--text-primary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{resolvedWorkflow?.name || 'Default'}</span>
+            <span style={{ display: 'block', fontSize: 12, fontWeight: 600, color: 'var(--text-primary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{activeWorkflow?.name || 'Default'}</span>
           </span>
         </div>
       </div>
@@ -2715,7 +2718,7 @@ function resolveLoanMeta(loanId) {
   };
 }
 
-function LoanDetailView({ loanId, tab, onTab, persona = 'LO' }) {
+function LoanDetailView({ loanId, tab, onTab, persona = 'LO', previewWorkflow = null }) {
   const localTab = tab || 'now';
   const setTab = onTab || (() => {});
   const meta = resolveLoanMeta(loanId);
@@ -2915,7 +2918,7 @@ function LoanDetailView({ loanId, tab, onTab, persona = 'LO' }) {
       {/* Scrollable region: LeftRail + Main + ToolsPanel.
           Only <main> scrolls vertically; the rails handle their own overflow. */}
       <div style={{ display: 'flex', flex: 1, minHeight: 0, overflow: 'hidden' }}>
-        <LeftRail tab={localTab} onTab={handleTab} onOpenURLA={openURLA} dataSubTab={dataSubTab} onDataSubTab={setDataSubTab} onOpenDocs={openDocsWindow}/>
+        <LeftRail tab={localTab} onTab={handleTab} onOpenURLA={openURLA} dataSubTab={dataSubTab} onDataSubTab={setDataSubTab} onOpenDocs={openDocsWindow} previewWorkflow={previewWorkflow}/>
 
         {/* Main */}
         <main style={{ flex: 1, padding: '24px 28px 40px', overflowY: 'auto', display: 'flex', flexDirection: 'column', minHeight: 0 }}>
