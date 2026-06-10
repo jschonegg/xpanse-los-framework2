@@ -1,7 +1,14 @@
 import React from 'react';
 import { Icon } from './Icon';
+import { flags } from '../flags';
+import { IMSLogoMonogram } from './IMSLogo';
 
 export function LogoMark({ size = 32 }) {
+  // When imsBrand is ON, render the IMS monogram (Intelligent Mortgage Solutions).
+  // Otherwise fall back to the previous sparkle-on-purple-tile mark.
+  if (flags.imsBrand) {
+    return <IMSLogoMonogram size={size}/>;
+  }
   return (
     <div style={{
       width: size, height: size, borderRadius: 8,
@@ -58,12 +65,16 @@ function LeftNavItem({ icon, label, active, onClick, disabled, iconSize = 19, st
   );
 }
 
-export function LeftNav({ route, onNavigate, onOpenCmd, onOpenPrefs }) {
+export function LeftNav({ route, onNavigate, onOpenCmd, onOpenPrefs, onLogoClick }) {
+  const logoInteractive = flags.logoToLogin && typeof onLogoClick === 'function';
+  // Polished icon set (flag: leftNavPolish):
+  //   pipeline: 'pipeline' (bar chart) → 'listCheck' (list of files in pipeline)
+  //   feed:     'bell'     (alerts)    → 'sparkle' (AI insights feed)
   const topItems = [
-    { id: 'home',     icon: 'home',     label: 'Home',     kind: 'route' },
-    { id: 'pipeline', icon: 'pipeline', label: 'Pipeline', kind: 'route' },
-    { id: 'feed',     icon: 'bell',     label: 'Feed',     kind: 'route' },
-    { id: 'search',   icon: 'search',   label: 'Search (⌘K)', kind: 'action' },
+    { id: 'home',     icon: 'home', label: 'Home', kind: 'route' },
+    { id: 'pipeline', icon: flags.leftNavPolish ? 'listCheck' : 'pipeline', label: 'Pipeline', kind: 'route' },
+    { id: 'feed',     icon: flags.leftNavPolish ? 'sparkle'   : 'bell',     label: 'Feed',     kind: 'route' },
+    { id: 'search',   icon: 'search', label: 'Search (⌘K)', kind: 'action' },
   ];
   const bottomItems = [
     { id: 'admin',    icon: 'sliders',  label: 'Admin Console', kind: 'route' },
@@ -89,9 +100,26 @@ export function LeftNav({ route, onNavigate, onOpenCmd, onOpenPrefs }) {
       flexShrink: 0,
     }}>
       {/* Logo */}
-      <div style={{ height: 32, display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 6 }}>
-        <LogoMark size={22}/>
-      </div>
+      {logoInteractive ? (
+        <button
+          type="button"
+          onClick={onLogoClick}
+          aria-label="Back to login"
+          title="Back to login"
+          style={{
+            height: 32, width: 32, marginBottom: 6,
+            background: 'transparent', border: 'none', padding: 0,
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            cursor: 'pointer', fontFamily: 'inherit',
+          }}
+        >
+          <LogoMark size={flags.imsBrand ? 28 : 22}/>
+        </button>
+      ) : (
+        <div style={{ height: 32, display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 6 }}>
+          <LogoMark size={flags.imsBrand ? 28 : 22}/>
+        </div>
+      )}
 
       {/* Top items */}
       {topItems.map(item => (

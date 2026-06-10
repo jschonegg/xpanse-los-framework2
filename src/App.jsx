@@ -15,6 +15,7 @@ import { LargeDepositReviewView } from './views/LargeDepositReview';
 import { PreferencesModal } from './components/PreferencesModal';
 import { AdminWorkflowsView } from './views/AdminWorkflows';
 import { WorkflowProvider } from './workflows/WorkflowContext';
+import { flags } from './flags';
 
 // ── Standalone URLA window (opened via window.open) ──────────────────────────
 function StandaloneURLA() {
@@ -70,10 +71,15 @@ export default function App() {
   if (window.location.search.includes('view=urla')) return <StandaloneURLA/>;
   if (window.location.search.includes('view=le'))   return <StandaloneLoanEstimate/>;
 
-  // Auth gate — login is shown until the user authenticates (or until they've
-  // authenticated once on this device). Pass ?login to force-show login again.
+  // Auth gate — login is shown until the user authenticates. When
+  // flags.alwaysStartOnLogin is ON, every page load starts unauthed so the
+  // experience always begins on LoginScreen (ignores prior los-authed). Pass
+  // ?login to force-show login again.
   const forceLogin = window.location.search.includes('login');
-  const [authed, setAuthed] = React.useState(() => !forceLogin && localStorage.getItem('los-authed') === '1');
+  const [authed, setAuthed] = React.useState(() => {
+    if (flags.alwaysStartOnLogin) return false;
+    return !forceLogin && localStorage.getItem('los-authed') === '1';
+  });
 
   // All remaining hooks are declared above the auth early-return so the
   // hook order stays stable across renders (Rules of Hooks).
@@ -111,6 +117,9 @@ export default function App() {
     return <LoginScreen onLogin={() => {
       localStorage.setItem('los-authed', '1');
       localStorage.setItem('los-route', 'home');
+      // When loginGoesHome is ON, also reset the in-memory route so the user
+      // lands on home regardless of what their last route was before logout.
+      if (flags.loginGoesHome) setRoute('home');
       if (forceLogin) window.history.replaceState({}, '', window.location.pathname);
       setAuthed(true);
     }}/>;
@@ -157,7 +166,16 @@ export default function App() {
 
   return (
     <WorkflowProvider>
-      <LeftNav route={route} onNavigate={navigate} onOpenCmd={() => setCmdOpen(true)} onOpenPrefs={() => setPrefsOpen(true)}/>
+      <LeftNav
+        route={route}
+        onNavigate={navigate}
+        onOpenCmd={() => setCmdOpen(true)}
+        onOpenPrefs={() => setPrefsOpen(true)}
+        onLogoClick={() => {
+          localStorage.removeItem('los-authed');
+          setAuthed(false);
+        }}
+      />
       <div style={{ flex: 1, display: 'flex', flexDirection: 'column', minHeight: 0, paddingBottom: 36, paddingLeft: 44 }}>
         {route === 'deposit-review' && <LargeDepositReviewView onBack={() => navigate('home')}/>}
         {route !== 'deposit-review' && (

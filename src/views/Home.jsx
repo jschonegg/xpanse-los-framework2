@@ -1,6 +1,7 @@
 import React from 'react';
 import ReactDOM from 'react-dom';
 import { Icon } from '../components/Icon';
+import { flags } from '../flags';
 import { WidgetGrid, PipelineSnapshotWidget, ClosingCountdownWidget, RateWatchWidget, ConditionsTrackerWidget, QuickActionsWidget, RecentActivityWidget,
          FilesAtRiskWidget, ReadyForUWWidget, LockClockWidget, WaitingOnBorrowerWidget } from './WidgetGrid';
 import { AIInsightsBanner } from './Pipeline';
@@ -145,8 +146,37 @@ function Leaderboard() {
 
   const periodLabels = { MTD: 'Resets Jun 1 · 11 days left', QTD: 'Q2 ends Jun 30', YTD: 'Jan – May 2026' };
 
+  // Branch-level summary stats shown above the leaderboard when the
+  // leaderboardBranchStats flag is ON. Mock values for now — when real
+  // branch data is wired up, swap these for live numbers.
+  const branchStats = [
+    { label: 'Branch volume MTD', value: '$28.4M', sub: '+9% vs Apr' },
+    { label: 'Active loans',      value: '186',    sub: '14 closing this week' },
+    { label: 'Avg cycle time',    value: '28d',    sub: 'best in region' },
+    { label: 'NPS · last 30d',    value: '71',     sub: '34 responses' },
+  ];
+
   return (
     <div style={{ background: '#fff', border: '1px solid #E5E7EB', borderRadius: 16, overflow: 'hidden' }}>
+
+      {/* ── Branch stats strip (flag: leaderboardBranchStats) ── */}
+      {flags.leaderboardBranchStats && (
+        <div style={{ padding: '14px 18px', background: 'linear-gradient(180deg, #FAFAFB 0%, #fff 100%)', borderBottom: '1px solid #F3F4F6' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 10 }}>
+            <span style={{ fontSize: 13, fontWeight: 700, color: '#111827', letterSpacing: '-0.01em' }}>Camp Hill Branch</span>
+            <span style={{ fontSize: 10, fontWeight: 700, color: '#7E68FA', background: '#EDE9FE', padding: '2px 7px', borderRadius: 4 }}>#1 IN REGION</span>
+          </div>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 16 }}>
+            {branchStats.map((s) => (
+              <div key={s.label} style={{ minWidth: 0 }}>
+                <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', color: '#9CA3AF', marginBottom: 4, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{s.label}</div>
+                <div style={{ fontSize: 20, fontWeight: 800, letterSpacing: '-0.02em', color: '#111827', lineHeight: 1.1, fontFamily: 'DM Mono' }}>{s.value}</div>
+                <div style={{ fontSize: 11, color: '#6B7280', marginTop: 2, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{s.sub}</div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* ── Header ───────────────────────────────── */}
       <div style={{ padding: '14px 18px 0', borderBottom: '1px solid #F3F4F6' }}>
@@ -1187,11 +1217,10 @@ export function HomeView({ onNavigate, onOpenLoan }) {
     }
   };
 
-  return (
-    <>
-    <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden', background: '#0F1117' }}>
-
-      {/* ── Hero ── (compact: same info, less vertical space) */}
+  // ── Hero block — gated by flags.heroFlowing.
+  // OFF (default): rendered above the main area as a pinned page header.
+  // ON: rendered as the first child of the scrolling center column so it scrolls with the page.
+  const hero = (
       <div style={{
         background: 'linear-gradient(135deg, #1a1535 0%, #1e1b4b 40%, #1a1d3a 100%)',
         borderBottom: '1px solid rgba(255,255,255,0.07)',
@@ -1339,12 +1368,22 @@ export function HomeView({ onNavigate, onOpenLoan }) {
           </div>
         </div>
       </div>
+  );
+
+  return (
+    <>
+    <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden', background: '#0F1117' }}>
+
+      {!flags.heroFlowing && hero}
 
       {/* ── Main area ── */}
       <div style={{ flex: 1, display: 'flex', overflow: 'hidden', background: '#F4F5F7' }}>
 
         {/* ── Center ── */}
         <div style={{ flex: 1, overflowY: 'auto', padding: '24px 28px 48px', minWidth: 0 }}>
+          {flags.heroFlowing && (
+            <div style={{ margin: '-24px -28px 24px' }}>{hero}</div>
+          )}
           {/* 01 · Today's priorities — operational triage */}
           <SectionHeader
             number={1}
