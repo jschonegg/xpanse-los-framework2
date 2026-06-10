@@ -7,6 +7,7 @@
 
 const defaults = {
   heroFlowing: false,
+  logoToLogin: false,
 };
 
 function readOverrides() {
