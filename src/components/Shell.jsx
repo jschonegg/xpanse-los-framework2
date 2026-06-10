@@ -3,11 +3,22 @@ import { Icon } from './Icon';
 import { flags } from '../flags';
 import { IMSLogoMonogram } from './IMSLogo';
 
+// Flat white version of the Xpanse X-mark from public/favicon.svg.
+// Used in the LeftNav rail; sits directly on the dark nav background
+// (no tile around it).
+function XpanseMark({ size = 28 }) {
+  return (
+    <svg width={size} height={size * (46 / 48)} viewBox="0 0 48 46" fill="none" xmlns="http://www.w3.org/2000/svg" aria-label="Xpanse">
+      <path fill="#fff" d="M25.946 44.938c-.664.845-2.021.375-2.021-.698V33.937a2.26 2.26 0 0 0-2.262-2.262H10.287c-.92 0-1.456-1.04-.92-1.788l7.48-10.471c1.07-1.497 0-3.578-1.842-3.578H1.237c-.92 0-1.456-1.04-.92-1.788L10.013.474c.214-.297.556-.474.92-.474h28.894c.92 0 1.456 1.04.92 1.788l-7.48 10.471c-1.07 1.498 0 3.579 1.842 3.579h11.377c.943 0 1.473 1.088.89 1.83L25.947 44.94z"/>
+    </svg>
+  );
+}
+
 export function LogoMark({ size = 32 }) {
-  // When imsBrand is ON, render the IMS monogram (Intelligent Mortgage Solutions).
-  // Otherwise fall back to the previous sparkle-on-purple-tile mark.
+  // imsBrand ON  → Xpanse X-mark (white, no tile)
+  // imsBrand OFF → legacy sparkle-on-purple-tile mark
   if (flags.imsBrand) {
-    return <IMSLogoMonogram size={size}/>;
+    return <XpanseMark size={size}/>;
   }
   return (
     <div style={{
