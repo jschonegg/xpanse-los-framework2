@@ -2187,14 +2187,15 @@ function StageMilestonesPopover({ stage, loan }) {
     }}
       onClick={(e) => e.stopPropagation()}
     >
-      {/* Arrow */}
+      {/* Arrow — combine translate + rotate in one transform so the centering
+          translateX isn't applied in the rotated frame (which shifts the
+          diamond off-center and lifts it off the popover's top edge). */}
       <div style={{
-        position: 'absolute', top: -6, left: '50%', transform: 'translateX(-50%)',
+        position: 'absolute', top: -6, left: '50%', transform: 'translateX(-50%) rotate(45deg)',
         width: 10, height: 10,
         background: 'var(--bg-surface)',
         border: '1px solid var(--border-subtle)',
         borderBottom: 'none', borderRight: 'none',
-        rotate: '45deg',
       }}/>
 
       {/* Header */}
@@ -2260,14 +2261,15 @@ function ProgressInsightPopover({ meta, loan }) {
       padding: '16px 18px',
       whiteSpace: 'normal',
     }}>
-      {/* Arrow */}
+      {/* Arrow — combine translate + rotate in one transform so the centering
+          translateX isn't applied in the rotated frame (which shifts the
+          diamond off-center and lifts it off the popover's top edge). */}
       <div style={{
-        position: 'absolute', top: -6, left: '50%', transform: 'translateX(-50%)',
+        position: 'absolute', top: -6, left: '50%', transform: 'translateX(-50%) rotate(45deg)',
         width: 10, height: 10,
         background: 'var(--bg-surface)',
         border: '1px solid var(--border-subtle)',
         borderBottom: 'none', borderRight: 'none',
-        rotate: '45deg',
       }}/>
 
       {/* Stage ladder */}

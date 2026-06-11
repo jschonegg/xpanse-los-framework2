@@ -216,7 +216,10 @@ select:focus-visible {
   border-radius: 6px;
 }
 
-/* LeftNav tooltip — hover or focus reveals the data-tooltip text. */
+/* Global-nav tooltip (LOS LeftNav + Admin Console rail) — hover or focus
+   reveals the data-tooltip text. The arrow (::before) anchors the pointer to
+   the icon; the bubble (::after) sits just past it so the diamond reads as
+   connected to the text (small 2px overlap, no visible gap). */
 [data-tooltip] {
   position: relative;
 }
@@ -224,7 +227,7 @@ select:focus-visible {
 [data-tooltip]:focus-visible::after {
   content: attr(data-tooltip);
   position: absolute;
-  left: calc(100% + 10px);
+  left: calc(100% + 12px);
   top: 50%;
   transform: translateY(-50%);
   background: #1a1d3a;
@@ -243,7 +246,7 @@ select:focus-visible {
 [data-tooltip]:focus-visible::before {
   content: '';
   position: absolute;
-  left: calc(100% + 4px);
+  left: calc(100% + 10px);
   top: 50%;
   transform: translateY(-50%) rotate(45deg);
   width: 8px; height: 8px;
