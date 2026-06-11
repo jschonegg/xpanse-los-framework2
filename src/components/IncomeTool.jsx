@@ -46,25 +46,42 @@ function CurrencyInput({ value, onChange, placeholder = '0', disabled, style }) 
 
 function SelectInput({ value, onChange, options, disabled }) {
   return (
-    <select
-      value={value}
-      onChange={e => onChange(e.target.value)}
-      disabled={disabled}
-      style={{
-        width: '100%', padding: '6px 8px', fontSize: 13, border: '1px solid var(--border-subtle)',
-        borderRadius: 6, background: disabled ? 'var(--bg-muted)' : 'var(--bg-surface)',
-        color: 'var(--text-primary)', outline: 'none', fontFamily: 'inherit', cursor: disabled ? 'default' : 'pointer',
-      }}
-    >
-      {options.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
-    </select>
+    <div style={{ position: 'relative' }}>
+      <select
+        value={value}
+        onChange={e => onChange(e.target.value)}
+        disabled={disabled}
+        style={{
+          width: '100%', padding: '6px 28px 6px 8px', fontSize: 13, border: '1px solid var(--border-subtle)',
+          borderRadius: 6, background: disabled ? 'var(--bg-muted)' : 'var(--bg-surface)',
+          color: 'var(--text-primary)', outline: 'none', fontFamily: 'inherit', cursor: disabled ? 'default' : 'pointer',
+          appearance: 'none', WebkitAppearance: 'none', MozAppearance: 'none',
+        }}
+      >
+        {options.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
+      </select>
+      <span style={{ position: 'absolute', right: 8, top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none', color: 'var(--text-tertiary)', display: 'flex' }}>
+        <Icon name="chevronDown" size={12}/>
+      </span>
+    </div>
   );
+}
+
+// Renders form labels in sentence case while preserving all-caps acronyms
+// like ZIP, SSN, FHA, etc.
+function toSentenceCase(label) {
+  if (typeof label !== 'string' || !label) return label;
+  return label.split(' ').map((word, i) => {
+    if (word.length >= 2 && /[A-Z]/.test(word) && word === word.toUpperCase()) return word;
+    if (i === 0) return word.charAt(0).toUpperCase() + word.slice(1).toLowerCase();
+    return word.toLowerCase();
+  }).join(' ');
 }
 
 function Label({ children, hint }) {
   return (
     <div style={{ marginBottom: 4 }}>
-      <span style={{ fontSize: 11.5, fontWeight: 600, color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.04em' }}>{children}</span>
+      <span style={{ fontSize: 12, fontWeight: 500, color: 'var(--text-secondary)' }}>{toSentenceCase(children)}</span>
       {hint && <span style={{ fontSize: 11, color: 'var(--text-tertiary)', marginLeft: 6 }}>{hint}</span>}
     </div>
   );

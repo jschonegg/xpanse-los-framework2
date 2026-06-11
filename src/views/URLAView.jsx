@@ -72,6 +72,17 @@ function AIBadge({ conf, source, flag }) {
   );
 }
 
+// Renders form labels in sentence case while preserving all-caps acronyms
+// like ZIP, SSN, FHA, etc.
+function toSentenceCase(label) {
+  if (typeof label !== 'string' || !label) return label;
+  return label.split(' ').map((word, i) => {
+    if (word.length >= 2 && /[A-Z]/.test(word) && word === word.toUpperCase()) return word;
+    if (i === 0) return word.charAt(0).toUpperCase() + word.slice(1).toLowerCase();
+    return word.toLowerCase();
+  }).join(' ');
+}
+
 function Field({ label, name, type = 'text', prefill, value, onChange, required, options, hint }) {
   const hasPrefill = prefill && prefill.conf > 0;
   const isEdited = hasPrefill && value !== prefill.value;
@@ -79,21 +90,26 @@ function Field({ label, name, type = 'text', prefill, value, onChange, required,
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 5 }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: 7 }}>
-        <label style={{ fontSize: 11.5, fontWeight: 600, color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
-          {label}{required && <span style={{ color: 'var(--status-red)', marginLeft: 2 }}>*</span>}
+        <label style={{ fontSize: 12, fontWeight: 500, color: 'var(--text-secondary)' }}>
+          {toSentenceCase(label)}{required && <span style={{ color: 'var(--status-red)', marginLeft: 2 }}>*</span>}
         </label>
         {hasPrefill && !isEdited && <AIBadge conf={prefill.conf} source={prefill.source} flag={prefill.flag}/>}
         {isEdited && <span style={{ fontSize: 10.5, color: 'var(--text-tertiary)' }}>edited</span>}
       </div>
 
       {options ? (
-        <select
-          value={value}
-          onChange={e => onChange(name, e.target.value)}
-          style={inputStyle(hasPrefill && !isEdited, prefill?.flag)}
-        >
-          {options.map(o => <option key={o} value={o}>{o}</option>)}
-        </select>
+        <div style={{ position: 'relative' }}>
+          <select
+            value={value}
+            onChange={e => onChange(name, e.target.value)}
+            style={{ ...inputStyle(hasPrefill && !isEdited, prefill?.flag), paddingRight: 30, cursor: 'pointer', appearance: 'none', WebkitAppearance: 'none', MozAppearance: 'none' }}
+          >
+            {options.map(o => <option key={o} value={o}>{o}</option>)}
+          </select>
+          <span style={{ position: 'absolute', right: 10, top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none', color: 'var(--text-tertiary)', display: 'flex' }}>
+            <Icon name="chevronDown" size={13}/>
+          </span>
+        </div>
       ) : (
         <input
           type={type}

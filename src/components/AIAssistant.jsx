@@ -209,9 +209,9 @@ const ALL_ACTIONS_PROCESSOR = [
     id: 'p9', type: 'ai', priority: 'medium', eta: '30 sec', confidence: 89,
     loan: 'Emily Rodriguez', loanId: 'LN-2024-0301', category: 'Conditions',
     title: 'Send condition status update to LO — Rodriguez',
-    why: "Rodriguez has been in UW for 4 days. The LO (Jamie Lee) hasn't been updated. I've drafted a brief status note: 3 open conditions, 2 borrower-side, 1 employer VOE in progress.",
+    why: "Rodriguez has been in UW for 4 days. Jamie Lee (processor) is working the conditions but the LO hasn't been looped in. I've drafted a brief status note: 3 open conditions, 2 borrower-side, 1 employer VOE in progress.",
     cta: 'Approve & send to LO',
-    preview: '"Hi Jamie — Rodriguez update: 3 conditions open. C-003 (paystub) and C-005 (bank statement) are borrower-side — portal requests sent. C-008 VOE is with Acme Corp, ETA 2 days. No blockers yet. — Jordan"',
+    preview: '"Rodriguez update: 3 conditions open. C-003 (paystub) and C-005 (bank statement) are borrower-side — portal requests sent. C-008 VOE is with Acme Corp, ETA 2 days. No blockers yet. — Jordan"',
   },
   {
     id: 'p10', type: 'nav', priority: 'medium', confidence: 82,

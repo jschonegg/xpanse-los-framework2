@@ -1,6 +1,7 @@
 import React from 'react';
 import { Icon } from '../components/Icon';
-import { StatusPill } from '../components/Shell';
+import { StatusPill, PageHeader } from '../components/Shell';
+import { LOANS } from '../data/loans';
 
 // ─── Section IDs (shared with LeftRail sub-nav so anchor scrolling works) ────
 // Each ID is attached directly to its corresponding form card so clicking
@@ -45,6 +46,111 @@ const LOAN_URLA_DATA = {
   },
 };
 const DEFAULT_URLA = LOAN_URLA_DATA['LN-2024-0234'];
+
+// Parse a loan's free-form property string into URLA street/city/state/zip parts.
+// Tolerates missing pieces; falls back to placeholders.
+function parsePropertyAddress(propStr) {
+  if (!propStr) return { street: '— TBD —', city: '', state: '', zip: '' };
+  // Match: "<street>, <city> <ST>[ <zip>]"
+  const m = propStr.match(/^(.+?),\s*(.+?)\s+([A-Z]{2})(?:\s+(\d{5}))?$/);
+  if (!m) return { street: propStr, city: '', state: '', zip: '' };
+  return { street: m[1].trim(), city: m[2].trim(), state: m[3], zip: m[4] || '' };
+}
+
+// Map a loan's product label into URLA loan-type / amortization fields.
+function deriveLoanTerms(loan) {
+  const product = loan.product || 'Conv 30yr';
+  let type = 'Conventional';
+  if (/FHA/i.test(product))   type = 'FHA';
+  else if (/VA/i.test(product))    type = 'VA';
+  else if (/USDA/i.test(product))  type = 'USDA-RD';
+  else if (/Jumbo/i.test(product)) type = 'Conventional (Jumbo)';
+  const termMatch = product.match(/(\d+)\s*yr/i);
+  const term = termMatch ? Number(termMatch[1]) : 30;
+  return { type, term, amortization: 'Fixed' };
+}
+
+// Build a complete URLA shape from a loan record, using realistic placeholder
+// values for PII/financial fields the loan record doesn't track (SSN, DOB,
+// employment, assets, liabilities). The borrower name, co-borrower (if any),
+// property, and loan terms always reflect the loan record so the form stays
+// in sync with the rest of the app.
+function buildURLAFromLoan(loan) {
+  if (!loan) return DEFAULT_URLA;
+  const propParts = parsePropertyAddress(loan.property);
+  const terms = deriveLoanTerms(loan);
+  const sameAddr = !!loan.coborrower;
+  return {
+    borrower: {
+      name: loan.borrower,
+      ssn: '***-**-0000', dob: '01/01/1985', citizenship: 'U.S. Citizen',
+      maritalStatus: loan.coborrower ? 'Married' : 'Single',
+      dependents: 0, dependentsAges: '—',
+      email: '— TBD —', phoneHome: '— TBD —', phoneCell: '— TBD —',
+    },
+    coborrower: loan.coborrower ? {
+      name: loan.coborrower.name,
+      ssn: '***-**-0000', dob: '01/01/1985', citizenship: 'U.S. Citizen',
+      maritalStatus: 'Married',
+      dependents: 0, dependentsAges: '—',
+      email: '— TBD —', phoneHome: '— TBD —', phoneCell: '— TBD —',
+    } : null,
+    currentAddress: {
+      street: propParts.street || '— TBD —',
+      city: propParts.city || '— TBD —',
+      state: propParts.state || '—',
+      zip: propParts.zip || '—',
+      yearsAtAddress: 3, housing: 'Rent',
+    },
+    coborrowerAddress: sameAddr ? {
+      street: propParts.street || '— TBD —',
+      city: propParts.city || '— TBD —',
+      state: propParts.state || '—',
+      zip: propParts.zip || '—',
+      yearsAtAddress: 3, housing: 'Rent',
+    } : null,
+    employment: { employer: '— TBD —', position: '— TBD —', startDate: '—', yearsInLine: 0, monthlyIncome: 0, selfEmployed: false },
+    additionalIncome: { source: '—', monthlyAmt: 0 },
+    coborrowerEmployment: loan.coborrower
+      ? { employer: '— TBD —', position: '— TBD —', startDate: '—', yearsInLine: 0, monthlyIncome: 0, selfEmployed: false }
+      : null,
+    coborrowerAdditionalIncome: loan.coborrower ? { source: '—', monthlyAmt: 0 } : null,
+    assets: [],
+    liabilities: [],
+    realEstate: [],
+    loan: {
+      amount: loan.amount || 0,
+      term: terms.term,
+      type: terms.type,
+      purpose: loan.loanPurpose || 'Purchase',
+      amortization: terms.amortization,
+      rate: loan.rate || 0,
+      occupancy: 'Primary Residence',
+    },
+    property: {
+      street: propParts.street || '— TBD —',
+      city: propParts.city || '— TBD —',
+      state: propParts.state || '—',
+      zip: propParts.zip || '—',
+      salePrice: loan.amount && loan.ltv ? Math.round(loan.amount / (loan.ltv / 100)) : 0,
+      propertyType: 'Single Family Detached',
+      yearBuilt: null,
+    },
+    declarations: {
+      willOccupyAsPrimary: 'Yes', ownershipPriorThreeYears: 'No', haveAnyOutstandingJudgments: 'No',
+      delinquentOrInDefault: 'No', partyToLawsuit: 'No', conveyedTitleInLieu: 'No',
+      preForeclosureOrShortSale: 'No', borrowedDownPayment: 'No', coSignerOnAnotherLoan: 'No',
+      usCitizen: 'Yes', bankruptcyLast7Years: 'No',
+    },
+    coborrowerDeclarations: loan.coborrower ? {
+      willOccupyAsPrimary: 'Yes', ownershipPriorThreeYears: 'No', haveAnyOutstandingJudgments: 'No',
+      delinquentOrInDefault: 'No', partyToLawsuit: 'No', conveyedTitleInLieu: 'No',
+      preForeclosureOrShortSale: 'No', borrowedDownPayment: 'No', coSignerOnAnotherLoan: 'No',
+      usCitizen: 'Yes', bankruptcyLast7Years: 'No',
+    } : null,
+    originator: { name: loan.assignee || 'Alex Martinez', nmlsr: 'NMLS# 1234567', company: 'Xpanse Mortgage', companyNmlsr: 'NMLS# 9876543' },
+  };
+}
 
 // Stand-in second-application borrower (used when user splits or adds App 2).
 const SECOND_APP_TEMPLATE = {
@@ -93,15 +199,38 @@ function appTabTitle(app) {
   return app.borrower.name;
 }
 
+// Renders form labels in sentence case while preserving all-caps acronyms
+// like ZIP, SSN, FHA, etc.
+function toSentenceCase(label) {
+  if (typeof label !== 'string' || !label) return label;
+  return label.split(' ').map((word, i) => {
+    if (word.length >= 2 && /[A-Z]/.test(word) && word === word.toUpperCase()) return word;
+    if (i === 0) return word.charAt(0).toUpperCase() + word.slice(1).toLowerCase();
+    return word.toLowerCase();
+  }).join(' ');
+}
+
 // ─── Editable field ─────────────────────────────────────────────────────────
-function URLAField({ label, value, prefix = '', suffix = '', readOnly = false, mono = false }) {
+// `onCommit(nextValue)` fires on blur when the value changed — used by the
+// linked Borrower Summary tab to push edits back to shared app state.
+// When `options` is passed, renders a select; commits immediately on change.
+function URLAField({ label, hint, value, prefix = '', suffix = '', readOnly = false, mono = false, options, onCommit }) {
   const [focused, setFocused] = React.useState(false);
   const [localVal, setLocalVal] = React.useState(value);
   React.useEffect(() => { setLocalVal(value); }, [value]);
+  const handleBlur = () => {
+    setFocused(false);
+    if (onCommit && localVal !== value) onCommit(localVal);
+  };
+  const isSelect = Array.isArray(options);
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-      <label style={{ fontSize: 10.5, fontWeight: 600, color: 'var(--text-tertiary)', textTransform: 'uppercase', letterSpacing: '0.06em' }}>{label}</label>
+      <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', gap: 8 }}>
+        <label style={{ fontSize: 12, fontWeight: 500, color: 'var(--text-secondary)' }}>{toSentenceCase(label)}</label>
+        {hint && <span style={{ fontSize: 11.5, color: 'var(--text-tertiary)' }}>{hint}</span>}
+      </div>
       <div style={{
+        position: 'relative',
         display: 'flex', alignItems: 'center', gap: 0,
         background: focused ? 'var(--bg-surface)' : 'var(--bg-muted)',
         border: `1px solid ${focused ? 'var(--text-primary)' : 'var(--border-subtle)'}`,
@@ -110,20 +239,90 @@ function URLAField({ label, value, prefix = '', suffix = '', readOnly = false, m
         transition: 'border-color 0.12s, box-shadow 0.12s',
       }}>
         {prefix && <span style={{ padding: '0 8px', fontSize: 13, color: 'var(--text-secondary)', borderRight: '1px solid var(--border-subtle)', background: 'var(--bg-muted)', height: 32, display: 'flex', alignItems: 'center', flexShrink: 0 }}>{prefix}</span>}
-        <input
-          value={localVal ?? ''} readOnly={readOnly}
-          onChange={e => setLocalVal(e.target.value)}
-          onFocus={() => setFocused(true)} onBlur={() => setFocused(false)}
-          style={{
-            flex: 1, height: 32, border: 'none', outline: 'none', background: 'transparent',
-            fontSize: 13, fontWeight: 400, fontFamily: mono ? 'DM Mono, monospace' : 'inherit',
-            color: 'var(--text-primary)', padding: '0 10px', cursor: readOnly ? 'default' : 'text', minWidth: 0,
-          }}
-        />
+        {isSelect ? (
+          <>
+            <select
+              value={localVal ?? ''} disabled={readOnly}
+              onChange={e => { setLocalVal(e.target.value); onCommit && onCommit(e.target.value); }}
+              onFocus={() => setFocused(true)} onBlur={() => setFocused(false)}
+              style={{
+                flex: 1, height: 32, border: 'none', outline: 'none', background: 'transparent',
+                fontSize: 13, fontWeight: 400, fontFamily: 'inherit',
+                color: 'var(--text-primary)', padding: '0 28px 0 10px', cursor: readOnly ? 'default' : 'pointer', minWidth: 0,
+                appearance: 'none', WebkitAppearance: 'none', MozAppearance: 'none',
+              }}
+            >
+              {options.map(opt => <option key={opt} value={opt}>{opt || '—'}</option>)}
+            </select>
+            <span style={{ position: 'absolute', right: 10, top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none', color: 'var(--text-tertiary)', display: 'flex' }}>
+              <Icon name="chevronDown" size={12}/>
+            </span>
+          </>
+        ) : (
+          <input
+            value={localVal ?? ''} readOnly={readOnly}
+            onChange={e => setLocalVal(e.target.value)}
+            onFocus={() => setFocused(true)} onBlur={handleBlur}
+            style={{
+              flex: 1, height: 32, border: 'none', outline: 'none', background: 'transparent',
+              fontSize: 13, fontWeight: 400, fontFamily: mono ? 'DM Mono, monospace' : 'inherit',
+              color: 'var(--text-primary)', padding: '0 10px', cursor: readOnly ? 'default' : 'text', minWidth: 0,
+            }}
+          />
+        )}
         {suffix && <span style={{ padding: '0 8px', fontSize: 13, color: 'var(--text-tertiary)', borderLeft: '1px solid var(--border-subtle)', background: 'var(--bg-muted)', height: 32, display: 'flex', alignItems: 'center', flexShrink: 0 }}>{suffix}</span>}
       </div>
     </div>
   );
+}
+
+const NAME_SUFFIXES = ['', 'Jr.', 'Sr.', 'II', 'III', 'IV', 'V'];
+const MARITAL_STATUSES = ['Single', 'Married', 'Separated', 'Divorced', 'Widowed', 'Domestic Partnership'];
+const US_STATES = [
+  '', 'AL','AK','AZ','AR','CA','CO','CT','DE','DC','FL','GA','HI','ID','IL','IN','IA','KS','KY','LA','ME','MD','MA','MI','MN','MS','MO',
+  'MT','NE','NV','NH','NJ','NM','NY','NC','ND','OH','OK','OR','PA','RI','SC','SD','TN','TX','UT','VT','VA','WA','WV','WI','WY',
+];
+
+// Compute integer years between a date string and today. Accepts MM/DD/YYYY,
+// YYYY-MM-DD, or any string Date can parse. Returns null when unparseable.
+function calcAge(dobStr) {
+  if (!dobStr || typeof dobStr !== 'string') return null;
+  let d = null;
+  const mdy = dobStr.trim().match(/^(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{2}|\d{4})$/);
+  if (mdy) {
+    let [, mm, dd, yy] = mdy;
+    if (yy.length === 2) yy = (parseInt(yy, 10) > 30 ? '19' : '20') + yy;
+    d = new Date(parseInt(yy, 10), parseInt(mm, 10) - 1, parseInt(dd, 10));
+  } else {
+    const parsed = new Date(dobStr);
+    if (!isNaN(parsed.getTime())) d = parsed;
+  }
+  if (!d || isNaN(d.getTime())) return null;
+  const now = new Date();
+  let age = now.getFullYear() - d.getFullYear();
+  const m = now.getMonth() - d.getMonth();
+  if (m < 0 || (m === 0 && now.getDate() < d.getDate())) age -= 1;
+  if (age < 0 || age > 130) return null;
+  return age;
+}
+
+// Parse a full name string into first/middle/last/suffix parts. Treats a
+// trailing token matching NAME_SUFFIXES as the suffix; everything between
+// first and last becomes the middle name (so "James M O'Connor" yields
+// firstName: "James", middleName: "M", lastName: "O'Connor").
+function splitName(name) {
+  if (!name || typeof name !== 'string') return { firstName: '', middleName: '', lastName: '', suffix: '' };
+  const parts = name.trim().split(/\s+/);
+  let suffix = '';
+  if (parts.length >= 2 && NAME_SUFFIXES.includes(parts[parts.length - 1])) suffix = parts.pop();
+  if (parts.length === 0) return { firstName: '', middleName: '', lastName: '', suffix };
+  if (parts.length === 1) return { firstName: parts[0], middleName: '', lastName: '', suffix };
+  if (parts.length === 2) return { firstName: parts[0], middleName: '', lastName: parts[1], suffix };
+  return { firstName: parts[0], middleName: parts.slice(1, -1).join(' '), lastName: parts[parts.length - 1], suffix };
+}
+
+function joinName({ firstName, middleName, lastName, suffix }) {
+  return [firstName, middleName, lastName, suffix].filter(s => s && String(s).trim()).join(' ');
 }
 
 function SectionHead({ label, sub, accent = false }) {
@@ -253,40 +452,57 @@ function YesNoRow({ label, value, coValue, showCoColumn }) {
 
 // ─── Section 1: Borrower Info ───────────────────────────────────────────────
 // Same exact field set for both borrowers so the two 1a cards line up.
-function PersonalInfoFields({ person }) {
+// `onChange(field, value)` (optional) — fires when a field is edited.
+function PersonalInfoFields({ person, onChange }) {
+  const commit = (field) => onChange ? (v) => onChange(field, v) : undefined;
+  const nameParts = splitName(person.name || '');
+  const commitName = (key) => (v) => onChange && onChange('name', joinName({ ...nameParts, [key]: v }));
   return (
     <div style={{ padding: '16px 14px', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '14px 18px', background: 'var(--bg-surface)' }}>
-      <URLAField label="Full Name"       value={person.name}/>
-      <URLAField label="Social Security" value={person.ssn} mono/>
-      <URLAField label="Date of Birth"   value={person.dob} mono/>
-      <URLAField label="Citizenship"     value={person.citizenship}/>
-      <URLAField label="Marital Status"  value={person.maritalStatus}/>
-      <URLAField label="Dependents"      value={person.dependents != null ? `${person.dependents}${person.dependentsAges ? ` (ages ${person.dependentsAges})` : ''}` : '—'}/>
-      <URLAField label="Home Phone"      value={person.phoneHome || '—'}/>
-      <URLAField label="Cell Phone"      value={person.phoneCell || '—'}/>
+      <URLAField label="First Name"      value={nameParts.firstName}   onCommit={commitName('firstName')}/>
+      <URLAField label="Middle Name"     value={nameParts.middleName}  onCommit={commitName('middleName')}/>
+      <URLAField label="Last Name"       value={nameParts.lastName}    onCommit={commitName('lastName')}/>
+      <URLAField label="Suffix"          value={nameParts.suffix} options={NAME_SUFFIXES} onCommit={commitName('suffix')}/>
+      <URLAField label="Social Security" value={person.ssn} mono       onCommit={commit('ssn')}/>
+      <URLAField label="Date of Birth"   value={person.dob} mono       onCommit={commit('dob')}
+        hint={calcAge(person.dob) != null ? `Age ${calcAge(person.dob)}` : null}/>
+      <URLAField label="Citizenship"     value={person.citizenship}    onCommit={commit('citizenship')}/>
+      <URLAField label="Marital Status"  value={person.maritalStatus} options={MARITAL_STATUSES} onCommit={commit('maritalStatus')}/>
+      <URLAField label="# of Dependents" value={person.dependents != null ? String(person.dependents) : ''}
+        onCommit={onChange ? (v) => onChange('dependents', v === '' ? null : parseInt(v, 10) || 0) : undefined}/>
+      <URLAField label="Dependent Ages"  value={person.dependentsAges || ''} onCommit={commit('dependentsAges')} hint="Comma-separated"/>
+      <URLAField label="Home Phone"      value={person.phoneHome || '—'} onCommit={commit('phoneHome')}/>
+      <URLAField label="Cell Phone"      value={person.phoneCell || '—'} onCommit={commit('phoneCell')}/>
       <div style={{ gridColumn: '1 / -1' }}>
-        <URLAField label="Email"         value={person.email}/>
+        <URLAField label="Email"         value={person.email}            onCommit={commit('email')}/>
       </div>
     </div>
   );
 }
 
-function SectionBorrowerInfo({ app, onAddCo, onRemoveCo, onUpdateApp }) {
+export function SectionBorrowerInfo({ app, onAddCo, onRemoveCo, onUpdateApp }) {
   const hasCo = !!app.coborrower;
   const b = app.borrower;
+  // Build nested-object field-change handlers that delegate to onUpdateApp.
+  const mkSubChange = (key) => (field, value) =>
+    onUpdateApp && onUpdateApp({ [key]: { ...(app[key] || {}), [field]: value } });
+  const onBorrowerChange   = mkSubChange('borrower');
+  const onCoborrowerChange = mkSubChange('coborrower');
+  const onAddressChange    = mkSubChange('currentAddress');
+  const onCoAddressChange  = mkSubChange('coborrowerAddress');
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
       {/* 1a — Personal (anchor for "1. Borrower Info") */}
       <div id="urla1003-1a" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, alignItems: 'flex-start', scrollMarginTop: 8 }}>
         <div style={{ border: '1px solid var(--border-subtle)', borderRadius: 10, overflow: 'hidden' }}>
           <SectionHead label="1a · Personal Information" sub="Borrower"/>
-          <PersonalInfoFields person={app.borrower}/>
+          <PersonalInfoFields person={app.borrower} onChange={onBorrowerChange}/>
         </div>
 
         {hasCo ? (
           <div style={{ border: '1px solid var(--border-subtle)', borderRadius: 10, overflow: 'hidden' }}>
             <SectionHead label="1a · Personal Information" sub="Co-Borrower"/>
-            <PersonalInfoFields person={app.coborrower}/>
+            <PersonalInfoFields person={app.coborrower} onChange={onCoborrowerChange}/>
           </div>
         ) : (
           <button onClick={onAddCo}
@@ -312,7 +528,7 @@ function SectionBorrowerInfo({ app, onAddCo, onRemoveCo, onUpdateApp }) {
 
       {/* Current address (paired when co-borrower present) */}
       <div style={{ display: 'grid', gridTemplateColumns: hasCo ? '1fr 1fr' : '1fr', gap: 16, alignItems: 'flex-start' }}>
-        <AddressCard sub="Borrower" address={app.currentAddress} narrow={hasCo}/>
+        <AddressCard sub="Borrower" address={app.currentAddress} narrow={hasCo} onChange={onAddressChange}/>
         {hasCo && (
           <AddressCard
             sub="Co-Borrower"
@@ -321,22 +537,19 @@ function SectionBorrowerInfo({ app, onAddCo, onRemoveCo, onUpdateApp }) {
             sameAsPrimary={!!app.coborrowerSameAddress}
             onToggleSameAsPrimary={() => onUpdateApp && onUpdateApp({ coborrowerSameAddress: !app.coborrowerSameAddress })}
             primaryBorrowerName={app.borrower.name}
+            onChange={app.coborrowerSameAddress ? onAddressChange : onCoAddressChange}
           />
         )}
       </div>
 
-      {/* 1b — Employment (paired when co-borrower present) */}
-      <div style={{ display: 'grid', gridTemplateColumns: hasCo ? '1fr 1fr' : '1fr', gap: 16, alignItems: 'flex-start' }}>
-        <EmploymentCard sub="Borrower" employment={app.employment} additional={app.additionalIncome} narrow={hasCo}/>
-        {hasCo && (
-          <EmploymentCard sub="Co-Borrower" employment={app.coborrowerEmployment || app.employment} additional={app.coborrowerAdditionalIncome} narrow/>
-        )}
-      </div>
+      {/* 1b — Employment & Income (unified table for both borrowers) */}
+      <IncomeTable app={app} onUpdateApp={onUpdateApp}/>
     </div>
   );
 }
 
-function AddressCard({ sub, address, narrow, sameAsPrimary, onToggleSameAsPrimary, primaryBorrowerName }) {
+function AddressCard({ sub, address, narrow, sameAsPrimary, onToggleSameAsPrimary, primaryBorrowerName, onChange }) {
+  const commit = (field) => onChange ? (v) => onChange(field, v) : undefined;
   if (!address) return null;
   const canToggle = typeof onToggleSameAsPrimary === 'function';
   return (
@@ -386,20 +599,23 @@ function AddressCard({ sub, address, narrow, sameAsPrimary, onToggleSameAsPrimar
         <div style={{ padding: '16px 14px', display: 'grid', gridTemplateColumns: narrow ? '2fr 1fr' : '2fr 1fr 1fr 1fr', gap: '14px 18px', background: 'var(--bg-surface)' }}>
           {narrow ? (
             <>
-              <div style={{ gridColumn: '1 / -1' }}><URLAField label="Street" value={address.street}/></div>
-              <URLAField label="City"  value={address.city}/>
-              <URLAField label="State / ZIP" value={`${address.state} ${address.zip}`} mono/>
+              <div style={{ gridColumn: '1 / -1' }}><URLAField label="Street" value={address.street} onCommit={commit('street')}/></div>
+              <URLAField label="City"  value={address.city}  onCommit={commit('city')}/>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0 12px' }}>
+                <URLAField label="State" options={US_STATES} value={address.state} onCommit={commit('state')}/>
+                <URLAField label="ZIP"   value={address.zip} mono onCommit={commit('zip')}/>
+              </div>
               <URLAField label="Years at Address" value={`${address.yearsAtAddress} yrs`}/>
-              <URLAField label="Housing" value={address.housing}/>
+              <URLAField label="Housing" value={address.housing} onCommit={commit('housing')}/>
             </>
           ) : (
             <>
-              <URLAField label="Street" value={address.street}/>
-              <URLAField label="City"   value={address.city}/>
-              <URLAField label="State"  value={address.state}/>
-              <URLAField label="ZIP"    value={address.zip} mono/>
+              <URLAField label="Street" value={address.street} onCommit={commit('street')}/>
+              <URLAField label="City"   value={address.city}   onCommit={commit('city')}/>
+              <URLAField label="State"  options={US_STATES} value={address.state} onCommit={commit('state')}/>
+              <URLAField label="ZIP"    value={address.zip} mono onCommit={commit('zip')}/>
               <URLAField label="Years at Address" value={`${address.yearsAtAddress} yrs`}/>
-              <URLAField label="Housing" value={address.housing}/>
+              <URLAField label="Housing" value={address.housing} onCommit={commit('housing')}/>
             </>
           )}
         </div>
@@ -408,27 +624,183 @@ function AddressCard({ sub, address, narrow, sameAsPrimary, onToggleSameAsPrimar
   );
 }
 
-function EmploymentCard({ sub, employment, additional, narrow }) {
-  if (!employment) return null;
+const INCOME_TYPES = ['Base Employment', 'Self-Employment', 'Bonus', 'Commission', 'Overtime', 'Rental', 'Investment', 'Social Security', 'Pension', 'Other'];
+
+// Build an income list from the legacy per-borrower employment/additional
+// income shape. Used as a fallback when an app hasn't migrated to the unified
+// `incomes` array yet.
+function deriveIncomesFromLegacy(app) {
+  const out = [];
+  let id = 1;
+  if (app.employment && app.employment.monthlyIncome) {
+    out.push({
+      id: id++, owner: 'borrower',
+      type: app.employment.selfEmployed ? 'Self-Employment' : 'Base Employment',
+      source: app.employment.employer || 'Employer',
+      monthlyAmount: app.employment.monthlyIncome,
+    });
+  }
+  if (app.additionalIncome && app.additionalIncome.monthlyAmt) {
+    out.push({
+      id: id++, owner: 'borrower', type: 'Other',
+      source: app.additionalIncome.source || 'Other income',
+      monthlyAmount: app.additionalIncome.monthlyAmt,
+    });
+  }
+  if (app.coborrower && app.coborrowerEmployment && app.coborrowerEmployment.monthlyIncome) {
+    out.push({
+      id: id++, owner: 'coborrower',
+      type: app.coborrowerEmployment.selfEmployed ? 'Self-Employment' : 'Base Employment',
+      source: app.coborrowerEmployment.employer || 'Employer',
+      monthlyAmount: app.coborrowerEmployment.monthlyIncome,
+    });
+  }
+  if (app.coborrowerAdditionalIncome && app.coborrowerAdditionalIncome.monthlyAmt) {
+    out.push({
+      id: id++, owner: 'coborrower', type: 'Other',
+      source: app.coborrowerAdditionalIncome.source || 'Other income',
+      monthlyAmount: app.coborrowerAdditionalIncome.monthlyAmt,
+    });
+  }
+  return out;
+}
+
+function ownerLabel(owner, app) {
+  const p = owner === 'coborrower' ? app.coborrower : app.borrower;
+  const parts = splitName((p && p.name) || '');
+  return parts.firstName || (owner === 'coborrower' ? 'Co-borrower' : 'Borrower');
+}
+
+function IncomeTable({ app, onUpdateApp }) {
+  const hasCo = !!app.coborrower;
+  const incomes = app.incomes || deriveIncomesFromLegacy(app);
+  const ownerOptions = hasCo
+    ? [{ value: 'borrower', label: ownerLabel('borrower', app) }, { value: 'coborrower', label: ownerLabel('coborrower', app) }]
+    : [{ value: 'borrower', label: ownerLabel('borrower', app) }];
+
+  const persist = (next) => onUpdateApp && onUpdateApp({ incomes: next });
+  const updateRow = (id, patch) => persist(incomes.map(inc => inc.id === id ? { ...inc, ...patch } : inc));
+  const deleteRow = (id) => persist(incomes.filter(inc => inc.id !== id));
+  const addRow = () => {
+    const nextId = incomes.reduce((max, inc) => Math.max(max, inc.id || 0), 0) + 1;
+    persist([...incomes, { id: nextId, owner: 'borrower', type: 'Base Employment', source: '', monthlyAmount: 0 }]);
+  };
+
+  const borrowerTotal = incomes.filter(i => i.owner === 'borrower').reduce((s, i) => s + (Number(i.monthlyAmount) || 0), 0);
+  const coTotal = incomes.filter(i => i.owner === 'coborrower').reduce((s, i) => s + (Number(i.monthlyAmount) || 0), 0);
+  const combined = borrowerTotal + coTotal;
+
+  const cellTd = { padding: '8px 10px', borderBottom: '1px solid var(--border-subtle)', verticalAlign: 'middle' };
+  const cellInput = {
+    width: '100%', height: 30, padding: '0 8px', border: '1px solid var(--border-subtle)',
+    borderRadius: 6, background: 'var(--bg-surface)', fontSize: 13, fontFamily: 'inherit',
+    color: 'var(--text-primary)', outline: 'none', boxSizing: 'border-box',
+  };
+  const cellSelect = { ...cellInput, paddingRight: 26, cursor: 'pointer', appearance: 'none', WebkitAppearance: 'none', MozAppearance: 'none' };
+  const chevronWrap = { position: 'absolute', right: 8, top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none', color: 'var(--text-tertiary)', display: 'flex' };
+
   return (
     <div style={{ border: '1px solid var(--border-subtle)', borderRadius: 10, overflow: 'hidden' }}>
-      <SectionHead label="1b · Current Employment & Income" sub={sub}/>
-      <div style={{ padding: '16px 14px', display: 'grid', gridTemplateColumns: narrow ? '1fr 1fr' : '2fr 1fr 1fr', gap: '14px 18px', background: 'var(--bg-surface)' }}>
-        <div style={{ gridColumn: narrow ? '1 / -1' : 'auto' }}>
-          <URLAField label="Employer" value={employment.employer}/>
-        </div>
-        <URLAField label="Position / Title" value={employment.position}/>
-        <URLAField label="Start Date"       value={employment.startDate} mono/>
-        <URLAField label="Years in Line of Work" value={`${employment.yearsInLine} yrs`}/>
-        <URLAField label="Monthly Income"   value={fmtK(employment.monthlyIncome)} mono prefix="$"/>
-        <URLAField label="Self-Employed"    value={employment.selfEmployed ? 'Yes' : 'No'}/>
+      <SectionHead label="1b · Current Employment & Income"/>
+      <div style={{ background: 'var(--bg-surface)', overflowX: 'auto' }}>
+        <table style={{ width: '100%', borderCollapse: 'collapse', tableLayout: 'fixed' }}>
+          <colgroup>
+            <col style={{ width: '18%' }}/>
+            <col style={{ width: '22%' }}/>
+            <col style={{ width: '32%' }}/>
+            <col style={{ width: '20%' }}/>
+            <col style={{ width: '8%' }}/>
+          </colgroup>
+          <thead>
+            <tr style={{ background: 'var(--bg-muted)' }}>
+              <th style={{ ...cellTd, fontSize: 11.5, fontWeight: 600, color: 'var(--text-tertiary)', textAlign: 'left' }}>Borrower</th>
+              <th style={{ ...cellTd, fontSize: 11.5, fontWeight: 600, color: 'var(--text-tertiary)', textAlign: 'left' }}>Type</th>
+              <th style={{ ...cellTd, fontSize: 11.5, fontWeight: 600, color: 'var(--text-tertiary)', textAlign: 'left' }}>Source / Employer</th>
+              <th style={{ ...cellTd, fontSize: 11.5, fontWeight: 600, color: 'var(--text-tertiary)', textAlign: 'right' }}>Monthly amount</th>
+              <th style={{ ...cellTd }}/>
+            </tr>
+          </thead>
+          <tbody>
+            {incomes.length === 0 ? (
+              <tr>
+                <td colSpan={5} style={{ padding: '20px 14px', textAlign: 'center', fontSize: 13, color: 'var(--text-tertiary)' }}>
+                  No income entries — click <strong>Add income</strong> to start.
+                </td>
+              </tr>
+            ) : incomes.map(inc => (
+              <tr key={inc.id}>
+                <td style={cellTd}>
+                  <div style={{ position: 'relative' }}>
+                    <select value={inc.owner} onChange={e => updateRow(inc.id, { owner: e.target.value })} style={cellSelect}>
+                      {ownerOptions.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
+                    </select>
+                    <span style={chevronWrap}><Icon name="chevronDown" size={12}/></span>
+                  </div>
+                </td>
+                <td style={cellTd}>
+                  <div style={{ position: 'relative' }}>
+                    <select value={inc.type} onChange={e => updateRow(inc.id, { type: e.target.value })} style={cellSelect}>
+                      {INCOME_TYPES.map(t => <option key={t} value={t}>{t}</option>)}
+                    </select>
+                    <span style={chevronWrap}><Icon name="chevronDown" size={12}/></span>
+                  </div>
+                </td>
+                <td style={cellTd}>
+                  <input value={inc.source || ''} onChange={e => updateRow(inc.id, { source: e.target.value })} placeholder="Employer or source" style={cellInput}/>
+                </td>
+                <td style={cellTd}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 4, justifyContent: 'flex-end' }}>
+                    <span style={{ fontSize: 13, color: 'var(--text-tertiary)' }}>$</span>
+                    <input type="number" min="0" step="100" value={inc.monthlyAmount || 0}
+                      onChange={e => updateRow(inc.id, { monthlyAmount: parseFloat(e.target.value) || 0 })}
+                      style={{ ...cellInput, fontFamily: 'DM Mono, monospace', textAlign: 'right' }}/>
+                  </div>
+                </td>
+                <td style={{ ...cellTd, textAlign: 'center' }}>
+                  <button onClick={() => deleteRow(inc.id)} aria-label="Delete income"
+                    style={{ width: 26, height: 26, borderRadius: 6, border: '1px solid var(--border-subtle)', background: 'var(--bg-surface)', cursor: 'pointer', color: 'var(--text-tertiary)', display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}
+                    onMouseEnter={e => { e.currentTarget.style.background = 'var(--card-red-bg)'; e.currentTarget.style.color = 'var(--status-red)'; e.currentTarget.style.borderColor = 'var(--status-red)'; }}
+                    onMouseLeave={e => { e.currentTarget.style.background = 'var(--bg-surface)'; e.currentTarget.style.color = 'var(--text-tertiary)'; e.currentTarget.style.borderColor = 'var(--border-subtle)'; }}>
+                    <Icon name="x" size={12}/>
+                  </button>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+          <tfoot>
+            <tr style={{ background: 'var(--bg-muted)' }}>
+              <td colSpan={3} style={{ ...cellTd, fontSize: 12, fontWeight: 600, color: 'var(--text-secondary)' }}>
+                {ownerLabel('borrower', app)} total
+              </td>
+              <td style={{ ...cellTd, textAlign: 'right', fontFamily: 'DM Mono, monospace', fontWeight: 700 }}>{fmtK(borrowerTotal)}</td>
+              <td style={cellTd}/>
+            </tr>
+            {hasCo && (
+              <tr style={{ background: 'var(--bg-muted)' }}>
+                <td colSpan={3} style={{ ...cellTd, fontSize: 12, fontWeight: 600, color: 'var(--text-secondary)' }}>
+                  {ownerLabel('coborrower', app)} total
+                </td>
+                <td style={{ ...cellTd, textAlign: 'right', fontFamily: 'DM Mono, monospace', fontWeight: 700 }}>{fmtK(coTotal)}</td>
+                <td style={cellTd}/>
+              </tr>
+            )}
+            <tr style={{ background: 'var(--bg-muted)', borderTop: '2px solid var(--border-strong)' }}>
+              <td colSpan={3} style={{ ...cellTd, borderBottom: 'none', fontSize: 12.5, fontWeight: 700, color: 'var(--text-primary)' }}>
+                Combined monthly income
+              </td>
+              <td style={{ ...cellTd, borderBottom: 'none', textAlign: 'right', fontFamily: 'DM Mono, monospace', fontWeight: 800, fontSize: 14 }}>{fmtK(combined)}</td>
+              <td style={{ ...cellTd, borderBottom: 'none' }}/>
+            </tr>
+          </tfoot>
+        </table>
       </div>
-      {additional && (
-        <div style={{ padding: '10px 14px', background: 'var(--bg-muted)', borderTop: '1px solid var(--border-subtle)', display: 'flex', alignItems: 'center', gap: 14, flexWrap: 'wrap' }}>
-          <span style={{ fontSize: 11, fontWeight: 700, color: 'var(--text-tertiary)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Other Income</span>
-          <span style={{ fontSize: 13, color: 'var(--text-primary)' }}>{additional.source}: <strong>{fmtK(additional.monthlyAmt)}/mo</strong></span>
-        </div>
-      )}
+      <div style={{ padding: '10px 14px', borderTop: '1px solid var(--border-subtle)', background: 'var(--bg-surface)' }}>
+        <button onClick={addRow}
+          className="btn btn-outline btn-sm"
+          style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+          <Icon name="plus" size={12}/> Add income
+        </button>
+      </div>
     </div>
   );
 }
@@ -595,12 +967,23 @@ function SectionDeclarations({ ld, app }) {
   );
 }
 
-// ─── Main view ──────────────────────────────────────────────────────────────
-export function URLA1003View({ loanId = 'LN-2024-0234' }) {
-  const ld = LOAN_URLA_DATA[loanId] || DEFAULT_URLA;
-  const [apps, setApps] = React.useState(() => [buildAppFromLoanData(ld)]);
-  const [activeApp, setActiveApp] = React.useState(0);
-  const [saved, setSaved] = React.useState(false);
+// Build the initial app data for a loan — used by both URLA1003View and the
+// Borrower Summary tab when state is being lifted to a shared parent so the
+// two views can render linked fields against the same object.
+export function buildInitialAppsForLoan(loanId) {
+  const ld = LOAN_URLA_DATA[loanId] || buildURLAFromLoan(LOANS.find(l => l.id === loanId));
+  return [buildAppFromLoanData(ld)];
+}
+
+// ─── Borrower application tabs + "manage borrowers" menu ────────────────────
+// Encapsulates the per-app tab strip and the ellipsis menu (add/remove
+// co-borrower, add/remove second app, split, combine). Renders against the
+// shared apps state so the 1003 and Borrower Summary stay in sync.
+export function BorrowerApplicationTabs({ loanId, apps, setApps, activeApp, setActiveApp }) {
+  const ld = React.useMemo(
+    () => LOAN_URLA_DATA[loanId] || buildURLAFromLoan(LOANS.find(l => l.id === loanId)),
+    [loanId]
+  );
   const [menuOpen, setMenuOpen] = React.useState(false);
   const menuRef = React.useRef(null);
 
@@ -612,19 +995,17 @@ export function URLA1003View({ loanId = 'LN-2024-0234' }) {
   }, [menuOpen]);
 
   const current = apps[activeApp];
-
   const updateApp = (idx, patch) => {
     setApps(prev => prev.map((a, i) => i === idx ? { ...a, ...patch } : a));
   };
 
   const handleAddCo = () => {
-    // Reuse the loan's co-borrower data if available, otherwise a clean blank
     updateApp(activeApp, {
-      coborrower:                ld.coborrower      || SECOND_APP_TEMPLATE.borrower,
-      coborrowerAddress:         ld.coborrowerAddress || ld.currentAddress,
-      coborrowerEmployment:      ld.coborrowerEmployment || ld.employment,
-      coborrowerAdditionalIncome:ld.coborrowerAdditionalIncome || ld.additionalIncome,
-      coborrowerDeclarations:    ld.coborrowerDeclarations || ld.declarations,
+      coborrower:                 ld.coborrower      || SECOND_APP_TEMPLATE.borrower,
+      coborrowerAddress:          ld.coborrowerAddress || ld.currentAddress,
+      coborrowerEmployment:       ld.coborrowerEmployment || ld.employment,
+      coborrowerAdditionalIncome: ld.coborrowerAdditionalIncome || ld.additionalIncome,
+      coborrowerDeclarations:     ld.coborrowerDeclarations || ld.declarations,
     });
     setMenuOpen(false);
   };
@@ -635,13 +1016,11 @@ export function URLA1003View({ loanId = 'LN-2024-0234' }) {
     });
     setMenuOpen(false);
   };
-
   const handleAddSecondApp = () => {
     setApps(prev => [...prev, JSON.parse(JSON.stringify(SECOND_APP_TEMPLATE))]);
-    setActiveApp(apps.length); // switch to the new tab
+    setActiveApp(apps.length);
     setMenuOpen(false);
   };
-
   const handleRemoveThisApp = () => {
     if (apps.length <= 1) return;
     const idxToRemove = activeApp;
@@ -649,9 +1028,7 @@ export function URLA1003View({ loanId = 'LN-2024-0234' }) {
     setActiveApp(Math.max(0, idxToRemove - 1));
     setMenuOpen(false);
   };
-
   const handleSplitToSeparate = () => {
-    // Move the active app's co-borrower into a new App 2
     if (!current.coborrower) return;
     const newApp2 = {
       borrower:                current.coborrower,
@@ -673,26 +1050,119 @@ export function URLA1003View({ loanId = 'LN-2024-0234' }) {
     });
     setMenuOpen(false);
   };
-
   const handleCombineIntoJoint = () => {
-    // Take the OTHER app's borrower and make it the current app's co-borrower
     if (apps.length < 2) return;
     const otherIdx = activeApp === 0 ? 1 : 0;
     const other = apps[otherIdx];
     setApps(prev => {
       const merged = prev.map((a, i) => i === activeApp ? {
         ...a,
-        coborrower:                other.borrower,
-        coborrowerAddress:         other.currentAddress,
-        coborrowerEmployment:      other.employment,
-        coborrowerAdditionalIncome:other.additionalIncome,
-        coborrowerDeclarations:    other.declarations,
+        coborrower:                 other.borrower,
+        coborrowerAddress:          other.currentAddress,
+        coborrowerEmployment:       other.employment,
+        coborrowerAdditionalIncome: other.additionalIncome,
+        coborrowerDeclarations:     other.declarations,
       } : a);
       return merged.filter((_, i) => i !== otherIdx);
     });
-    // After collapse, only one app remains
     setActiveApp(0);
     setMenuOpen(false);
+  };
+
+  return (
+    <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 20 }}>
+      <div style={{
+        display: 'flex', gap: 4,
+        background: 'var(--bg-muted)', padding: 4,
+        borderRadius: 10,
+      }}>
+        {apps.map((app, i) => {
+          const active = activeApp === i;
+          return (
+            <button key={i} onClick={() => setActiveApp(i)} style={{
+              display: 'flex', flexDirection: 'column', alignItems: 'flex-start',
+              padding: '6px 14px', border: 'none', borderRadius: 7, cursor: 'pointer',
+              background: active ? 'var(--bg-surface)' : 'transparent',
+              boxShadow: active ? '0 1px 4px rgba(0,0,0,0.08)' : 'none',
+              transition: 'all 0.12s', fontFamily: 'inherit',
+              minWidth: 160, textAlign: 'left',
+            }}>
+              <span style={{ fontSize: 12.5, fontWeight: 700, color: active ? 'var(--text-primary)' : 'var(--text-tertiary)' }}>
+                {appTabTitle(app)}
+              </span>
+              <span style={{ fontSize: 11, color: active ? 'var(--text-secondary)' : 'var(--text-tertiary)', marginTop: 1 }}>
+                Application {i + 1}
+              </span>
+            </button>
+          );
+        })}
+      </div>
+      <div ref={menuRef} style={{ position: 'relative' }}>
+        <button
+          onClick={() => setMenuOpen(o => !o)}
+          title="Manage borrowers" aria-label="Manage borrowers" aria-expanded={menuOpen}
+          style={{
+            width: 32, height: 32, borderRadius: 8,
+            border: '1px solid var(--border-subtle)',
+            background: menuOpen ? 'var(--bg-muted)' : 'var(--bg-surface)',
+            cursor: 'pointer', display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+            color: 'var(--text-secondary)',
+            transition: 'background 0.12s, border-color 0.12s',
+          }}
+          onMouseEnter={e => { if (!menuOpen) e.currentTarget.style.background = 'var(--bg-muted)'; }}
+          onMouseLeave={e => { if (!menuOpen) e.currentTarget.style.background = 'var(--bg-surface)'; }}
+        >
+          <Icon name="moreV" size={15}/>
+        </button>
+        {menuOpen && (
+          <BorrowerMenu
+            app={current}
+            appCount={apps.length}
+            isFirstApp={activeApp === 0}
+            onAddCo={handleAddCo}
+            onRemoveCo={handleRemoveCo}
+            onAddSecondApp={handleAddSecondApp}
+            onRemoveThisApp={handleRemoveThisApp}
+            onSplitToSeparate={handleSplitToSeparate}
+            onCombineIntoJoint={handleCombineIntoJoint}
+          />
+        )}
+      </div>
+    </div>
+  );
+}
+
+// ─── Main view ──────────────────────────────────────────────────────────────
+// `apps`/`setApps`/`activeApp`/`setActiveApp` are optional — when provided
+// (from LoanDetailView), this view becomes controlled and shares state with
+// the Borrower Summary tab. Without them, it manages its own state.
+export function URLA1003View({ loanId = 'LN-2024-0234', apps: appsProp, setApps: setAppsProp, activeApp: activeAppProp, setActiveApp: setActiveAppProp }) {
+  const ld = LOAN_URLA_DATA[loanId] || buildURLAFromLoan(LOANS.find(l => l.id === loanId));
+  const [localApps, setLocalApps] = React.useState(() => [buildAppFromLoanData(ld)]);
+  const [localActiveApp, setLocalActiveApp] = React.useState(0);
+  const apps = appsProp || localApps;
+  const setApps = setAppsProp || setLocalApps;
+  const activeApp = activeAppProp != null ? activeAppProp : localActiveApp;
+  const setActiveApp = setActiveAppProp || setLocalActiveApp;
+  const [saved, setSaved] = React.useState(false);
+  const current = apps[activeApp];
+  const updateApp = (idx, patch) => {
+    setApps(prev => prev.map((a, i) => i === idx ? { ...a, ...patch } : a));
+  };
+  const handleAddCo = () => {
+    updateApp(activeApp, {
+      coborrower:                ld.coborrower      || SECOND_APP_TEMPLATE.borrower,
+      coborrowerAddress:         ld.coborrowerAddress || ld.currentAddress,
+      coborrowerEmployment:      ld.coborrowerEmployment || ld.employment,
+      coborrowerAdditionalIncome:ld.coborrowerAdditionalIncome || ld.additionalIncome,
+      coborrowerDeclarations:    ld.coborrowerDeclarations || ld.declarations,
+    });
+  };
+  const handleRemoveCo = () => {
+    updateApp(activeApp, {
+      coborrower: null, coborrowerAddress: null, coborrowerEmployment: null,
+      coborrowerAdditionalIncome: null, coborrowerDeclarations: null,
+    });
   };
 
   const handleSave = () => { setSaved(true); setTimeout(() => setSaved(false), 2500); };
@@ -700,94 +1170,26 @@ export function URLA1003View({ loanId = 'LN-2024-0234' }) {
   return (
     <div style={{ display: 'flex', flexDirection: 'column' }}>
 
-      {/* Doc header */}
-      <div style={{
-        display: 'flex', alignItems: 'center', gap: 16,
-        padding: '14px 0 16px',
-        borderBottom: '1px solid var(--border-subtle)',
-        marginBottom: 22,
-      }}>
-        <div style={{ width: 38, height: 38, borderRadius: 9, background: 'var(--bg-muted)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-          <Icon name="doc" size={19} color="var(--text-secondary)" strokeWidth={1.6}/>
-        </div>
-        <div style={{ flex: 1, minWidth: 0 }}>
-          <div style={{ fontSize: 18, fontWeight: 700, letterSpacing: '-0.01em' }}>
-            Uniform Residential Loan Application
-          </div>
-          <div style={{ fontSize: 12.5, color: 'var(--text-tertiary)', marginTop: 2 }}>
-            Form 1003 · {ld.property.street}, {ld.property.city} {ld.property.state}
-          </div>
-        </div>
-        <StatusPill tone="blue">Draft</StatusPill>
-        <div style={{ display: 'flex', gap: 6 }}>
+      <PageHeader
+        icon="doc"
+        title="Uniform Residential Loan Application"
+        subtitle="Form 1003"
+        actions={<>
           <button className="btn btn-outline btn-sm"><Icon name="download" size={13}/> Export PDF</button>
           <button className="btn btn-primary btn-sm" onClick={handleSave} style={{ minWidth: 80 }}>
             {saved ? <><Icon name="check" size={13}/> Saved</> : <><Icon name="doc" size={13}/> Save</>}
           </button>
-        </div>
-      </div>
+        </>}
+      />
 
-      {/* Application tabs + borrower-management ellipsis (right of tabs) */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 20 }}>
-        <div style={{
-          display: 'flex', gap: 4,
-          background: 'var(--bg-muted)', padding: 4,
-          borderRadius: 10,
-        }}>
-          {apps.map((app, i) => {
-            const active = activeApp === i;
-            return (
-              <button key={i} onClick={() => setActiveApp(i)} style={{
-                display: 'flex', flexDirection: 'column', alignItems: 'flex-start',
-                padding: '6px 14px', border: 'none', borderRadius: 7, cursor: 'pointer',
-                background: active ? 'var(--bg-surface)' : 'transparent',
-                boxShadow: active ? '0 1px 4px rgba(0,0,0,0.08)' : 'none',
-                transition: 'all 0.12s', fontFamily: 'inherit',
-                minWidth: 160, textAlign: 'left',
-              }}>
-                <span style={{ fontSize: 12.5, fontWeight: 700, color: active ? 'var(--text-primary)' : 'var(--text-tertiary)' }}>
-                  {appTabTitle(app)}
-                </span>
-                <span style={{ fontSize: 11, color: active ? 'var(--text-secondary)' : 'var(--text-tertiary)', marginTop: 1 }}>
-                  Application {i + 1}
-                </span>
-              </button>
-            );
-          })}
-        </div>
-        {/* Borrower-management ellipsis */}
-        <div ref={menuRef} style={{ position: 'relative' }}>
-          <button
-            onClick={() => setMenuOpen(o => !o)}
-            title="Manage borrowers" aria-label="Manage borrowers" aria-expanded={menuOpen}
-            style={{
-              width: 32, height: 32, borderRadius: 8,
-              border: '1px solid var(--border-subtle)',
-              background: menuOpen ? 'var(--bg-muted)' : 'var(--bg-surface)',
-              cursor: 'pointer', display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
-              color: 'var(--text-secondary)',
-              transition: 'background 0.12s, border-color 0.12s',
-            }}
-            onMouseEnter={e => { if (!menuOpen) e.currentTarget.style.background = 'var(--bg-muted)'; }}
-            onMouseLeave={e => { if (!menuOpen) e.currentTarget.style.background = 'var(--bg-surface)'; }}
-          >
-            <Icon name="moreV" size={15}/>
-          </button>
-          {menuOpen && (
-            <BorrowerMenu
-              app={current}
-              appCount={apps.length}
-              isFirstApp={activeApp === 0}
-              onAddCo={handleAddCo}
-              onRemoveCo={handleRemoveCo}
-              onAddSecondApp={handleAddSecondApp}
-              onRemoveThisApp={handleRemoveThisApp}
-              onSplitToSeparate={handleSplitToSeparate}
-              onCombineIntoJoint={handleCombineIntoJoint}
-            />
-          )}
-        </div>
-      </div>
+
+      <BorrowerApplicationTabs
+        loanId={loanId}
+        apps={apps}
+        setApps={setApps}
+        activeApp={activeApp}
+        setActiveApp={setActiveApp}
+      />
 
       {/* Form sections — anchor IDs live on the inner cards (1a, 2a, 3, 4a, 5)
           so clicking a sub-link in the LeftRail jumps directly to that

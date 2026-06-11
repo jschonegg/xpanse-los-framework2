@@ -2,7 +2,7 @@ import React from 'react';
 import ReactDOM from 'react-dom';
 import { createRoot } from 'react-dom/client';
 import { Icon } from '../components/Icon';
-import { Avatar, StatusPill } from '../components/Shell';
+import { Avatar, StatusPill, PageHeader } from '../components/Shell';
 import { LoanSummaryCards } from '../components/LoanSummaryCards';
 import { ConditionsTab, AUSTab, PricingLockTab, ClosingTab, AuditTab } from './LoanWorkspaces';
 import { FileReviewTab } from './FileReviewTab';
@@ -17,7 +17,7 @@ function ServicesTab() {
   );
 }
 import { LoanEstimateView } from './LoanEstimateView';
-import { URLA1003View, URLA1003_SECTIONS } from './URLA1003View';
+import { URLA1003View, URLA1003_SECTIONS, SectionBorrowerInfo, BorrowerApplicationTabs, buildInitialAppsForLoan } from './URLA1003View';
 import { CommsTab, LOAN_CONTACTS } from './CommsTab';
 import { NowTabApplication } from './NowTabApplication';
 import { NowTabProcessing } from './NowTabProcessing';
@@ -28,6 +28,9 @@ import { URLAView } from './URLAView';
 import { LOANS } from '../data/loans';
 import { DocumentsTool } from '../components/DocumentsTool';
 import { IncomeTool } from '../components/IncomeTool';
+import { useWorkflows } from '../workflows/WorkflowContext';
+import { FIXED_SYSTEM_LINKS, PAGE_CONTENT_TAB, getPage } from '../workflows/workflowModel';
+// import { PreviewContextSwitcher } from './AdminWorkflows'; // preview-context switcher (removed for now)
 
 // ─── Property intelligence data per loan ─────────────────────────────────────
 const PROPERTY_INTEL = {
@@ -529,7 +532,39 @@ function ltvHeaderTone(ltv) {
   return null;
 }
 
-function LeftRail({ tab, onTab, onOpenURLA, dataSubTab, onDataSubTab, onOpenDocs }) {
+// ─── Configurable left-nav structure ────────────────────────────────────────
+// Tasks + Loan Story are "fixed" system links — always at the top, never
+// editable. Everything below is grouped into configurable sections that an
+// admin can rename, reorder, add to, or delete (when empty) in Config View.
+const DEFAULT_NAV_CONFIG = {
+  fixed: [
+    { id: 'now',   label: 'Tasks',      icon: 'target' },
+    { id: 'story', label: 'Loan Story', icon: 'book' },
+  ],
+  sections: [
+    {
+      id: 'sec-forms', label: 'Forms', items: [
+        { id: 'borrowerSummary', label: 'Borrower Info', icon: 'doc' },
+        { id: 'urla1003',        label: '1003',             icon: 'doc' },
+      ],
+    },
+    {
+      id: 'sec-workspaces', label: 'Workspaces', items: [
+        { id: 'filereview', label: 'File Review',          icon: 'listCheck' },
+        { id: 'conditions', label: 'Conditions',           icon: 'listCheck', badge: 4 },
+        { id: 'aus',        label: 'AUS',                  icon: 'zap' },
+        { id: 'credit',     label: 'Credit & Liabilities', icon: 'database' },
+        { id: 'pricing',    label: 'Pricing & Lock',       icon: 'dollar' },
+        { id: 'documents',  label: 'Documents',            icon: 'doc' },
+        { id: 'closing',    label: 'Closing',              icon: 'calculator' },
+        { id: 'audit',      label: 'Audit',                icon: 'fileSearch' },
+        { id: 'services',   label: 'Services',             icon: 'settings' },
+      ],
+    },
+  ],
+};
+
+function LeftRail({ tab, onTab, onOpenURLA, dataSubTab, onDataSubTab, onOpenDocs, previewWorkflow }) {
   // Groups state: open/closed + doc ordering per group
   const [groups, setGroups] = React.useState(
     DOC_GROUPS.map(g => ({ ...g, open: g.defaultOpen, docs: [...g.docs] }))
@@ -615,25 +650,215 @@ function LeftRail({ tab, onTab, onOpenURLA, dataSubTab, onDataSubTab, onOpenDocs
     setDropTarget(null);
   };
 
-  const items = [
-    { id: 'now',   label: 'Tasks',      icon: 'target' },
-    { id: 'story', label: 'Loan Story', icon: 'book' },
-    // Hidden for now — old Documents tab (kept here in case we want to bring it back)
-    // { id: 'data',  label: 'Documents',  icon: 'database' },
-    { divider: true, label: 'Forms' },
-    { id: 'borrowerSummary', label: 'Borrower Summary', icon: 'doc' },
-    { id: 'urla1003',        label: '1003',              icon: 'doc', subItems: URLA1003_SECTIONS },
-    { divider: true, label: 'Workspaces' },
-    { id: 'filereview', label: 'File Review',   icon: 'listCheck' },
-    { id: 'conditions', label: 'Conditions', icon: 'listCheck', badge: 4 },
-    { id: 'aus',     label: 'AUS',          icon: 'zap' },
-    { id: 'credit',  label: 'Credit & Liabilities', icon: 'database' },
-    { id: 'pricing', label: 'Pricing & Lock',icon: 'dollar' },
-    { id: 'documents', label: 'Documents',   icon: 'doc' },
-    { id: 'closing', label: 'Closing',       icon: 'calculator' },
-    { id: 'audit',   label: 'Audit',         icon: 'fileSearch' },
-    { id: 'services', label: 'Services',     icon: 'settings' },
-  ];
+  // ─── Configurable nav state ──────────────────────────────────────────────
+  // `committed` is what the user has saved; `draft` is the in-progress edit
+  // while Config View is on. When config mode is off, render the committed
+  // structure read-only.
+  const [committedNav, setCommittedNav]   = React.useState(DEFAULT_NAV_CONFIG);
+  const [configMode, setConfigMode]       = React.useState(false);
+  const [draftNav, setDraftNav]           = React.useState(DEFAULT_NAV_CONFIG);
+  const [editingSectionId, setEditingSectionId] = React.useState(null);
+  const [sectionMenuOpenId, setSectionMenuOpenId] = React.useState(null);
+  // const [ctxOpen, setCtxOpen] = React.useState(false); // preview-context switcher (removed for now)
+
+  // The loan nav is now driven by the active, rule-matched workflow configured
+  // in the Admin console (see WorkflowProvider). Fixed system links stay pinned
+  // at the top; each configured page maps onto the existing content-tab id so
+  // the content router and the 1003 sub-nav keep working unchanged.
+  // When `previewWorkflow` is supplied (full-preview overlay from the Admin
+  // console), render that workflow's nav instead of the rule-matched one.
+  const { resolvedWorkflow } = useWorkflows();
+  const activeWorkflow = previewWorkflow || resolvedWorkflow;
+  const activeNav = React.useMemo(() => ({
+    fixed: FIXED_SYSTEM_LINKS.map(l => ({ id: l.tab, label: l.label, icon: l.icon })),
+    sections: (activeWorkflow?.sections || []).map(s => ({
+      id: s.id,
+      label: s.title,
+      items: s.pages.map(p => ({
+        id: PAGE_CONTENT_TAB[p.id] || p.id,
+        label: p.label,
+        icon: p.icon,
+        badge: getPage(p.id)?.badge,
+      })),
+    })),
+  }), [activeWorkflow]);
+
+  const enterConfig = () => { setDraftNav(committedNav); setConfigMode(true); };
+  const saveConfig  = () => { setCommittedNav(draftNav); setConfigMode(false); setEditingSectionId(null); setSectionMenuOpenId(null); };
+  const cancelConfig = () => { setDraftNav(committedNav); setConfigMode(false); setEditingSectionId(null); setSectionMenuOpenId(null); };
+
+  // ─── Nav drag-and-drop (config mode only) ───────────────────────────────
+  // dragRef tracks the dragged thing: { kind: 'item', sectionId, idx } OR
+  // { kind: 'section', idx }. Drop target shows a 2px insertion line.
+  const navDragRef = React.useRef(null);
+  const [navDropTarget, setNavDropTarget] = React.useState(null);
+
+  const beginItemDrag = (sectionId, idx) => (e) => {
+    navDragRef.current = { kind: 'item', sectionId, idx };
+    e.dataTransfer.effectAllowed = 'move';
+    // Required for Firefox
+    try { e.dataTransfer.setData('text/plain', `${sectionId}:${idx}`); } catch (_) {}
+  };
+  const overItemSlot = (sectionId, idx) => (e) => {
+    if (!navDragRef.current || navDragRef.current.kind !== 'item') return;
+    e.preventDefault();
+    e.dataTransfer.dropEffect = 'move';
+    setNavDropTarget({ kind: 'item', sectionId, idx });
+  };
+  const dropItemAt = (sectionId, idx) => (e) => {
+    e.preventDefault();
+    const src = navDragRef.current;
+    navDragRef.current = null;
+    setNavDropTarget(null);
+    if (!src || src.kind !== 'item') return;
+    setDraftNav(prev => {
+      const sections = prev.sections.map(s => ({ ...s, items: [...s.items] }));
+      const fromSec = sections.find(s => s.id === src.sectionId);
+      const toSec   = sections.find(s => s.id === sectionId);
+      if (!fromSec || !toSec) return prev;
+      const [moved] = fromSec.items.splice(src.idx, 1);
+      let insertIdx = idx;
+      if (fromSec === toSec && src.idx < idx) insertIdx -= 1; // adjust for self-remove
+      toSec.items.splice(insertIdx, 0, moved);
+      return { ...prev, sections };
+    });
+  };
+
+  const beginSectionDrag = (idx) => (e) => {
+    navDragRef.current = { kind: 'section', idx };
+    e.dataTransfer.effectAllowed = 'move';
+    try { e.dataTransfer.setData('text/plain', `section:${idx}`); } catch (_) {}
+  };
+  const overSectionSlot = (idx) => (e) => {
+    if (!navDragRef.current || navDragRef.current.kind !== 'section') return;
+    e.preventDefault();
+    e.dataTransfer.dropEffect = 'move';
+    setNavDropTarget({ kind: 'section', idx });
+  };
+  const dropSectionAt = (idx) => (e) => {
+    e.preventDefault();
+    const src = navDragRef.current;
+    navDragRef.current = null;
+    setNavDropTarget(null);
+    if (!src || src.kind !== 'section' || src.idx === idx) return;
+    setDraftNav(prev => {
+      const sections = [...prev.sections];
+      const [moved] = sections.splice(src.idx, 1);
+      const insertIdx = src.idx < idx ? idx - 1 : idx;
+      sections.splice(insertIdx, 0, moved);
+      return { ...prev, sections };
+    });
+  };
+
+  const endNavDrag = () => { navDragRef.current = null; setNavDropTarget(null); };
+
+  // ─── Section mutators (config mode) ──────────────────────────────────────
+  const renameSection = (sectionId, label) => {
+    setDraftNav(prev => ({
+      ...prev,
+      sections: prev.sections.map(s => s.id === sectionId ? { ...s, label } : s),
+    }));
+  };
+  const deleteSection = (sectionId) => {
+    setDraftNav(prev => ({
+      ...prev,
+      sections: prev.sections.filter(s => s.id !== sectionId || s.items.length > 0),
+    }));
+    setSectionMenuOpenId(null);
+  };
+  const addSection = () => {
+    const newId = `sec-${Date.now()}`;
+    setDraftNav(prev => ({
+      ...prev,
+      sections: [...prev.sections, { id: newId, label: 'New workflow category', items: [] }],
+    }));
+    setEditingSectionId(newId);
+  };
+
+  // ─── Item renderer (used by both fixed and configurable lists) ──────────
+  const renderNavItem = (it, opts = {}) => {
+    const { isFixed = false, sectionId, idx } = opts;
+    const active = tab === it.id;
+    const isDraggable = configMode && !isFixed;
+    const isDropHere = navDropTarget?.kind === 'item' && navDropTarget.sectionId === sectionId && navDropTarget.idx === idx;
+    return (
+      <React.Fragment key={it.id}>
+        {isDropHere && <div style={{ height: 2, background: 'var(--text-primary)', borderRadius: 999, margin: '2px 6px' }}/>}
+        <div
+          draggable={isDraggable}
+          onDragStart={isDraggable ? beginItemDrag(sectionId, idx) : undefined}
+          onDragOver={isDraggable ? overItemSlot(sectionId, idx) : undefined}
+          onDrop={isDraggable ? dropItemAt(sectionId, idx) : undefined}
+          onDragEnd={endNavDrag}
+          style={{ position: 'relative' }}
+        >
+          <button
+            onClick={() => onTab(it.id)}
+            style={{
+              display: 'flex', alignItems: 'center', gap: 10, width: '100%',
+              height: 34, padding: '0 12px',
+              border: configMode && !isFixed ? '1px dashed transparent' : 'none',
+              cursor: configMode && !isFixed ? 'grab' : 'pointer',
+              background: active ? 'var(--text-primary)' : 'transparent',
+              color: active ? '#fff' : 'var(--text-secondary)',
+              fontSize: 13, fontWeight: 500, borderRadius: 7,
+              fontFamily: 'inherit', textAlign: 'left', transition: 'background 0.12s, border-color 0.12s',
+            }}
+            onMouseEnter={e => {
+              if (!active) e.currentTarget.style.background = 'var(--bg-muted)';
+              if (configMode && !isFixed) e.currentTarget.style.borderColor = 'var(--border-subtle)';
+            }}
+            onMouseLeave={e => {
+              if (!active) e.currentTarget.style.background = 'transparent';
+              if (configMode && !isFixed) e.currentTarget.style.borderColor = 'transparent';
+            }}
+          >
+            {configMode && !isFixed && (
+              <span style={{ display: 'inline-flex', color: active ? 'rgba(255,255,255,0.5)' : 'var(--text-tertiary)', flexShrink: 0, marginLeft: -4 }}>
+                <Icon name="grip" size={12}/>
+              </span>
+            )}
+            <Icon name={it.icon} size={14} strokeWidth={1.7}/>
+            <span style={{ flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{it.label}</span>
+            {it.badge && (
+              <span style={{ background: active ? '#D74C3C' : 'var(--card-red-bg)', color: active ? '#fff' : 'var(--status-red)', fontSize: 10.5, fontWeight: 600, minWidth: 17, height: 17, borderRadius: 999, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', padding: '0 5px' }}>{it.badge}</span>
+            )}
+            {configMode && isFixed && (
+              <span style={{
+                fontSize: 9.5, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em',
+                color: active ? 'rgba(255,255,255,0.7)' : 'var(--text-tertiary)',
+                background: active ? 'rgba(255,255,255,0.12)' : 'var(--bg-muted)',
+                padding: '1px 6px', borderRadius: 4,
+              }}>System</span>
+            )}
+          </button>
+        </div>
+
+        {/* 1003 sub-nav (only in normal mode, when active) */}
+        {!configMode && it.id === 'urla1003' && active && (
+          <div style={{ display: 'flex', flexDirection: 'column', paddingLeft: 22, marginTop: 4, gap: 1 }}>
+            {URLA1003_SECTIONS.map(sub => (
+              <button key={sub.id} onClick={() => {
+                const el = document.getElementById(sub.id);
+                if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+              }} style={{
+                display: 'flex', alignItems: 'center', height: 28,
+                padding: '0 12px', border: 'none', background: 'transparent',
+                cursor: 'pointer', fontFamily: 'inherit',
+                fontSize: 12, fontWeight: 500, color: 'var(--text-secondary)',
+                borderRadius: 6, textAlign: 'left',
+              }}
+                onMouseEnter={e => { e.currentTarget.style.background = 'var(--bg-muted)'; e.currentTarget.style.color = 'var(--text-primary)'; }}
+                onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = 'var(--text-secondary)'; }}
+              >
+                {sub.label}
+              </button>
+            ))}
+          </div>
+        )}
+      </React.Fragment>
+    );
+  };
 
   return (
     <aside style={{
@@ -641,240 +866,228 @@ function LeftRail({ tab, onTab, onOpenURLA, dataSubTab, onDataSubTab, onOpenDocs
       borderRight: '1px solid var(--border-subtle)',
       background: 'var(--bg-surface)',
       display: 'flex', flexDirection: 'column',
-      flexShrink: 0, minHeight: 0, overflowY: 'auto',
+      flexShrink: 0, minHeight: 0,
     }}>
-      <div style={{ padding: '16px 12px 8px', display: 'flex', flexDirection: 'column', gap: 2 }}>
-        {items.map((it, i) => {
-          if (it.divider) {
-            return (
-              <p key={i} role="group" aria-label={it.label} style={{ fontSize: 10.5, fontWeight: 600, color: 'var(--text-tertiary)', textTransform: 'uppercase', letterSpacing: '0.07em', padding: '14px 12px 6px', margin: 0 }}>
-                {it.label}
-              </p>
-            );
-          }
-          const active = tab === it.id;
+      <div style={{ flex: 1, overflowY: 'auto', padding: '16px 12px 8px', display: 'flex', flexDirection: 'column', gap: 2 }}>
+
+        {/* Fixed (system) links — Tasks, Loan Story */}
+        {activeNav.fixed.map(it => renderNavItem(it, { isFixed: true }))}
+
+        {/* Divider beneath fixed links — only visible in config mode */}
+        {configMode && (
+          <>
+            <div style={{ height: 1, background: 'var(--border-subtle)', margin: '10px 4px 4px' }}/>
+            <div style={{
+              fontSize: 11.5, color: 'var(--text-secondary)',
+              padding: '4px 8px 8px', lineHeight: 1.4,
+            }}>
+              Configure workflow navigation for this loan view.
+            </div>
+          </>
+        )}
+
+        {/* Configurable sections */}
+        {activeNav.sections.map((section, sIdx) => {
+          const isEditing = editingSectionId === section.id;
+          const menuOpen = sectionMenuOpenId === section.id;
+          const isSectionDropHere = navDropTarget?.kind === 'section' && navDropTarget.idx === sIdx;
           return (
-            <React.Fragment key={it.id}>
-              <button
-                onClick={() => onTab(it.id)}
+            <div key={section.id} style={{ marginTop: 4 }}>
+              {isSectionDropHere && <div style={{ height: 2, background: 'var(--text-primary)', borderRadius: 999, margin: '4px 6px' }}/>}
+
+              {/* Section header */}
+              <div
+                draggable={configMode}
+                onDragStart={configMode ? beginSectionDrag(sIdx) : undefined}
+                onDragOver={configMode ? overSectionSlot(sIdx) : undefined}
+                onDrop={configMode ? dropSectionAt(sIdx) : undefined}
+                onDragEnd={endNavDrag}
                 style={{
-                  display: 'flex', alignItems: 'center', gap: 10,
-                  height: 34, padding: '0 12px',
-                  border: 'none', cursor: 'pointer',
-                  background: active ? 'var(--text-primary)' : 'transparent',
-                  color: active ? '#fff' : 'var(--text-secondary)',
-                  fontSize: 13, fontWeight: 500, borderRadius: 7,
-                  fontFamily: 'inherit', textAlign: 'left', transition: 'background 0.12s',
+                  display: 'flex', alignItems: 'center', gap: 4,
+                  padding: configMode ? '8px 8px 6px' : '14px 12px 6px',
+                  margin: 0,
+                  background: configMode ? 'var(--bg-muted)' : 'transparent',
+                  borderRadius: configMode ? 6 : 0,
+                  cursor: configMode ? 'grab' : 'default',
                 }}
-                onMouseEnter={e => { if (!active) e.currentTarget.style.background = 'var(--bg-muted)'; }}
-                onMouseLeave={e => { if (!active) e.currentTarget.style.background = 'transparent'; }}
               >
-                <Icon name={it.icon} size={14} strokeWidth={1.7}/>
-                <span style={{ flex: 1 }}>{it.label}</span>
-                {it.badge && (
-                  <span style={{ background: active ? '#D74C3C' : 'var(--card-red-bg)', color: active ? '#fff' : 'var(--status-red)', fontSize: 10.5, fontWeight: 600, minWidth: 17, height: 17, borderRadius: 999, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', padding: '0 5px' }}>{it.badge}</span>
+                {configMode && (
+                  <span style={{ display: 'inline-flex', color: 'var(--text-tertiary)', flexShrink: 0 }}>
+                    <Icon name="grip" size={12}/>
+                  </span>
                 )}
-              </button>
-
-              {/* 1003 sub-nav — anchor links into each major section */}
-              {it.id === 'urla1003' && active && it.subItems && (
-                <div style={{ display: 'flex', flexDirection: 'column', paddingLeft: 22, marginTop: 4, gap: 1 }}>
-                  {it.subItems.map(sub => (
-                    <button key={sub.id} onClick={() => {
-                      const el = document.getElementById(sub.id);
-                      if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
-                    }} style={{
-                      display: 'flex', alignItems: 'center', height: 28,
-                      padding: '0 12px', border: 'none', background: 'transparent',
-                      cursor: 'pointer', fontFamily: 'inherit',
-                      fontSize: 12, fontWeight: 500, color: 'var(--text-secondary)',
-                      borderRadius: 6, textAlign: 'left',
+                {isEditing ? (
+                  <input
+                    autoFocus
+                    value={section.label}
+                    onChange={e => renameSection(section.id, e.target.value)}
+                    onBlur={() => setEditingSectionId(null)}
+                    onKeyDown={e => { if (e.key === 'Enter' || e.key === 'Escape') { e.preventDefault(); setEditingSectionId(null); } }}
+                    style={{
+                      flex: 1, height: 22, padding: '0 6px',
+                      border: '1px solid var(--border-default)', borderRadius: 5,
+                      background: 'var(--bg-surface)', fontFamily: 'inherit',
+                      fontSize: 11, fontWeight: 600, color: 'var(--text-primary)',
+                      textTransform: 'uppercase', letterSpacing: '0.07em',
+                      outline: 'none',
                     }}
-                      onMouseEnter={e => { e.currentTarget.style.background = 'var(--bg-muted)'; e.currentTarget.style.color = 'var(--text-primary)'; }}
-                      onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = 'var(--text-secondary)'; }}
+                  />
+                ) : (
+                  <span
+                    onClick={configMode ? () => setEditingSectionId(section.id) : undefined}
+                    style={{
+                      flex: 1, fontSize: 10.5, fontWeight: 600,
+                      color: 'var(--text-tertiary)',
+                      textTransform: 'uppercase', letterSpacing: '0.07em',
+                      cursor: configMode ? 'text' : 'default',
+                    }}
+                  >
+                    {section.label}
+                  </span>
+                )}
+                {configMode && (
+                  <div style={{ position: 'relative', flexShrink: 0 }}>
+                    <button
+                      onClick={(e) => { e.stopPropagation(); setSectionMenuOpenId(menuOpen ? null : section.id); }}
+                      aria-label="Section options"
+                      style={{
+                        width: 22, height: 22, borderRadius: 5,
+                        border: 'none', background: 'transparent', cursor: 'pointer',
+                        display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+                        color: 'var(--text-tertiary)',
+                      }}
+                      onMouseEnter={e => e.currentTarget.style.background = 'var(--border-subtle)'}
+                      onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
                     >
-                      {sub.label}
+                      <Icon name="moreV" size={13}/>
                     </button>
-                  ))}
-                </div>
-              )}
-
-              {/* Data subnav — grouped, collapsible, drag-and-drop within groups */}
-              {it.id === 'data' && active && (
-                <div style={{ display: 'flex', flexDirection: 'column', paddingLeft: 10, marginTop: 4, maxHeight: 460, overflowY: 'auto' }}>
-                  {groups.map(group => {
-                    const needsCount = group.docs.filter(d => d.status === 'needs').length;
-                    const isDropGroup = dropTarget?.groupId === group.id;
-
-                    return (
-                      <div key={group.id} style={{ marginBottom: 2 }}>
-                        {/* Group header */}
+                    {menuOpen && (
+                      <div
+                        onMouseLeave={() => setSectionMenuOpenId(null)}
+                        style={{
+                          position: 'absolute', top: '100%', right: 0, marginTop: 4,
+                          background: 'var(--bg-surface)', border: '1px solid var(--border-subtle)',
+                          borderRadius: 8, boxShadow: '0 6px 24px rgba(0,0,0,0.12)',
+                          padding: 4, minWidth: 140, zIndex: 20,
+                        }}
+                      >
                         <button
-                          onClick={() => toggleGroup(group.id)}
+                          onClick={() => { setSectionMenuOpenId(null); setEditingSectionId(section.id); }}
                           style={{
-                            display: 'flex', alignItems: 'center', gap: 6, width: '100%',
-                            height: 26, padding: '0 8px 0 4px',
-                            border: 'none', background: 'transparent', cursor: 'pointer',
-                            fontFamily: 'inherit', borderRadius: 6,
+                            display: 'flex', alignItems: 'center', gap: 8, width: '100%',
+                            padding: '7px 10px', border: 'none', background: 'transparent',
+                            cursor: 'pointer', fontFamily: 'inherit', fontSize: 12.5,
+                            color: 'var(--text-primary)', borderRadius: 5, textAlign: 'left',
                           }}
                           onMouseEnter={e => e.currentTarget.style.background = 'var(--bg-muted)'}
                           onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
-                        >
-                          <span style={{
-                            display: 'inline-flex', alignItems: 'center',
-                            color: 'var(--text-tertiary)',
-                            transition: 'transform 0.15s',
-                            transform: group.open ? 'rotate(90deg)' : 'rotate(0deg)',
-                          }}>
-                            <Icon name="chevronRight" size={11} strokeWidth={2.5}/>
-                          </span>
-                          <span style={{ flex: 1, fontSize: 11.5, fontWeight: 600, color: 'var(--text-secondary)', textAlign: 'left' }}>
-                            {group.label}
-                          </span>
-                          {needsCount > 0 && (
-                            <span style={{ fontSize: 9.5, fontWeight: 700, color: '#E0A23A', background: '#FEF3C7', padding: '1px 5px', borderRadius: 4 }}>
-                              {needsCount}
-                            </span>
-                          )}
-                        </button>
-
-                        {/* Doc rows */}
-                        {group.open && (
-                          <div style={{ paddingLeft: 8, paddingBottom: 4 }}>
-                            {group.docs.map((doc, idx) => {
-                              const hasPages   = doc.pages && doc.pages.length > 0;
-                              const pagesOpen  = !!expandedPages[doc.id];
-                              const isClickable = doc.clickable || hasPages;
-                              const dotColor   = { ready: '#3DA866', needs: '#E0A23A', pending: '#9AA0A6' }[doc.status];
-                              const isDragging = dragState.current.groupId === group.id && dragState.current.fromIdx === idx;
-                              const isDropHere = isDropGroup && dropTarget?.idx === idx;
-                              // A doc with pages is "active" if any of its pages is active
-                              const anyPageActive = hasPages && doc.pages.some(p => dataSubTab === p.id);
-                              const isActive   = dataSubTab === doc.id || anyPageActive;
-
-                              return (
-                                <div key={doc.id} style={{ position: 'relative' }}>
-                                  {isDropHere && !isDragging && (
-                                    <div style={{ position: 'absolute', top: 0, left: 4, right: 0, height: 2, background: 'var(--text-primary)', borderRadius: 999, zIndex: 10, pointerEvents: 'none' }}/>
-                                  )}
-
-                                  {/* Doc row */}
-                                  <div
-                                    draggable={isClickable}
-                                    onDragStart={isClickable ? e => handleDragStart(e, group.id, idx) : undefined}
-                                    onDragOver={isClickable ? e => handleDragOver(e, group.id, idx) : undefined}
-                                    onDrop={isClickable ? e => handleDrop(e, group.id, idx) : undefined}
-                                    onDragEnd={handleDragEnd}
-                                    className={isClickable ? 'doc-row' : ''}
-                                    style={{
-                                      display: 'flex', alignItems: 'center', gap: 6,
-                                      height: 24, padding: '0 6px 0 4px',
-                                      borderRadius: 6,
-                                      background: isActive && !hasPages ? 'var(--bg-muted)' : 'transparent',
-                                      opacity: isDragging ? 0.35 : isClickable ? 1 : 0.4,
-                                      cursor: !isClickable ? 'default' : 'pointer',
-                                      pointerEvents: !isClickable ? 'none' : 'auto',
-                                      transition: 'background 0.1s, opacity 0.1s',
-                                    }}
-                                    onMouseEnter={e => { if (!isActive && isClickable) e.currentTarget.style.background = 'var(--bg-muted)'; }}
-                                    onMouseLeave={e => { if (!isActive || hasPages) e.currentTarget.style.background = 'transparent'; }}
-                                  >
-                                    {isClickable && (
-                                      <span className="doc-grip" style={{ display: 'flex', flexShrink: 0, color: 'var(--border-strong)', opacity: 0, transition: 'opacity 0.12s', cursor: 'grab' }}>
-                                        <Icon name="grip" size={11}/>
-                                      </span>
-                                    )}
-                                    <span style={{ width: 6, height: 6, borderRadius: '50%', background: dotColor, flexShrink: 0 }}/>
-                                    <span
-                                      onClick={() => hasPages ? toggleDocPages(doc.id) : (isClickable && onDataSubTab(doc.id))}
-                                      style={{
-                                        flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
-                                        fontSize: 12,
-                                        fontWeight: isActive ? 600 : 400,
-                                        color: isActive ? 'var(--text-primary)' : isClickable ? 'var(--text-secondary)' : 'var(--text-tertiary)',
-                                      }}
-                                    >
-                                      {doc.label}
-                                    </span>
-                                    {/* Pages chevron */}
-                                    {hasPages && (
-                                      <span
-                                        onClick={() => toggleDocPages(doc.id)}
-                                        style={{
-                                          display: 'flex', alignItems: 'center', flexShrink: 0,
-                                          color: 'var(--text-tertiary)',
-                                          transition: 'transform 0.15s',
-                                          transform: pagesOpen ? 'rotate(90deg)' : 'rotate(0deg)',
-                                          cursor: 'pointer',
-                                        }}
-                                      >
-                                        <Icon name="chevronRight" size={10} strokeWidth={2.5}/>
-                                      </span>
-                                    )}
-                                  </div>
-
-                                  {/* Page sub-rows */}
-                                  {hasPages && pagesOpen && (
-                                    <div style={{ paddingLeft: 14, paddingBottom: 2 }}
-                                      onDragLeave={e => { if (!e.currentTarget.contains(e.relatedTarget)) setPageDropTarget(null); }}>
-                                      {doc.pages.map((page, pageIdx) => {
-                                        const pageActive = dataSubTab === page.id;
-                                        const pageDot = { ready: '#3DA866', needs: '#E0A23A', pending: '#9AA0A6' }[page.status];
-                                        const isPageDrop = pageDropTarget?.docId === doc.id && pageDropTarget?.idx === pageIdx;
-                                        return (
-                                          <div
-                                            key={page.id}
-                                            draggable
-                                            onDragStart={e => handlePageDragStart(e, doc.id, pageIdx)}
-                                            onDragOver={e => handlePageDragOver(e, doc.id, pageIdx)}
-                                            onDrop={e => handlePageDrop(e, doc.id, pageIdx)}
-                                            onDragEnd={() => setPageDropTarget(null)}
-                                            onClick={() => page.clickable && onDataSubTab(page.id)}
-                                            style={{
-                                              display: 'flex', alignItems: 'center', gap: 6,
-                                              height: 24, padding: '0 4px 0 2px',
-                                              borderRadius: 5, cursor: 'grab',
-                                              opacity: page.clickable ? 1 : 0.55,
-                                              background: isPageDrop ? 'var(--ai-primary-subtle, rgba(99,102,241,0.08))' : pageActive ? 'var(--bg-muted)' : 'transparent',
-                                              borderTop: isPageDrop ? '2px solid var(--ai-primary)' : '2px solid transparent',
-                                              transition: 'background 0.1s',
-                                              userSelect: 'none',
-                                            }}
-                                            onMouseEnter={e => { if (!pageActive && page.clickable) e.currentTarget.style.background = 'var(--bg-muted)'; }}
-                                            onMouseLeave={e => { if (!isPageDrop && !pageActive) e.currentTarget.style.background = 'transparent'; }}
-                                          >
-                                            {/* Drag handle */}
-                                            <span style={{ display: 'flex', flexDirection: 'column', gap: 2, flexShrink: 0, opacity: 0.3, paddingLeft: 1 }}>
-                                              <span style={{ display: 'block', width: 8, height: 1, borderRadius: 1, background: 'var(--text-primary)' }}/>
-                                              <span style={{ display: 'block', width: 8, height: 1, borderRadius: 1, background: 'var(--text-primary)' }}/>
-                                              <span style={{ display: 'block', width: 8, height: 1, borderRadius: 1, background: 'var(--text-primary)' }}/>
-                                            </span>
-                                            <span style={{ width: 5, height: 5, borderRadius: '50%', background: pageDot, flexShrink: 0 }}/>
-                                            <span style={{
-                                              flex: 1, fontSize: 11.5, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
-                                              fontWeight: pageActive ? 600 : 400,
-                                              color: pageActive ? 'var(--text-primary)' : page.clickable ? 'var(--text-secondary)' : 'var(--text-tertiary)',
-                                            }}>
-                                              {page.label}
-                                            </span>
-                                          </div>
-                                        );
-                                      })}
-                                    </div>
-                                  )}
-                                </div>
-                              );
-                            })}
-                          </div>
-                        )}
+                        >Rename</button>
+                        <button
+                          disabled={section.items.length > 0}
+                          onClick={() => deleteSection(section.id)}
+                          title={section.items.length > 0 ? 'Move items out before deleting' : 'Delete category'}
+                          style={{
+                            display: 'flex', alignItems: 'center', gap: 8, width: '100%',
+                            padding: '7px 10px', border: 'none', background: 'transparent',
+                            cursor: section.items.length > 0 ? 'not-allowed' : 'pointer',
+                            fontFamily: 'inherit', fontSize: 12.5,
+                            color: section.items.length > 0 ? 'var(--text-tertiary)' : 'var(--status-red)',
+                            opacity: section.items.length > 0 ? 0.55 : 1,
+                            borderRadius: 5, textAlign: 'left',
+                          }}
+                          onMouseEnter={e => { if (section.items.length === 0) e.currentTarget.style.background = 'var(--bg-muted)'; }}
+                          onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
+                        >Delete category</button>
                       </div>
-                    );
-                  })}
-                </div>
-              )}
-            </React.Fragment>
+                    )}
+                  </div>
+                )}
+              </div>
+
+              {/* Section items */}
+              <div
+                onDragOver={configMode && section.items.length === 0 ? overItemSlot(section.id, 0) : undefined}
+                onDrop={configMode && section.items.length === 0 ? dropItemAt(section.id, 0) : undefined}
+                style={{
+                  display: 'flex', flexDirection: 'column', gap: 1,
+                  paddingTop: configMode ? 4 : 0,
+                  minHeight: configMode && section.items.length === 0 ? 36 : undefined,
+                  border: configMode && section.items.length === 0 ? '1px dashed var(--border-subtle)' : 'none',
+                  borderRadius: configMode && section.items.length === 0 ? 6 : 0,
+                  background: configMode && navDropTarget?.kind === 'item' && navDropTarget.sectionId === section.id && section.items.length === 0 ? 'var(--bg-muted)' : 'transparent',
+                  alignItems: configMode && section.items.length === 0 ? 'center' : 'stretch',
+                  justifyContent: configMode && section.items.length === 0 ? 'center' : undefined,
+                }}
+              >
+                {section.items.length === 0 && configMode ? (
+                  <span style={{ fontSize: 11.5, color: 'var(--text-tertiary)', fontStyle: 'italic' }}>
+                    Drag links here
+                  </span>
+                ) : (
+                  section.items.map((it, idx) => renderNavItem(it, { sectionId: section.id, idx }))
+                )}
+              </div>
+            </div>
           );
         })}
+
+        {/* Add category */}
+        {configMode && (
+          <button
+            onClick={addSection}
+            style={{
+              display: 'flex', alignItems: 'center', gap: 8,
+              height: 32, padding: '0 10px', marginTop: 10,
+              border: '1px dashed var(--border-default)',
+              background: 'transparent', cursor: 'pointer',
+              fontFamily: 'inherit', fontSize: 12, fontWeight: 500,
+              color: 'var(--text-secondary)', borderRadius: 7,
+            }}
+            onMouseEnter={e => { e.currentTarget.style.background = 'var(--bg-muted)'; e.currentTarget.style.color = 'var(--text-primary)'; }}
+            onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = 'var(--text-secondary)'; }}
+          >
+            <Icon name="plus" size={12} strokeWidth={2}/>
+            Add category
+          </button>
+        )}
+      </div>
+
+      {/* Footer — applied-workflow indicator. Shows which workflow (configured
+          in the Admin console) currently drives this loan nav. */}
+      <div style={{
+        borderTop: '1px solid var(--border-subtle)',
+        padding: '10px 12px',
+        background: 'var(--bg-surface)',
+        flexShrink: 0, position: 'relative',
+      }}>
+        {/* Preview-context switcher temporarily removed — keep for later revival.
+        {ctxOpen && (
+          <div style={{
+            position: 'absolute', left: 8, right: 8, bottom: 'calc(100% + 6px)', zIndex: 40,
+            background: 'var(--bg-surface)', border: '1px solid var(--border-subtle)', borderRadius: 10,
+            boxShadow: '0 10px 32px rgba(0,0,0,0.16)', padding: 12, maxHeight: 400, overflowY: 'auto',
+          }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 10 }}>
+              <span style={{ fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em', color: 'var(--text-tertiary)' }}>Preview context</span>
+              <div style={{ flex: 1 }}/>
+              <button onClick={() => setCtxOpen(false)} aria-label="Close preview context" style={{ border: 'none', background: 'transparent', cursor: 'pointer', color: 'var(--text-tertiary)', display: 'flex' }}><Icon name="x" size={14}/></button>
+            </div>
+            <div style={{ fontSize: 11, color: 'var(--text-tertiary)', lineHeight: 1.45, marginBottom: 10 }}>
+              Mock user + loan attributes that determine which workflow this loan view uses.
+            </div>
+            <PreviewContextSwitcher compact/>
+          </div>
+        )}
+        */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 9, width: '100%' }}>
+          <span style={{ width: 24, height: 24, borderRadius: 6, background: 'var(--bg-muted)', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, color: 'var(--text-secondary)' }}>
+            <Icon name="workflow" size={13}/>
+          </span>
+          <span style={{ minWidth: 0, flex: 1 }}>
+            <span style={{ display: 'block', fontSize: 9, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em', color: 'var(--text-tertiary)' }}>Workflow</span>
+            <span style={{ display: 'block', fontSize: 12, fontWeight: 600, color: 'var(--text-primary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{activeWorkflow?.name || 'Default'}</span>
+          </span>
+        </div>
       </div>
 
     </aside>
@@ -1212,16 +1425,18 @@ const RAIL_TOOLS = [
 
 // Demo notes — would come from a notes store in production.
 const DEMO_NOTES = [
-  { id: 1, author: 'Alex Martinez', initials: 'AM', avatarColor: '#4A39C9',
+  { id: 1, author: 'Alex Martinez', role: 'Loan Officer', initials: 'AM', avatarColor: '#4A39C9',
     timestamp: 'Yesterday, 3:42 PM',
     body: 'Borrower confirmed via email — fine with the 15-day lock extension. Watching rate movement before locking the float-down.' },
-  { id: 2, author: 'Jamie Lee', initials: 'JL', avatarColor: '#A8541C',
+  { id: 2, author: 'Jamie Lee', role: 'Processor', initials: 'JL', avatarColor: '#A8541C',
     timestamp: 'May 22, 11:18 AM',
     body: 'Pulled updated paystub. DTI now at 38% — tight but within guidelines. Income calc note: includes seasonal OT.' },
   { id: 3, author: 'AI Assistant', initials: 'AI', avatarColor: '#6E59E8', ai: true,
     timestamp: 'May 20, 9:04 AM',
     body: 'Detected large deposit ($8,500) on 4/15 — letter of explanation may be needed. Flagged as auto-clearable on next upload.' },
 ];
+
+const PERSONA_ROLE = { LO: 'Loan Officer', Processor: 'Processor' };
 
 function RailTooltip({ label, visible }) {
   return (
@@ -1466,6 +1681,7 @@ function NotesDrawerBody() {
     setNotes(prev => [{
       id: Date.now(),
       author: 'You',
+      role: PERSONA_ROLE[localStorage.getItem('los-persona')] || 'Loan Officer',
       initials: 'YO',
       avatarColor: '#0E1014',
       timestamp: 'Just now',
@@ -1529,7 +1745,7 @@ function NotesDrawerBody() {
             }}>
               <Avatar initials={n.initials} size={28} color={n.avatarColor}/>
               <div style={{ flex: 1, minWidth: 0 }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 2 }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 1 }}>
                   <span style={{ fontSize: 12.5, fontWeight: 600, color: 'var(--text-primary)' }}>{n.author}</span>
                   {n.ai && (
                     <span style={{
@@ -1542,7 +1758,15 @@ function NotesDrawerBody() {
                     </span>
                   )}
                 </div>
-                <div style={{ fontSize: 11, color: 'var(--text-tertiary)', marginBottom: 5 }}>{n.timestamp}</div>
+                <div style={{ fontSize: 11, color: 'var(--text-tertiary)', marginBottom: 5, display: 'flex', alignItems: 'center', gap: 6 }}>
+                  {n.role && !n.ai && (
+                    <>
+                      <span>{n.role}</span>
+                      <span aria-hidden="true">·</span>
+                    </>
+                  )}
+                  <span>{n.timestamp}</span>
+                </div>
                 <div style={{ fontSize: 12.5, color: 'var(--text-secondary)', lineHeight: 1.5, wordBreak: 'break-word' }}>{n.body}</div>
               </div>
             </div>
@@ -2479,7 +2703,7 @@ function resolveLoanMeta(loanId) {
   const formattedAmount = loan.amount != null ? `$${loan.amount.toLocaleString('en-US')}` : (override?.amount || '—');
   return {
     borrower:   loan.borrower   || override?.borrower,
-    coborrower: override?.coborrower || '',
+    coborrower: loan.coborrower ? `+ ${loan.coborrower.name}` : (override?.coborrower || ''),
     initials:   loan.initials   || override?.initials,
     color:      loan.avatarColor || override?.color,
     // Property is null on Application-stage loans — surface that explicitly
@@ -2494,13 +2718,25 @@ function resolveLoanMeta(loanId) {
   };
 }
 
-function LoanDetailView({ loanId, tab, onTab, persona = 'LO' }) {
+function LoanDetailView({ loanId, tab, onTab, persona = 'LO', previewWorkflow = null }) {
   const localTab = tab || 'now';
   const setTab = onTab || (() => {});
   const meta = resolveLoanMeta(loanId);
   const loan = LOANS.find(l => l.id === loanId) || {};
   const isApplication = meta.status === 'Application';
   const [urlaOpen, setUrlaOpen] = React.useState(false);
+
+  // Lifted URLA app state — shared between the 1003 tab and the Borrower
+  // Summary tab so edits in one immediately reflect in the other.
+  const [urlaApps, setUrlaApps] = React.useState(() => buildInitialAppsForLoan(loanId));
+  const [urlaActiveApp, setUrlaActiveApp] = React.useState(0);
+  React.useEffect(() => {
+    setUrlaApps(buildInitialAppsForLoan(loanId));
+    setUrlaActiveApp(0);
+  }, [loanId]);
+  const updateActiveUrlaApp = React.useCallback((patch) => {
+    setUrlaApps(prev => prev.map((a, i) => i === urlaActiveApp ? { ...a, ...patch } : a));
+  }, [urlaActiveApp]);
   const commsWindowRef = React.useRef(null);
   const docsWindowRef = React.useRef(null);
   const incomeWindowRef = React.useRef(null);
@@ -2682,7 +2918,7 @@ function LoanDetailView({ loanId, tab, onTab, persona = 'LO' }) {
       {/* Scrollable region: LeftRail + Main + ToolsPanel.
           Only <main> scrolls vertically; the rails handle their own overflow. */}
       <div style={{ display: 'flex', flex: 1, minHeight: 0, overflow: 'hidden' }}>
-        <LeftRail tab={localTab} onTab={handleTab} onOpenURLA={openURLA} dataSubTab={dataSubTab} onDataSubTab={setDataSubTab} onOpenDocs={openDocsWindow}/>
+        <LeftRail tab={localTab} onTab={handleTab} onOpenURLA={openURLA} dataSubTab={dataSubTab} onDataSubTab={setDataSubTab} onOpenDocs={openDocsWindow} previewWorkflow={previewWorkflow}/>
 
         {/* Main */}
         <main style={{ flex: 1, padding: '24px 28px 40px', overflowY: 'auto', display: 'flex', flexDirection: 'column', minHeight: 0 }}>
@@ -2698,8 +2934,8 @@ function LoanDetailView({ loanId, tab, onTab, persona = 'LO' }) {
            : localTab === 'closing' ? <ClosingTab/>
            : localTab === 'audit' ? <AuditTab/>
            : localTab === 'services' ? <ServicesTab/>
-           : localTab === 'borrowerSummary' ? <FormPlaceholder title="Borrower Summary" description="Auto-generated borrower summary forms will live here — print-ready, signature-routable, with field-by-field overrides." icon="doc"/>
-           : localTab === 'urla1003' ? <URLA1003View loanId={loanId}/>
+           : localTab === 'borrowerSummary' ? <BorrowerSummaryView loanId={loanId} apps={urlaApps} setApps={setUrlaApps} activeApp={urlaActiveApp} setActiveApp={setUrlaActiveApp} onUpdateApp={updateActiveUrlaApp}/>
+           : localTab === 'urla1003' ? <URLA1003View loanId={loanId} apps={urlaApps} setApps={setUrlaApps} activeApp={urlaActiveApp} setActiveApp={setUrlaActiveApp}/>
            : isApplication ? <NowTabApplication borrowerName={meta.borrower} loanId={loanId} loan={loan} onOpenURLA={openURLA}/>
            : meta.status === 'Processing' ? <NowTabProcessing borrowerName={meta.borrower} loanId={loanId} loan={loan}/>
            : meta.status === 'Underwriting' ? <NowTabUnderwriting borrowerName={meta.borrower} loanId={loanId} loan={loan} fema={loan.fema || null}/>
@@ -2717,6 +2953,34 @@ function LoanDetailView({ loanId, tab, onTab, persona = 'LO' }) {
         </div>,
         document.body
       )}
+    </div>
+  );
+}
+
+// Borrower Summary tab — mirrors Section 1 (Borrower Info) of the URLA 1003.
+// Fields are bidirectionally linked to the 1003 via shared `app` state at
+// LoanDetailView, so edits here propagate to the 1003 and vice versa.
+function BorrowerSummaryView({ loanId, apps, setApps, activeApp, setActiveApp, onUpdateApp }) {
+  const app = apps && apps[activeApp];
+  if (!app) return null;
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column' }}>
+      <PageHeader
+        icon="doc"
+        title="Borrower Info"
+        actions={<>
+          <button className="btn btn-outline btn-sm"><Icon name="download" size={13}/> Export PDF</button>
+          <button className="btn btn-primary btn-sm"><Icon name="doc" size={13}/> Save</button>
+        </>}
+      />
+      <BorrowerApplicationTabs
+        loanId={loanId}
+        apps={apps}
+        setApps={setApps}
+        activeApp={activeApp}
+        setActiveApp={setActiveApp}
+      />
+      <SectionBorrowerInfo app={app} onUpdateApp={onUpdateApp}/>
     </div>
   );
 }

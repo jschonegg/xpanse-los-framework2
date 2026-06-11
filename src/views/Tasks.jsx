@@ -1,7 +1,7 @@
 import React from 'react';
 import { Icon } from '../components/Icon';
 import { Avatar } from '../components/Shell';
-import { TASKS, TASK_COUNTS } from '../data/tasks';
+import { TASKS, TASK_COUNTS, TASK_TYPES, TASK_TYPE_ORDER } from '../data/tasks';
 
 // ── Shared bits ─────────────────────────────────────────────────────────────
 function fmtAmount(n) {
@@ -59,8 +59,31 @@ function TaskKpi({ icon, iconColor, label, value }) {
   );
 }
 
+// ── Compact quick-action CTA shown inline on each task row ──────────────────
+function RowCta({ cta, onClick }) {
+  const [hover, setHover] = React.useState(false);
+  return (
+    <button
+      onClick={onClick}
+      onMouseEnter={() => setHover(true)}
+      onMouseLeave={() => setHover(false)}
+      style={{
+        display: 'inline-flex', alignItems: 'center', gap: 6,
+        height: 30, padding: '0 12px', borderRadius: 7, flexShrink: 0,
+        border: '1px solid', borderColor: hover ? 'var(--text-primary)' : 'var(--border-default)',
+        background: hover ? 'var(--text-primary)' : 'var(--bg-surface)',
+        color: hover ? '#fff' : 'var(--text-primary)',
+        fontFamily: 'inherit', fontSize: 12, fontWeight: 600, whiteSpace: 'nowrap',
+        cursor: 'pointer', transition: 'all 0.12s',
+      }}
+    >
+      <Icon name={cta.icon} size={12}/> {cta.label}
+    </button>
+  );
+}
+
 // ── Task row (full list) ───────────────────────────────────────────────────
-function TaskRow({ task, selected, onSelect, checked, onToggle }) {
+function TaskRow({ task, selected, onSelect, checked, onToggle, onAction }) {
   const [hover, setHover] = React.useState(false);
   return (
     <div
@@ -109,10 +132,44 @@ function TaskRow({ task, selected, onSelect, checked, onToggle }) {
         </div>
       </div>
 
-      {/* Right chevron when selected */}
-      <div style={{ alignSelf: 'center', color: 'var(--text-tertiary)', opacity: selected || hover ? 1 : 0, transition: 'opacity 0.12s' }}>
-        <Icon name="chevronRight" size={14}/>
+      {/* Inline quick-action CTA + chevron */}
+      <div style={{ alignSelf: 'center', display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0 }}>
+        <RowCta
+          cta={task.primaryCta}
+          onClick={(e) => { e.stopPropagation(); onAction && onAction(task); }}
+        />
+        <div style={{ color: 'var(--text-tertiary)', opacity: selected || hover ? 1 : 0, transition: 'opacity 0.12s' }}>
+          <Icon name="chevronRight" size={14}/>
+        </div>
       </div>
+    </div>
+  );
+}
+
+// ── Section header when the list is grouped by task type ────────────────────
+function TypeGroupHeader({ type, count }) {
+  const def = TASK_TYPES[type];
+  if (!def) return null;
+  return (
+    <div style={{
+      display: 'flex', alignItems: 'center', gap: 8,
+      padding: '9px 16px',
+      background: 'var(--bg-muted)',
+      borderBottom: '1px solid var(--border-subtle)',
+    }}>
+      <span style={{
+        width: 22, height: 22, borderRadius: 6, flexShrink: 0,
+        background: def.color + '1A',
+        display: 'flex', alignItems: 'center', justifyContent: 'center',
+      }}>
+        <Icon name={def.icon} size={12} color={def.color}/>
+      </span>
+      <span style={{ fontSize: 12.5, fontWeight: 600, color: 'var(--text-primary)' }}>{def.label}</span>
+      <span style={{
+        fontSize: 11, fontWeight: 600, color: 'var(--text-tertiary)',
+        background: 'var(--bg-surface)', border: '1px solid var(--border-subtle)',
+        borderRadius: 999, padding: '0 7px', lineHeight: '17px',
+      }}>{count}</span>
     </div>
   );
 }
@@ -189,7 +246,9 @@ function TaskDetail({ task, onOpenLoan }) {
         </button>
         {task.borrower.loanId && (
           <button
-            onClick={() => onOpenLoan && onOpenLoan(task.borrower.loanId)}
+            // Coming from a task → open the loan on the page relevant to this
+            // task (e.g. Documents, Pricing). Falls back to Tasks if unmapped.
+            onClick={() => onOpenLoan && onOpenLoan(task.borrower.loanId, task.loanTab || 'now')}
             style={{
               flex: 1, height: 38, borderRadius: 8,
               border: '1px solid var(--border-default)', background: 'var(--bg-surface)',
@@ -224,6 +283,7 @@ export function TasksView({ onOpenLoan }) {
   const [tab, setTab] = React.useState('all');
   const [selectedId, setSelectedId] = React.useState(TASKS[0].id);
   const [checked, setChecked] = React.useState(new Set());
+  const [groupByType, setGroupByType] = React.useState(true);
 
   const toggleChecked = (id) => {
     const next = new Set(checked);
@@ -234,6 +294,25 @@ export function TasksView({ onOpenLoan }) {
   const tabDef = TASK_TABS.find(t => t.id === tab) || TASK_TABS[0];
   const filtered = TASKS.filter(tabDef.filter);
   const selected = filtered.find(t => t.id === selectedId) || filtered[0];
+
+  // The inline CTA focuses the task so its full action surface opens in the
+  // detail panel (no backend wired in this prototype).
+  const handleAction = (task) => setSelectedId(task.id);
+
+  // Group the filtered rows by type, preserving the canonical type order.
+  const groups = TASK_TYPE_ORDER
+    .map(type => ({ type, tasks: filtered.filter(t => t.type === type) }))
+    .filter(g => g.tasks.length > 0);
+
+  const renderRow = (task) => (
+    <TaskRow key={task.id} task={task}
+      selected={selected && selected.id === task.id}
+      onSelect={setSelectedId}
+      checked={checked.has(task.id)}
+      onToggle={toggleChecked}
+      onAction={handleAction}
+    />
+  );
 
   return (
     <>
@@ -271,7 +350,38 @@ export function TasksView({ onOpenLoan }) {
           );
         })}
         <div style={{ flex: 1 }}/>
-        <span style={{ fontSize: 12, color: 'var(--text-tertiary)' }}>{filtered.length} task{filtered.length !== 1 ? 's' : ''}</span>
+
+        {/* Group-by-type toggle */}
+        <div role="group" aria-label="Group tasks" style={{
+          display: 'inline-flex', alignItems: 'center', background: 'var(--bg-muted)',
+          borderRadius: 7, padding: 2, gap: 1,
+        }}>
+          {[
+            { id: false, label: 'List', icon: 'listCheck' },
+            { id: true,  label: 'By type', icon: 'sliders' },
+          ].map(opt => {
+            const active = groupByType === opt.id;
+            return (
+              <button key={String(opt.id)} onClick={() => setGroupByType(opt.id)}
+                aria-pressed={active}
+                style={{
+                  display: 'inline-flex', alignItems: 'center', gap: 5,
+                  padding: '4px 10px', border: 'none', cursor: 'pointer',
+                  fontFamily: 'inherit', fontSize: 12, fontWeight: active ? 600 : 500,
+                  borderRadius: 5,
+                  background: active ? 'var(--bg-surface)' : 'transparent',
+                  color: active ? 'var(--text-primary)' : 'var(--text-tertiary)',
+                  boxShadow: active ? '0 1px 2px rgba(0,0,0,0.06)' : 'none',
+                  transition: 'all 0.12s',
+                }}>
+                <Icon name={opt.icon} size={12} color={active ? 'var(--text-primary)' : 'var(--text-tertiary)'}/>
+                {opt.label}
+              </button>
+            );
+          })}
+        </div>
+
+        <span style={{ fontSize: 12, color: 'var(--text-tertiary)', marginLeft: 4 }}>{filtered.length} task{filtered.length !== 1 ? 's' : ''}</span>
       </div>
 
       {/* Two-column body */}
@@ -279,15 +389,15 @@ export function TasksView({ onOpenLoan }) {
         <div style={{ background: 'var(--bg-surface)', border: '1px solid var(--border-subtle)', borderRadius: 10, overflow: 'hidden' }}>
           {filtered.length === 0 ? (
             <div style={{ padding: '40px 20px', textAlign: 'center', color: 'var(--text-tertiary)', fontSize: 13 }}>No tasks in this view.</div>
-          ) : (
-            filtered.map(task => (
-              <TaskRow key={task.id} task={task}
-                selected={selected && selected.id === task.id}
-                onSelect={setSelectedId}
-                checked={checked.has(task.id)}
-                onToggle={toggleChecked}
-              />
+          ) : groupByType ? (
+            groups.map(g => (
+              <div key={g.type}>
+                <TypeGroupHeader type={g.type} count={g.tasks.length}/>
+                {g.tasks.map(renderRow)}
+              </div>
             ))
+          ) : (
+            filtered.map(renderRow)
           )}
         </div>
 

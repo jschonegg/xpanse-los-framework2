@@ -68,7 +68,6 @@ const ACTIVITY = [
 const LB_DATA = {
   MTD: [
     { id: 'js', name: 'Jordan Schonegg', initials: 'JS', color: '#4A39C9', you: true,  title: 'Sr. Loan Officer', volume: 1970, units: 3, avgDays: 24, pipeline: 2540, delta: 0,  goal: 2500 },
-    { id: 'jl', name: 'Jamie Lee',       initials: 'JL', color: '#C25535', you: false, title: 'Loan Officer',     volume: 1420, units: 2, avgDays: 28, pipeline: 1980, delta: 1,  goal: 2000 },
     { id: 'ps', name: 'Priya Shah',      initials: 'PS', color: '#2A8C53', you: false, title: 'Loan Officer',     volume: 1080, units: 2, avgDays: 31, pipeline: 1640, delta: -1, goal: 2000 },
     { id: 'mw', name: 'Marcus Webb',     initials: 'MW', color: '#7B3FA0', you: false, title: 'Jr. Loan Officer', volume:  610, units: 1, avgDays: 36, pipeline:  890, delta: 0,  goal: 1500 },
     { id: 'rn', name: 'Riley Nash',      initials: 'RN', color: '#0E9F6E', you: false, title: 'Jr. Loan Officer', volume:  480, units: 1, avgDays: 41, pipeline:  720, delta: 1,  goal: 1200 },
@@ -77,7 +76,6 @@ const LB_DATA = {
   QTD: [
     { id: 'js', name: 'Jordan Schonegg', initials: 'JS', color: '#4A39C9', you: true,  title: 'Sr. Loan Officer', volume: 7400, units: 11, avgDays: 23, pipeline: 2540, delta: 0,  goal: 10000 },
     { id: 'ps', name: 'Priya Shah',      initials: 'PS', color: '#2A8C53', you: false, title: 'Loan Officer',     volume: 5900, units:  9, avgDays: 27, pipeline: 1640, delta: 2,  goal: 8000 },
-    { id: 'jl', name: 'Jamie Lee',       initials: 'JL', color: '#C25535', you: false, title: 'Loan Officer',     volume: 5200, units:  8, avgDays: 29, pipeline: 1980, delta: -1, goal: 8000 },
     { id: 'mw', name: 'Marcus Webb',     initials: 'MW', color: '#7B3FA0', you: false, title: 'Jr. Loan Officer', volume: 2800, units:  5, avgDays: 34, pipeline:  890, delta: 0,  goal: 5000 },
     { id: 'ac', name: 'Alex Chen',       initials: 'AC', color: '#D97706', you: false, title: 'Loan Officer',     volume: 2100, units:  3, avgDays: 39, pipeline:  550, delta: 1,  goal: 5000 },
     { id: 'rn', name: 'Riley Nash',      initials: 'RN', color: '#0E9F6E', you: false, title: 'Jr. Loan Officer', volume: 1600, units:  3, avgDays: 42, pipeline:  720, delta: -1, goal: 4000 },
@@ -85,7 +83,6 @@ const LB_DATA = {
   YTD: [
     { id: 'js', name: 'Jordan Schonegg', initials: 'JS', color: '#4A39C9', you: true,  title: 'Sr. Loan Officer', volume: 18200, units: 27, avgDays: 24, pipeline: 2540, delta: 0,  goal: 30000 },
     { id: 'ps', name: 'Priya Shah',      initials: 'PS', color: '#2A8C53', you: false, title: 'Loan Officer',     volume: 15800, units: 22, avgDays: 26, pipeline: 1640, delta: 1,  goal: 24000 },
-    { id: 'jl', name: 'Jamie Lee',       initials: 'JL', color: '#C25535', you: false, title: 'Loan Officer',     volume: 14300, units: 20, avgDays: 28, pipeline: 1980, delta: -1, goal: 24000 },
     { id: 'mw', name: 'Marcus Webb',     initials: 'MW', color: '#7B3FA0', you: false, title: 'Jr. Loan Officer', volume:  8400, units: 13, avgDays: 33, pipeline:  890, delta: 2,  goal: 15000 },
     { id: 'ac', name: 'Alex Chen',       initials: 'AC', color: '#D97706', you: false, title: 'Loan Officer',     volume:  7200, units: 11, avgDays: 37, pipeline:  550, delta: 0,  goal: 15000 },
     { id: 'rn', name: 'Riley Nash',      initials: 'RN', color: '#0E9F6E', you: false, title: 'Jr. Loan Officer', volume:  5600, units:  9, avgDays: 40, pipeline:  720, delta: -1, goal: 12000 },

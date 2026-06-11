@@ -245,6 +245,44 @@ const ICONS = {
       <path d="M14 17H15" />
     </>
   ),
+  sliders: (
+    <>
+      <path d="M4 7H13" />
+      <path d="M17 7H20" />
+      <circle cx="15" cy="7" r="2" />
+      <path d="M4 17H7" />
+      <path d="M11 17H20" />
+      <circle cx="9" cy="17" r="2" />
+    </>
+  ),
+  workflow: (
+    <>
+      <rect x="3" y="4" width="6" height="5" rx="1" />
+      <rect x="15" y="15" width="6" height="5" rx="1" />
+      <path d="M6 9V13A2 2 0 0 0 8 15H15" />
+    </>
+  ),
+  trash: (
+    <>
+      <path d="M4 7H20" />
+      <path d="M10 11V17" />
+      <path d="M14 11V17" />
+      <path d="M6 7L7 19A2 2 0 0 0 9 21H15A2 2 0 0 0 17 19L18 7" />
+      <path d="M9 7V4A1 1 0 0 1 10 3H14A1 1 0 0 1 15 4V7" />
+    </>
+  ),
+  copy: (
+    <>
+      <rect x="9" y="9" width="11" height="11" rx="2" />
+      <path d="M5 15H4A2 2 0 0 1 2 13V4A2 2 0 0 1 4 2H13A2 2 0 0 1 15 4V5" />
+    </>
+  ),
+  eye: (
+    <>
+      <path d="M2 12S5 5 12 5S22 12 22 12S19 19 12 19S2 12 2 12Z" />
+      <circle cx="12" cy="12" r="3" />
+    </>
+  ),
 };
 
 export function Icon({ name, size = 16, color, strokeWidth = 1.75, style, ...rest }) {
