@@ -1,5 +1,6 @@
 import React from 'react';
 import { Icon } from '../components/Icon';
+import { flags } from '../flags';
 
 // ─── Color semantics (strict) ────────────────────────────────────────────────
 // Use these consistently across all widgets — color carries meaning, not
@@ -294,9 +295,9 @@ export function ReadyForUWWidget({ onOpenLoan }) {
           <div style={{ fontSize: 12, color: '#6B7280', marginTop: 2 }}>Cleared for UW · all PTD conditions met</div>
         </div>
         <span style={{
-          fontSize: 10, fontWeight: 700, letterSpacing: '0.06em',
+          fontSize: flags.homePolishV2 ? 11 : 10, fontWeight: 700, letterSpacing: '0.06em',
           background: '#EDE9FE', color: '#5B21B6',
-          padding: '3px 8px', borderRadius: 999, textTransform: 'uppercase',
+          padding: flags.homePolishV2 ? '3px 9px' : '3px 8px', borderRadius: 999, textTransform: 'uppercase',
         }}>AI VERIFIED</span>
       </div>
       <div style={{ display: 'flex', flexDirection: 'column' }}>
@@ -449,7 +450,11 @@ export function WaitingOnBorrowerWidget({ onOpenLoan }) {
 // tabs. Each tab body just renders the existing widget so its internal header
 // (counts, status pills) and rows stay intact.
 export function FilesNeedingActionWidget({ onOpenLoan }) {
-  const TABS = [
+  const TABS = flags.homePolishV2 ? [
+    { id: 'ready-for-uw',        label: 'Ready for UW', count: 3, Body: ReadyForUWWidget },
+    { id: 'lock-clock',          label: 'Locks',        count: 3, Body: LockClockWidget },
+    { id: 'waiting-on-borrower', label: 'Borrower',     count: 5, Body: WaitingOnBorrowerWidget },
+  ] : [
     { id: 'ready-for-uw',        label: 'Ready for UW',        count: 3, Body: ReadyForUWWidget },
     { id: 'lock-clock',          label: 'Locks expiring',      count: 3, Body: LockClockWidget },
     { id: 'waiting-on-borrower', label: 'Waiting on borrower', count: 5, Body: WaitingOnBorrowerWidget },
@@ -826,9 +831,20 @@ function CatalogDrawer({ activeIds, onAdd, onClose }) {
 }
 
 // ─── Main WidgetGrid ──────────────────────────────────────────────────────────
-export function WidgetGrid({ renderWidget, hiddenIds, hideSectionLabel }) {
+export function WidgetGrid({ renderWidget, hiddenIds, hideSectionLabel, hideToolbar, externalEditMode, onExternalEditToggle }) {
   const [layout,   setLayout]   = React.useState(loadLayout);
-  const [editMode, setEditMode] = React.useState(false);
+  const [internalEditMode, setInternalEditMode] = React.useState(false);
+  const controlled = externalEditMode !== undefined;
+  const editMode = controlled ? externalEditMode : internalEditMode;
+  const setEditMode = controlled
+    ? (val) => onExternalEditToggle?.(typeof val === 'function' ? val(editMode) : val)
+    : setInternalEditMode;
+  // Save layout whenever the user leaves edit mode (works for both modes).
+  const prevEditMode = React.useRef(editMode);
+  React.useEffect(() => {
+    if (prevEditMode.current && !editMode) saveLayout(layout);
+    prevEditMode.current = editMode;
+  }, [editMode, layout]);
   const [catalog,  setCatalog]  = React.useState(false);
 
   // Drag-and-drop state
@@ -883,7 +899,8 @@ export function WidgetGrid({ renderWidget, hiddenIds, hideSectionLabel }) {
 
   return (
     <>
-      {/* Toolbar */}
+      {/* Toolbar — suppressed when caller renders its own (hideToolbar). */}
+      {!hideToolbar && (
       <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 18 }}>
         <span style={{ fontSize: 12, fontWeight: 700, letterSpacing: '0.07em', textTransform: 'uppercase', color: '#9CA3AF', flex: 1 }}>
           {editMode ? '✦ Drag to reorder · click × to remove' : (hideSectionLabel ? '' : 'Your dashboard')}
@@ -910,6 +927,7 @@ export function WidgetGrid({ renderWidget, hiddenIds, hideSectionLabel }) {
           }
         </button>
       </div>
+      )}
 
       {/* Grid */}
       <div style={{
