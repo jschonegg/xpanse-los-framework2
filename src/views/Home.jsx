@@ -155,30 +155,69 @@ function Leaderboard() {
   // leaderboardBranchStats flag is ON. Mock values for now — when real
   // branch data is wired up, swap these for live numbers.
   const branchStats = [
-    { label: 'Branch volume MTD', value: '$28.4M', sub: '+9% vs Apr' },
-    { label: 'Active loans',      value: '186',    sub: '14 closing this week' },
-    { label: 'Avg cycle time',    value: '28d',    sub: 'best in region' },
-    { label: 'NPS · last 30d',    value: '71',     sub: '34 responses' },
+    { label: 'Volume',       value: '$28.4M', sub: '+9% vs Apr',        trend: 'up' },
+    { label: 'Active loans', value: '186',    sub: '14 closing this week' },
+    { label: 'Avg cycle',    value: '28d',    sub: 'best in region',    trend: 'good' },
+    { label: 'NPS · 30d',    value: '71',     sub: '34 responses',      tone: 'nps' },
   ];
+  // NPS color-coding: 70+ excellent, 50-69 good, 30-49 ok, <30 poor
+  const npsColor = (v) => v >= 70 ? '#059669' : v >= 50 ? '#0EA5E9' : v >= 30 ? '#D97706' : '#EF4444';
 
   return (
     <div style={{ background: '#fff', border: '1px solid #E5E7EB', borderRadius: 16, overflow: 'hidden' }}>
 
-      {/* ── Branch stats strip (flag: leaderboardBranchStats; suppressed in homePolishV2 to avoid double header) ── */}
-      {flags.leaderboardBranchStats && !flags.homePolishV2 && (
-        <div style={{ padding: '14px 18px', background: 'linear-gradient(180deg, #FAFAFB 0%, #fff 100%)', borderBottom: '1px solid #F3F4F6' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 10 }}>
-            <span style={{ fontSize: 13, fontWeight: 700, color: '#111827', letterSpacing: '-0.01em' }}>Camp Hill Branch</span>
-            <span style={{ fontSize: 10, fontWeight: 700, color: '#7E68FA', background: '#EDE9FE', padding: '2px 7px', borderRadius: 4 }}>#1 IN REGION</span>
+      {/* ── Branch ecosystem strip ───────────────────────────── */}
+      {flags.leaderboardBranchStats && (
+        <div style={{ padding: '16px 20px 14px', borderBottom: '1px solid #F3F4F6' }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+              <Icon name="pin" size={13} color="var(--text-tertiary)" strokeWidth={1.8}/>
+              <span style={{ fontSize: 14, fontWeight: 700, color: 'var(--text-primary)', letterSpacing: '-0.01em' }}>Camp Hill Branch</span>
+              <span style={{
+                fontSize: 10, fontWeight: 700, letterSpacing: '0.06em',
+                color: 'var(--primary-700)', background: 'var(--primary-50)',
+                padding: '2px 7px', borderRadius: 4, textTransform: 'uppercase',
+              }}>#1 in region</span>
+            </div>
+            <span style={{ fontSize: 11, color: 'var(--text-tertiary)' }}>Last 30 days</span>
           </div>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 16 }}>
-            {branchStats.map((s) => (
-              <div key={s.label} style={{ minWidth: 0 }}>
-                <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', color: '#9CA3AF', marginBottom: 4, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{s.label}</div>
-                <div style={{ fontSize: 20, fontWeight: 800, letterSpacing: '-0.02em', color: '#111827', lineHeight: 1.1, fontFamily: 'DM Mono' }}>{s.value}</div>
-                <div style={{ fontSize: 11, color: '#6B7280', marginTop: 2, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{s.sub}</div>
-              </div>
-            ))}
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)' }}>
+            {branchStats.map((s, i) => {
+              const isNps = s.tone === 'nps';
+              const npsHex = isNps ? npsColor(parseInt(s.value, 10)) : null;
+              return (
+                <div key={s.label} style={{
+                  minWidth: 0,
+                  paddingLeft: i === 0 ? 0 : 16,
+                  borderLeft: i === 0 ? 'none' : '1px solid #F3F4F6',
+                }}>
+                  <div style={{
+                    fontSize: 10, fontWeight: 700, letterSpacing: '0.10em',
+                    textTransform: 'uppercase', color: 'var(--text-tertiary)',
+                    marginBottom: 6, whiteSpace: 'nowrap',
+                    overflow: 'hidden', textOverflow: 'ellipsis',
+                  }}>{s.label}</div>
+                  <div style={{ display: 'flex', alignItems: 'baseline', gap: 6 }}>
+                    <span style={{
+                      fontSize: 22, fontWeight: 800, letterSpacing: '-0.02em',
+                      color: isNps ? npsHex : 'var(--text-primary)',
+                      lineHeight: 1.05, fontFamily: 'DM Mono',
+                    }}>{s.value}</span>
+                    {isNps && (
+                      <span style={{
+                        fontSize: 10, fontWeight: 700, letterSpacing: '0.04em',
+                        color: npsHex, background: npsHex + '15',
+                        padding: '1px 6px', borderRadius: 999, textTransform: 'uppercase',
+                      }}>{parseInt(s.value, 10) >= 70 ? 'Excellent' : parseInt(s.value, 10) >= 50 ? 'Good' : 'Watch'}</span>
+                    )}
+                  </div>
+                  <div style={{
+                    fontSize: 11, color: 'var(--text-secondary)', marginTop: 3,
+                    whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
+                  }}>{s.sub}</div>
+                </div>
+              );
+            })}
           </div>
         </div>
       )}
@@ -186,14 +225,9 @@ function Leaderboard() {
       {/* ── Header ───────────────────────────────── */}
       <div style={{ padding: '14px 18px 0', borderBottom: '1px solid #F3F4F6' }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-            {flags.consistentCardHeaders && (
-              <div style={{ width: 22, height: 22, borderRadius: 6, background: '#7E68FA18', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                <Icon name="trendingUp" size={12} color="#7E68FA"/>
-              </div>
-            )}
-            <span style={{ fontSize: 14, fontWeight: 700, color: '#111827' }}>{flags.lessEmoji ? 'Leaderboard' : '🏆 Leaderboard'}</span>
-            <span style={{ fontSize: 11, color: '#9CA3AF', fontWeight: 500 }}>Branch-wide</span>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            <Icon name="trendingUp" size={13} color="var(--text-tertiary)" strokeWidth={1.8}/>
+            <span style={{ fontSize: 13, fontWeight: 700, color: 'var(--text-primary)', letterSpacing: '-0.005em' }}>Top performers</span>
           </div>
           {/* Period pills */}
           <div style={{ display: 'flex', background: '#F3F4F6', borderRadius: 7, padding: 3, gap: 2 }}>

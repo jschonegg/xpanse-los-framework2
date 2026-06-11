@@ -70,8 +70,6 @@ export function AIInsightsCards({ onOpenLoan }) {
 
   return (
     <div style={{
-      background: '#F5F3FF', border: '1px solid #DDD6FE', borderRadius: 16,
-      padding: 14,
       display: 'grid', gridTemplateColumns: '1fr 1.2fr 1.2fr 1.2fr', gap: 14,
       alignItems: 'stretch',
     }}>
