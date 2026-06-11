@@ -1,5 +1,5 @@
 import React from 'react';
-import { buildDefaultWorkflows, makeWorkflow, makeCustomPage, DEFAULT_PREVIEW_CONTEXT, newId } from './workflowModel';
+import { buildDefaultWorkflows, makeWorkflow, makeCustomPage, loanToWorkflowContext, DEFAULT_PREVIEW_CONTEXT, newId } from './workflowModel';
 import { getMatchingWorkflow } from './workflowResolver';
 
 // ─── Persistence ────────────────────────────────────────────────────────────
@@ -142,6 +142,13 @@ export function WorkflowProvider({ children }) {
     return getMatchingWorkflow(workflows, { role }, loanContext);
   }, [workflows, previewContext]);
 
+  // Resolve the workflow for an actual loan from its purpose + status. Role is
+  // ignored for now (role-based targeting is config-example only), so the loan
+  // view reflects the loan's real purpose/status.
+  const resolveWorkflowForLoan = React.useCallback((loan) => {
+    return getMatchingWorkflow(workflows, {}, loanToWorkflowContext(loan), ['role']);
+  }, [workflows]);
+
   const value = {
     workflows,
     saveWorkflow,
@@ -154,6 +161,7 @@ export function WorkflowProvider({ children }) {
     previewContext,
     setPreviewContext,
     resolvedWorkflow,
+    resolveWorkflowForLoan,
     customPages,
     addCustomPage,
   };

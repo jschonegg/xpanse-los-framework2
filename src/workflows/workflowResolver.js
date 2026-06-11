@@ -44,19 +44,24 @@ export function evaluateCondition(condition, context) {
 }
 
 // A condition group is its own list of conditions combined by its own logic.
-export function evaluateGroup(group, context) {
-  const conditions = group?.conditions || [];
+// `ignoreFields` drops conditions on those fields (e.g. role) before evaluating.
+export function evaluateGroup(group, context, ignoreFields = []) {
+  const conditions = (group?.conditions || []).filter(c => !ignoreFields.includes(c.field));
   if (!conditions.length) return true;
   const results = conditions.map(c => evaluateCondition(c, context));
   return group.logic === 'OR' ? results.some(Boolean) : results.every(Boolean);
 }
 
 // Evaluate a workflow's full rule set: top-level conditions plus any groups,
-// combined by the top-level logic. No rules → always matches.
-export function evaluateRules(rules, context) {
+// combined by the top-level logic. No rules → always matches. `ignoreFields`
+// lets a caller skip matching on certain fields (e.g. role in the loan view,
+// where workflows are resolved purely from loan purpose + status).
+export function evaluateRules(rules, context, ignoreFields = []) {
   if (!rules) return true;
-  const condResults = (rules.conditions || []).map(c => evaluateCondition(c, context));
-  const groupResults = (rules.groups || []).map(g => evaluateGroup(g, context));
+  const condResults = (rules.conditions || [])
+    .filter(c => !ignoreFields.includes(c.field))
+    .map(c => evaluateCondition(c, context));
+  const groupResults = (rules.groups || []).map(g => evaluateGroup(g, context, ignoreFields));
   const all = [...condResults, ...groupResults];
   if (!all.length) return true;
   return rules.logic === 'OR' ? all.some(Boolean) : all.every(Boolean);
@@ -66,7 +71,7 @@ export function evaluateRules(rules, context) {
 //   1. Active workflows only (drafts never apply).
 //   2. Non-default matches sorted by priority (lower number wins).
 //   3. Fall back to the Default Workflow if nothing else matches.
-export function getMatchingWorkflow(workflows, userContext = {}, loanContext = {}) {
+export function getMatchingWorkflow(workflows, userContext = {}, loanContext = {}, ignoreFields = []) {
   const context = { ...userContext, ...loanContext };
   const active = (workflows || []).filter(w => w.status === 'active');
   const defaultWorkflow = active.find(w => w.id === 'default')
@@ -74,7 +79,7 @@ export function getMatchingWorkflow(workflows, userContext = {}, loanContext = {
     || null;
 
   const matches = active
-    .filter(w => w.id !== 'default' && evaluateRules(w.rules, context))
+    .filter(w => w.id !== 'default' && evaluateRules(w.rules, context, ignoreFields))
     .sort((a, b) => (a.priority ?? 999) - (b.priority ?? 999));
 
   return matches[0] || defaultWorkflow;

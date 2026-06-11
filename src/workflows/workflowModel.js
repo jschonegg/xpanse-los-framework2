@@ -126,6 +126,31 @@ export const DEFAULT_PREVIEW_CONTEXT = {
   branch: 'Nashville',
 };
 
+// Map a loan record onto the workflow rule vocabulary so the loan view can
+// resolve its navigation from the loan's own purpose + status. Loan data uses
+// shorthand (e.g. 'Cash-out refi', 'Approval') that we normalize to the rule
+// field values defined in RULE_FIELD_DEFS.
+const LOAN_STATUS_TO_RULE = {
+  Application: 'New',
+  Processing: 'Processing',
+  Underwriting: 'Underwriting',
+  Approval: 'Conditional Approval',
+  Closing: 'Closing',
+  Funded: 'Funded',
+};
+export function loanToWorkflowContext(loan) {
+  if (!loan) return {};
+  const purpose = (loan.loanPurpose || '').toLowerCase();
+  let loanPurpose;
+  if (purpose.includes('cash-out') || purpose.includes('cash out')) loanPurpose = 'Cash-out Refinance';
+  else if (purpose.includes('purchase')) loanPurpose = 'Purchase';
+  else if (purpose.includes('refi') || purpose.includes('refinance')) loanPurpose = 'Rate/Term Refinance';
+  return {
+    loanPurpose,
+    loanStatus: LOAN_STATUS_TO_RULE[loan.status] || loan.status,
+  };
+}
+
 // ─── id + factory helpers ───────────────────────────────────────────────────
 let _seq = 0;
 export function newId(prefix = 'id') {

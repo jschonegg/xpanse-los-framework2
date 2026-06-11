@@ -597,7 +597,7 @@ const DEFAULT_NAV_CONFIG = {
   ],
 };
 
-function LeftRail({ tab, onTab, onOpenURLA, dataSubTab, onDataSubTab, onOpenDocs, previewWorkflow }) {
+function LeftRail({ tab, onTab, onOpenURLA, dataSubTab, onDataSubTab, onOpenDocs, previewWorkflow, loan }) {
   // Groups state: open/closed + doc ordering per group
   const [groups, setGroups] = React.useState(
     DOC_GROUPS.map(g => ({ ...g, open: g.defaultOpen, docs: [...g.docs] }))
@@ -699,9 +699,10 @@ function LeftRail({ tab, onTab, onOpenURLA, dataSubTab, onDataSubTab, onOpenDocs
   // at the top; each configured page maps onto the existing content-tab id so
   // the content router and the 1003 sub-nav keep working unchanged.
   // When `previewWorkflow` is supplied (full-preview overlay from the Admin
-  // console), render that workflow's nav instead of the rule-matched one.
-  const { resolvedWorkflow } = useWorkflows();
-  const activeWorkflow = previewWorkflow || resolvedWorkflow;
+  // console), render that workflow's nav instead. Otherwise the workflow is
+  // resolved from this loan's own purpose + status (role-agnostic for now).
+  const { resolveWorkflowForLoan } = useWorkflows();
+  const activeWorkflow = previewWorkflow || resolveWorkflowForLoan(loan);
   const activeNav = React.useMemo(() => ({
     fixed: FIXED_SYSTEM_LINKS.map(l => ({ id: l.tab, label: l.label, icon: l.icon })),
     sections: (activeWorkflow?.sections || []).map(s => ({
@@ -1083,44 +1084,6 @@ function LeftRail({ tab, onTab, onOpenURLA, dataSubTab, onDataSubTab, onOpenDocs
             Add category
           </button>
         )}
-      </div>
-
-      {/* Footer — applied-workflow indicator. Shows which workflow (configured
-          in the Admin console) currently drives this loan nav. */}
-      <div style={{
-        borderTop: '1px solid var(--border-subtle)',
-        padding: '10px 12px',
-        background: 'var(--bg-surface)',
-        flexShrink: 0, position: 'relative',
-      }}>
-        {/* Preview-context switcher temporarily removed — keep for later revival.
-        {ctxOpen && (
-          <div style={{
-            position: 'absolute', left: 8, right: 8, bottom: 'calc(100% + 6px)', zIndex: 40,
-            background: 'var(--bg-surface)', border: '1px solid var(--border-subtle)', borderRadius: 10,
-            boxShadow: '0 10px 32px rgba(0,0,0,0.16)', padding: 12, maxHeight: 400, overflowY: 'auto',
-          }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 10 }}>
-              <span style={{ fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em', color: 'var(--text-tertiary)' }}>Preview context</span>
-              <div style={{ flex: 1 }}/>
-              <button onClick={() => setCtxOpen(false)} aria-label="Close preview context" style={{ border: 'none', background: 'transparent', cursor: 'pointer', color: 'var(--text-tertiary)', display: 'flex' }}><Icon name="x" size={14}/></button>
-            </div>
-            <div style={{ fontSize: 11, color: 'var(--text-tertiary)', lineHeight: 1.45, marginBottom: 10 }}>
-              Mock user + loan attributes that determine which workflow this loan view uses.
-            </div>
-            <PreviewContextSwitcher compact/>
-          </div>
-        )}
-        */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: 9, width: '100%' }}>
-          <span style={{ width: 24, height: 24, borderRadius: 6, background: 'var(--bg-muted)', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, color: 'var(--text-secondary)' }}>
-            <Icon name="workflow" size={13}/>
-          </span>
-          <span style={{ minWidth: 0, flex: 1 }}>
-            <span style={{ display: 'block', fontSize: 9, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em', color: 'var(--text-tertiary)' }}>Workflow</span>
-            <span style={{ display: 'block', fontSize: 12, fontWeight: 600, color: 'var(--text-primary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{activeWorkflow?.name || 'Default'}</span>
-          </span>
-        </div>
       </div>
 
     </aside>
@@ -2898,7 +2861,7 @@ function LoanDetailView({ loanId, tab, onTab, persona = 'LO', previewWorkflow = 
       {/* Scrollable region: LeftRail + Main + ToolsPanel.
           Only <main> scrolls vertically; the rails handle their own overflow. */}
       <div style={{ display: 'flex', flex: 1, minHeight: 0, overflow: 'hidden' }}>
-        <LeftRail tab={localTab} onTab={handleTab} onOpenURLA={openURLA} dataSubTab={dataSubTab} onDataSubTab={setDataSubTab} onOpenDocs={openDocsWindow} previewWorkflow={previewWorkflow}/>
+        <LeftRail tab={localTab} onTab={handleTab} onOpenURLA={openURLA} dataSubTab={dataSubTab} onDataSubTab={setDataSubTab} onOpenDocs={openDocsWindow} previewWorkflow={previewWorkflow} loan={loan}/>
 
         {/* Main */}
         <main style={{ flex: 1, padding: '24px 28px 40px', overflowY: 'auto', display: 'flex', flexDirection: 'column', minHeight: 0 }}>
