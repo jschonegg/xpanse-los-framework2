@@ -36,15 +36,6 @@ const PTF_CONDITIONS = [
   { id: 'P-004', owner: 'processor', title: 'Final appraisal review sign-off',         due: 'Jun 10', status: 'received',    note: 'Cleared by UW May 19' },
 ];
 
-const TIMELINE = [
-  { label: 'Application',         date: 'May 7',  done: true },
-  { label: 'Processing',          date: 'May 9',  done: true },
-  { label: 'Submitted to UW',     date: 'May 15', done: true },
-  { label: 'Conditional Approval',date: 'May 18', done: true, active: true },
-  { label: 'Clear to Close',      date: '~Jun 6', done: false },
-  { label: 'Closing',             date: 'Jun 12', done: false },
-];
-
 const statusMeta = {
   'received':    { label: 'Received',    dot: '#0E9F6E', text: '#065F46', bg: '#E7F8F1' },
   'in-progress': { label: 'In progress', dot: '#2453D6', text: '#1E3A8A', bg: '#EEF3FE' },
@@ -75,35 +66,6 @@ export function LOApprovalView() {
 
   return (
     <>
-      {/* ── Closing timeline — top of page, always visible ─────────────────── */}
-      <div style={{ background: '#fff', border: '1px solid #E5E8F0', borderRadius: 14, padding: '14px 18px', marginBottom: 16 }}>
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14 }}>
-          <div style={{ fontSize: 13, fontWeight: 700, color: '#0B1B2B' }}>Closing timeline</div>
-          <div style={{ fontSize: 12, color: '#8B95A6', fontFamily: 'JetBrains Mono, monospace' }}>Target {OBEN.closingTarget} · {OBEN.closingDays}d away</div>
-        </div>
-        <div style={{ display: 'flex', alignItems: 'flex-start', position: 'relative' }}>
-          <div style={{ position: 'absolute', top: 11, left: 11, right: 11, height: 2, background: '#E5E8F0', zIndex: 0 }}/>
-          <div style={{ position: 'absolute', top: 11, left: 11, height: 2, background: 'linear-gradient(90deg, #0A1F44, #0DBFA8)', width: (4 / TIMELINE.length * 100) + '%', zIndex: 1, transition: 'width 0.5s ease' }}/>
-          {TIMELINE.map((step, i) => (
-            <div key={i} style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', position: 'relative', zIndex: 2 }}>
-              <div style={{
-                width: 22, height: 22, borderRadius: '50%',
-                background: step.done ? '#0A1F44' : step.active ? '#2453D6' : '#fff',
-                border: step.active ? '2px solid #2453D6' : step.done ? 'none' : '2px solid #D1D6E1',
-                display: 'flex', alignItems: 'center', justifyContent: 'center',
-                boxShadow: step.active ? '0 0 0 4px #EEF3FE' : 'none',
-                transition: 'all 0.3s',
-              }}>
-                {step.done && <svg width="10" height="10" fill="none" stroke="#fff" strokeWidth="2.5" viewBox="0 0 24 24"><path d="M20 6 9 17l-5-5"/></svg>}
-                {step.active && !step.done && <div style={{ width: 8, height: 8, borderRadius: '50%', background: '#2453D6' }}/>}
-              </div>
-              <div style={{ fontSize: 10.5, fontWeight: step.active ? 700 : step.done ? 600 : 400, color: step.active ? '#2453D6' : step.done ? '#0B1B2B' : '#8B95A6', marginTop: 6, textAlign: 'center', lineHeight: 1.3 }}>{step.label}</div>
-              <div style={{ fontSize: 10, color: step.active ? '#2453D6' : '#8B95A6', marginTop: 2, fontFamily: 'JetBrains Mono, monospace' }}>{step.date}</div>
-            </div>
-          ))}
-        </div>
-      </div>
-
       {/* ── Lock Expiry Banner ─────────────────────────────────────────────── */}
       {!lockExtended && (
         <div style={{
