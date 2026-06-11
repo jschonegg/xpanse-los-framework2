@@ -138,7 +138,7 @@ function LEField({ label, value, onChange, prefix = '', suffix = '', readOnly = 
             flex: 1, height: 32, border: 'none', outline: 'none',
             background: 'transparent',
             fontSize: 13, fontWeight: 400,
-            fontFamily: mono ? 'DM Mono, monospace' : 'inherit',
+            fontFamily: mono ? 'DM Sans' : 'inherit',
             color: 'var(--text-primary)',
             padding: '0 10px', cursor: 'text',
             minWidth: 0,
@@ -185,7 +185,7 @@ function FeeRow({ label, amount, onChange, sub, required = false, readOnly = fal
       </div>
       <div style={{ width: 120, flexShrink: 0 }}>
         {readOnly ? (
-          <div style={{ height: 32, display: 'flex', alignItems: 'center', justifyContent: 'flex-end', fontSize: 13, fontWeight: 600, fontFamily: 'DM Mono', color: 'var(--text-primary)', paddingRight: 10 }}>{fmt(val || 0)}</div>
+          <div style={{ height: 32, display: 'flex', alignItems: 'center', justifyContent: 'flex-end', fontSize: 13, fontWeight: 600, fontFamily: 'DM Sans', color: 'var(--text-primary)', paddingRight: 10 }}>{fmt(val || 0)}</div>
         ) : (
           <div style={{
             display: 'flex', alignItems: 'center',
@@ -198,7 +198,7 @@ function FeeRow({ label, amount, onChange, sub, required = false, readOnly = fal
             <input
               value={val}
               onChange={e => handleChange(e.target.value)}
-              style={{ flex: 1, border: 'none', outline: 'none', background: 'transparent', fontSize: 12.5, fontFamily: 'DM Mono', padding: '0 8px', minWidth: 0, height: '100%' }}
+              style={{ flex: 1, border: 'none', outline: 'none', background: 'transparent', fontSize: 12.5, fontFamily: 'DM Sans', padding: '0 8px', minWidth: 0, height: '100%' }}
             />
           </div>
         )}
@@ -215,7 +215,7 @@ function CompRow({ label, value, sub }) {
         <div style={{ fontSize: 13, fontWeight: 500 }}>{label}</div>
         {sub && <div style={{ fontSize: 11.5, color: 'var(--text-tertiary)', marginTop: 1 }}>{sub}</div>}
       </div>
-      <div style={{ fontSize: 14, fontWeight: 700, fontFamily: 'DM Mono' }}>{value}</div>
+      <div style={{ fontSize: 14, fontWeight: 700, fontFamily: 'DM Sans' }}>{value}</div>
     </div>
   );
 }
@@ -314,14 +314,14 @@ function Page1({ ld, loanId }) {
                 <div style={{ fontSize: 13, fontWeight: 500 }}>{row.label}</div>
                 <div style={{ fontSize: 11.5, color: 'var(--text-tertiary)', marginTop: 2 }}>{row.note}</div>
               </div>
-              <div style={{ padding: '10px 14px', textAlign: 'right', fontSize: 13.5, fontWeight: 600, fontFamily: 'DM Mono' }}>{row.val1}</div>
-              {ld.miMonthly > 0 && <div style={{ padding: '10px 14px', textAlign: 'right', fontSize: 13.5, fontWeight: 600, fontFamily: 'DM Mono' }}>{row.val2}</div>}
+              <div style={{ padding: '10px 14px', textAlign: 'right', fontSize: 13.5, fontWeight: 600, fontFamily: 'DM Sans' }}>{row.val1}</div>
+              {ld.miMonthly > 0 && <div style={{ padding: '10px 14px', textAlign: 'right', fontSize: 13.5, fontWeight: 600, fontFamily: 'DM Sans' }}>{row.val2}</div>}
             </div>
           ))}
           {/* Total row */}
           <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', padding: '10px 14px', background: 'var(--bg-muted)', borderTop: '2px solid var(--border-strong)', alignItems: 'center' }}>
             <span style={{ fontSize: 13, fontWeight: 700 }}>Estimated Total Monthly Payment</span>
-            <span style={{ textAlign: 'right', fontSize: 15, fontWeight: 700, fontFamily: 'DM Mono', color: 'var(--text-primary)' }}>{fmt(totalMonthly)}</span>
+            <span style={{ textAlign: 'right', fontSize: 15, fontWeight: 700, fontFamily: 'DM Sans', color: 'var(--text-primary)' }}>{fmt(totalMonthly)}</span>
           </div>
         </div>
       </div>
@@ -332,7 +332,7 @@ function Page1({ ld, loanId }) {
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', background: 'var(--bg-surface)' }}>
           <div style={{ padding: '20px 22px', borderRight: '1px solid var(--border-subtle)' }}>
             <div style={{ fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em', color: 'var(--text-tertiary)', marginBottom: 6 }}>Closing Costs</div>
-            <div style={{ fontSize: 24, fontWeight: 700, fontFamily: 'DM Mono' }}>{fmtK(totalClosing)}</div>
+            <div style={{ fontSize: 24, fontWeight: 700, fontFamily: 'DM Sans' }}>{fmtK(totalClosing)}</div>
             <div style={{ fontSize: 12, color: 'var(--text-tertiary)', marginTop: 4 }}>Includes {fmtK(loanCosts)} in loan costs + {fmtK(otherCosts)} in other costs</div>
             <div style={{ marginTop: 12 }}>
               <div style={{ height: 6, borderRadius: 999, background: 'var(--bg-muted)', overflow: 'hidden' }}>
@@ -346,7 +346,7 @@ function Page1({ ld, loanId }) {
           </div>
           <div style={{ padding: '20px 22px' }}>
             <div style={{ fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em', color: 'var(--text-tertiary)', marginBottom: 6 }}>Cash to Close</div>
-            <div style={{ fontSize: 24, fontWeight: 700, fontFamily: 'DM Mono' }}>{fmtK(cashToClose)}</div>
+            <div style={{ fontSize: 24, fontWeight: 700, fontFamily: 'DM Sans' }}>{fmtK(cashToClose)}</div>
             <div style={{ fontSize: 12, color: 'var(--text-tertiary)', marginTop: 4 }}>Down payment {fmtK(ld.salePrice - ld.loanAmount)} + closing costs {fmtK(totalClosing)}</div>
             <div style={{ marginTop: 12, display: 'flex', alignItems: 'center', gap: 6, fontSize: 12, color: 'var(--status-green)', fontWeight: 600 }}>
               <Icon name="check" size={12} strokeWidth={2.5}/>
@@ -405,7 +405,7 @@ function Page2({ ld }) {
       <div style={{ border: '1px solid var(--border-subtle)', borderRadius: 10, overflow: 'hidden' }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 14px', background: 'var(--bg-muted)' }}>
           <span style={{ fontSize: 12, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em' }}>D. Total Loan Costs (A + B + C)</span>
-          <span style={{ fontSize: 15, fontWeight: 700, fontFamily: 'DM Mono' }}>{fmt(loanCosts)}</span>
+          <span style={{ fontSize: 15, fontWeight: 700, fontFamily: 'DM Sans' }}>{fmt(loanCosts)}</span>
         </div>
       </div>
 
@@ -448,7 +448,7 @@ function Page2({ ld }) {
       <div style={{ border: '1px solid var(--border-subtle)', borderRadius: 10, overflow: 'hidden' }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 14px', background: 'var(--bg-muted)' }}>
           <span style={{ fontSize: 12, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em' }}>I. Total Other Costs (E + F + G + H)</span>
-          <span style={{ fontSize: 15, fontWeight: 700, fontFamily: 'DM Mono' }}>{fmt(otherCosts)}</span>
+          <span style={{ fontSize: 15, fontWeight: 700, fontFamily: 'DM Sans' }}>{fmt(otherCosts)}</span>
         </div>
       </div>
 
@@ -456,7 +456,7 @@ function Page2({ ld }) {
       <div style={{ border: '2px solid var(--text-primary)', borderRadius: 10, overflow: 'hidden' }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 14px', background: 'var(--text-primary)' }}>
           <span style={{ fontSize: 13, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em', color: '#fff' }}>J. Total Closing Costs (D + I)</span>
-          <span style={{ fontSize: 17, fontWeight: 700, fontFamily: 'DM Mono', color: '#fff' }}>{fmt(totalJ)}</span>
+          <span style={{ fontSize: 17, fontWeight: 700, fontFamily: 'DM Sans', color: '#fff' }}>{fmt(totalJ)}</span>
         </div>
       </div>
 
@@ -475,12 +475,12 @@ function Page2({ ld }) {
           ].map((row, i) => (
             <div key={i} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '9px 14px', borderBottom: '1px solid var(--border-subtle)', fontSize: 13 }}>
               <span style={{ color: 'var(--text-secondary)' }}>{row.label}</span>
-              <span style={{ fontFamily: 'DM Mono', fontWeight: 600 }}>{row.value}</span>
+              <span style={{ fontFamily: 'DM Sans', fontWeight: 600 }}>{row.value}</span>
             </div>
           ))}
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 14px', background: 'var(--bg-muted)', borderTop: '2px solid var(--border-strong)' }}>
             <span style={{ fontSize: 13, fontWeight: 700 }}>Cash to Close</span>
-            <span style={{ fontSize: 16, fontWeight: 700, fontFamily: 'DM Mono' }}>{fmt(cashToClose - 1000)}</span>
+            <span style={{ fontSize: 16, fontWeight: 700, fontFamily: 'DM Sans' }}>{fmt(cashToClose - 1000)}</span>
           </div>
         </div>
       </div>

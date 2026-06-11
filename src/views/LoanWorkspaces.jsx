@@ -232,7 +232,7 @@ function ConditionsTab() {
               const label = r.result === 'clear' ? '✓ Ready to clear' : r.result === 'partial' ? '⚠ Partial match' : '↗ Needs UW review';
               return (
                 <div key={r.conditionId} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '10px 12px', background: 'var(--bg-surface)', borderRadius: 8, border: '1px solid var(--border-subtle)' }}>
-                  <span style={{ fontFamily: 'DM Mono', fontSize: 11, color: 'var(--text-tertiary)', flexShrink: 0 }}>{r.conditionId}</span>
+                  <span style={{ fontFamily: 'DM Sans', fontSize: 11, color: 'var(--text-tertiary)', flexShrink: 0 }}>{r.conditionId}</span>
                   <span style={{ fontSize: 13, flex: 1, minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{r.conditionTitle}</span>
                   <span style={{ fontSize: 11.5, color: 'var(--text-tertiary)', flexShrink: 0 }}>{r.docName}</span>
                   <span style={{ fontSize: 12, fontWeight: 600, color, flexShrink: 0 }}>{label}</span>
@@ -348,7 +348,7 @@ function ConditionRow({ c, expanded, onToggle, onClear, onSubmitUW }) {
         </div>
         <div style={{ flex: 1, minWidth: 0 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
-            <span style={{ fontFamily: 'DM Mono', fontSize: 11, color: 'var(--text-tertiary)' }}>{c.id}</span>
+            <span style={{ fontFamily: 'DM Sans', fontSize: 11, color: 'var(--text-tertiary)' }}>{c.id}</span>
             <span style={{ fontSize: 13.5, fontWeight: 500, color: isCleared ? 'var(--text-tertiary)' : 'var(--text-primary)', textDecoration: isCleared ? 'line-through' : 'none' }}>{c.title}</span>
             {isBlocking && !isCleared && <StatusPill tone="red">Blocking</StatusPill>}
             {isPending && !isCleared && <StatusPill tone="neutral" style={{ color: '#7B3FA0' }}>Pending UW</StatusPill>}
@@ -720,7 +720,7 @@ function KeyMetric({ label, value }) {
   return (
     <div style={{ textAlign: 'right' }}>
       <div style={{ fontSize: 11.5, color: 'var(--text-tertiary)', letterSpacing: '0.05em', textTransform: 'uppercase', fontWeight: 600 }}>{label}</div>
-      <div style={{ fontSize: 18, fontWeight: 600, fontFamily: 'DM Mono', marginTop: 4 }}>{value}</div>
+      <div style={{ fontSize: 18, fontWeight: 600, fontFamily: 'DM Sans', marginTop: 4 }}>{value}</div>
     </div>
   );
 }
@@ -886,7 +886,7 @@ function PriceRow({ label, value, tone, mono, bold }) {
     }}>
       <span style={{ fontSize: 13, color: 'var(--text-secondary)', fontWeight: bold ? 600 : 400 }}>{label}</span>
       <span style={{
-        fontFamily: mono ? 'DM Mono' : 'inherit',
+        fontFamily: mono ? 'DM Sans' : 'inherit',
         fontSize: 13.5, fontWeight: bold ? 700 : 500,
         color,
       }}>{value}</span>
@@ -905,11 +905,11 @@ function RateScenario({ rate, points, pi, tone, badge }) {
       background: active ? 'var(--ai-bg)' : 'transparent',
     }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-        <span style={{ fontFamily: 'DM Mono', fontSize: 14, fontWeight: 600 }}>{rate}%</span>
+        <span style={{ fontFamily: 'DM Sans', fontSize: 14, fontWeight: 600 }}>{rate}%</span>
         {badge && <StatusPill tone="ai">{badge}</StatusPill>}
       </div>
-      <span style={{ fontSize: 12, color: 'var(--text-tertiary)', fontFamily: 'DM Mono' }}>{points}</span>
-      <span style={{ fontSize: 13, fontFamily: 'DM Mono' }}>{pi}/mo</span>
+      <span style={{ fontSize: 12, color: 'var(--text-tertiary)', fontFamily: 'DM Sans' }}>{points}</span>
+      <span style={{ fontSize: 13, fontFamily: 'DM Sans' }}>{pi}/mo</span>
       <button className="btn btn-outline btn-sm" style={{ visibility: active ? 'hidden' : 'visible' }}>
         Select
       </button>
@@ -1008,11 +1008,11 @@ function ClosingTab() {
           <div style={{ padding: 16, background: 'var(--bg-muted)' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 13 }}>
               <span style={{ color: 'var(--text-secondary)' }}>Funding amount</span>
-              <span style={{ fontFamily: 'DM Mono', fontWeight: 600 }}>$425,000.00</span>
+              <span style={{ fontFamily: 'DM Sans', fontWeight: 600 }}>$425,000.00</span>
             </div>
             <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 13, marginTop: 6 }}>
               <span style={{ color: 'var(--text-secondary)' }}>Cash to close</span>
-              <span style={{ fontFamily: 'DM Mono', fontWeight: 600 }}>$87,235.18</span>
+              <span style={{ fontFamily: 'DM Sans', fontWeight: 600 }}>$87,235.18</span>
             </div>
           </div>
         </div>
@@ -1067,7 +1067,7 @@ function CDTimeline() {
               color: s.current ? 'var(--text-primary)' : 'var(--text-secondary)',
               marginTop: 8,
             }}>{s.label}</div>
-            <div style={{ fontSize: 11.5, color: 'var(--text-tertiary)', marginTop: 2, fontFamily: 'DM Mono' }}>{s.date}</div>
+            <div style={{ fontSize: 11.5, color: 'var(--text-tertiary)', marginTop: 2, fontFamily: 'DM Sans' }}>{s.date}</div>
           </div>
           {i < steps.length - 1 && (
             <div style={{
@@ -1308,7 +1308,7 @@ function AuditTab() {
               const t = AUDIT_TYPES[e.type] || AUDIT_TYPES.doc;
               return (
                 <tr key={i} style={{ borderBottom: '1px solid var(--border-subtle)' }}>
-                  <td style={{ padding: '12px 16px', fontFamily: 'DM Mono', fontSize: 12, color: 'var(--text-tertiary)' }}>
+                  <td style={{ padding: '12px 16px', fontFamily: 'DM Sans', fontSize: 12, color: 'var(--text-tertiary)' }}>
                     {e.ts}
                   </td>
                   <td style={{ padding: '12px 16px' }}>

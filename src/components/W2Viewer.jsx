@@ -57,7 +57,7 @@ function W2Document({ activeBox, onBoxClick }) {
 
   return (
     <div style={{
-      fontFamily: 'Arial, sans-serif',
+      fontFamily: 'DM Sans',
       background: '#fff',
       border: '2px solid #333',
       borderRadius: 4,
@@ -319,7 +319,7 @@ export function W2Viewer({ onClose }) {
             W-2 · Marcus Johnson · Tax Year 2025
           </div>
           <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
-            <span style={{ fontSize: 11.5, color: 'var(--text-tertiary)', fontFamily: 'DM Mono' }}>LN-2024-0267</span>
+            <span style={{ fontSize: 11.5, color: 'var(--text-tertiary)', fontFamily: 'DM Sans' }}>LN-2024-0267</span>
             <button onClick={onClose} className="btn btn-icon btn-ghost" style={{ width: 26, height: 26 }}>
               <Icon name="x" size={14}/>
             </button>

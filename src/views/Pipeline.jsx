@@ -19,7 +19,7 @@ function ClosingBadge({ dateStr }) {
   const label = d < 0 ? `${Math.abs(d)}d ago` : d === 0 ? 'Today' : `${d}d`;
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-      <span style={{ fontFamily: 'DM Mono', fontSize: 11.5, color: 'var(--text-tertiary)' }}>{dateStr}</span>
+      <span style={{ fontFamily: 'DM Sans', fontSize: 11.5, color: 'var(--text-tertiary)' }}>{dateStr}</span>
       <span style={{ fontSize: 11, fontWeight: 600, padding: '1px 7px', borderRadius: 999, background: bg, color, display: 'inline-block', width: 'fit-content' }}>{label}</span>
     </div>
   );
@@ -38,7 +38,7 @@ function StageProgress({ status }) {
         <div style={{ flex: 1, height: 3, borderRadius: 999, background: 'var(--bg-muted)', overflow: 'hidden' }}>
           <div style={{ width: `${pct}%`, height: '100%', background: color, borderRadius: 999, transition: 'width 0.3s' }}/>
         </div>
-        <span style={{ fontSize: 10, color: 'var(--text-tertiary)', fontFamily: 'DM Mono', minWidth: 24 }}>{idx + 1}/{total}</span>
+        <span style={{ fontSize: 10, color: 'var(--text-tertiary)', fontFamily: 'DM Sans', minWidth: 24 }}>{idx + 1}/{total}</span>
       </div>
     </div>
   );
@@ -199,7 +199,7 @@ function DailyFocus({ loans, onOpenLoan }) {
             <div style={{ flex: 1, minWidth: 0 }}>
               <div style={{ display: 'flex', alignItems: 'baseline', gap: 7 }}>
                 <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-primary)', whiteSpace: 'nowrap' }}>{a.label}</span>
-                <span style={{ fontSize: 11.5, color: 'var(--text-tertiary)', fontFamily: 'DM Mono', flexShrink: 0 }}>{l.id}</span>
+                <span style={{ fontSize: 11.5, color: 'var(--text-tertiary)', fontFamily: 'DM Sans', flexShrink: 0 }}>{l.id}</span>
               </div>
               <div style={{ fontSize: 12.5, color: 'var(--text-secondary)', marginTop: 1, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                 {a.detail}
@@ -424,7 +424,7 @@ export function AIInsightsBanner({ loans, onOpenLoan }) {
         flexShrink: 0,
       }}>
         <CarouselBtn onClick={goPrev} disabled={items.length <= 1} dir="prev" aria-label="Previous insight"/>
-        <span style={{ fontFamily: 'DM Mono', fontSize: 11.5, minWidth: 36, textAlign: 'center', color: 'var(--text-secondary)' }}>
+        <span style={{ fontFamily: 'DM Sans', fontSize: 11.5, minWidth: 36, textAlign: 'center', color: 'var(--text-secondary)' }}>
           {idx + 1} / {items.length}
         </span>
         <CarouselBtn onClick={goNext} disabled={items.length <= 1} dir="next" aria-label="Next insight"/>
@@ -498,7 +498,7 @@ const COLUMN_DEFS = [
         </div>
         <div style={{ display: 'flex', flexDirection: 'column', minWidth: 0, lineHeight: 1.25 }}>
           <span style={{ fontSize: 13.5, fontWeight: 500, color: 'var(--text-primary)' }}>{l.borrower}</span>
-          <span style={{ fontFamily: 'DM Mono', fontSize: 11, color: 'var(--text-tertiary)' }}>{l.id}</span>
+          <span style={{ fontFamily: 'DM Sans', fontSize: 11, color: 'var(--text-tertiary)' }}>{l.id}</span>
         </div>
       </div>
     )},
@@ -519,7 +519,7 @@ const COLUMN_DEFS = [
       ? <span style={{ fontSize: 13, color: 'var(--text-secondary)' }}>{l.loanPurpose}</span>
       : <span style={{ fontSize: 13, color: 'var(--text-tertiary)' }}>—</span> },
   { id: 'rate', label: 'Rate', width: 80, align: 'right', editType: 'number', step: 0.125, suffix: '%',
-    render: (l) => <span style={{ fontFamily: 'DM Mono', fontSize: 12.5 }}>{l.rate.toFixed(3)}%</span> },
+    render: (l) => <span style={{ fontFamily: 'DM Sans', fontSize: 12.5 }}>{l.rate.toFixed(3)}%</span> },
   { id: 'status', label: 'Status', width: 150, editType: 'select',
     options: ['Application','Processing','Underwriting','Approval','Closing','Funded'],
     render: (l) => <StageProgress status={l.status}/> },
@@ -537,9 +537,9 @@ const COLUMN_DEFS = [
       );
     }},
   { id: 'dti', label: 'DTI', width: 70, align: 'right', editType: 'number', suffix: '%',
-    render: (l) => <span style={{ fontFamily: 'DM Mono', fontSize: 12.5 }}>{l.dti}%</span> },
+    render: (l) => <span style={{ fontFamily: 'DM Sans', fontSize: 12.5 }}>{l.dti}%</span> },
   { id: 'ltv', label: 'LTV', width: 70, align: 'right', editType: 'number', suffix: '%',
-    render: (l) => <span style={{ fontFamily: 'DM Mono', fontSize: 12.5 }}>{l.ltv}%</span> },
+    render: (l) => <span style={{ fontFamily: 'DM Sans', fontSize: 12.5 }}>{l.ltv}%</span> },
   { id: 'closingDate', label: 'Est. Closing', width: 130, editType: 'date',
     render: (l) => <ClosingBadge dateStr={l.closingDate}/> },
   { id: 'assignee', label: 'Assignee', width: 160, editType: 'select',
@@ -672,7 +672,7 @@ function HealthBar({ loan, compact }) {
         <div style={{ width: 52, height: 5, borderRadius: 999, background: 'var(--bg-muted)', overflow: 'hidden' }}>
           <div style={{ width: `${score}%`, height: '100%', borderRadius: 999, background: color, transition: 'width 0.3s' }}/>
         </div>
-        <span style={{ fontFamily: 'DM Mono', fontSize: 11.5, fontWeight: 600, color, minWidth: 22 }}>{score}</span>
+        <span style={{ fontFamily: 'DM Sans', fontSize: 11.5, fontWeight: 600, color, minWidth: 22 }}>{score}</span>
       </div>
       {hover && (
         <div style={{

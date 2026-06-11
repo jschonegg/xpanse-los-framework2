@@ -265,7 +265,7 @@ function URLAField({ label, hint, value, prefix = '', suffix = '', readOnly = fa
             onFocus={() => setFocused(true)} onBlur={handleBlur}
             style={{
               flex: 1, height: 32, border: 'none', outline: 'none', background: 'transparent',
-              fontSize: 13, fontWeight: 400, fontFamily: mono ? 'DM Mono, monospace' : 'inherit',
+              fontSize: 13, fontWeight: 400, fontFamily: mono ? 'DM Sans' : 'inherit',
               color: 'var(--text-primary)', padding: '0 10px', cursor: readOnly ? 'default' : 'text', minWidth: 0,
             }}
           />
@@ -753,7 +753,7 @@ function IncomeTable({ app, onUpdateApp }) {
                     <span style={{ fontSize: 13, color: 'var(--text-tertiary)' }}>$</span>
                     <input type="number" min="0" step="100" value={inc.monthlyAmount || 0}
                       onChange={e => updateRow(inc.id, { monthlyAmount: parseFloat(e.target.value) || 0 })}
-                      style={{ ...cellInput, fontFamily: 'DM Mono, monospace', textAlign: 'right' }}/>
+                      style={{ ...cellInput, fontFamily: 'DM Sans', textAlign: 'right' }}/>
                   </div>
                 </td>
                 <td style={{ ...cellTd, textAlign: 'center' }}>
@@ -772,7 +772,7 @@ function IncomeTable({ app, onUpdateApp }) {
               <td colSpan={3} style={{ ...cellTd, fontSize: 12, fontWeight: 600, color: 'var(--text-secondary)' }}>
                 {ownerLabel('borrower', app)} total
               </td>
-              <td style={{ ...cellTd, textAlign: 'right', fontFamily: 'DM Mono, monospace', fontWeight: 700 }}>{fmtK(borrowerTotal)}</td>
+              <td style={{ ...cellTd, textAlign: 'right', fontFamily: 'DM Sans', fontWeight: 700 }}>{fmtK(borrowerTotal)}</td>
               <td style={cellTd}/>
             </tr>
             {hasCo && (
@@ -780,7 +780,7 @@ function IncomeTable({ app, onUpdateApp }) {
                 <td colSpan={3} style={{ ...cellTd, fontSize: 12, fontWeight: 600, color: 'var(--text-secondary)' }}>
                   {ownerLabel('coborrower', app)} total
                 </td>
-                <td style={{ ...cellTd, textAlign: 'right', fontFamily: 'DM Mono, monospace', fontWeight: 700 }}>{fmtK(coTotal)}</td>
+                <td style={{ ...cellTd, textAlign: 'right', fontFamily: 'DM Sans', fontWeight: 700 }}>{fmtK(coTotal)}</td>
                 <td style={cellTd}/>
               </tr>
             )}
@@ -788,7 +788,7 @@ function IncomeTable({ app, onUpdateApp }) {
               <td colSpan={3} style={{ ...cellTd, borderBottom: 'none', fontSize: 12.5, fontWeight: 700, color: 'var(--text-primary)' }}>
                 Combined monthly income
               </td>
-              <td style={{ ...cellTd, borderBottom: 'none', textAlign: 'right', fontFamily: 'DM Mono, monospace', fontWeight: 800, fontSize: 14 }}>{fmtK(combined)}</td>
+              <td style={{ ...cellTd, borderBottom: 'none', textAlign: 'right', fontFamily: 'DM Sans', fontWeight: 800, fontSize: 14 }}>{fmtK(combined)}</td>
               <td style={{ ...cellTd, borderBottom: 'none' }}/>
             </tr>
           </tfoot>
@@ -822,12 +822,12 @@ function SectionAssetsLiabilities({ ld }) {
             <div key={i} style={{ display: 'grid', gridTemplateColumns: '1.2fr 1.5fr 1fr', padding: '10px 14px', borderBottom: '1px solid var(--border-subtle)', fontSize: 13, alignItems: 'center' }}>
               <span style={{ color: 'var(--text-primary)' }}>{a.type}</span>
               <span style={{ color: 'var(--text-secondary)' }}>{a.institution}</span>
-              <span style={{ textAlign: 'right', fontFamily: 'DM Mono, monospace', fontWeight: 600 }}>{fmtK(a.cashOrMarketValue)}</span>
+              <span style={{ textAlign: 'right', fontFamily: 'DM Sans', fontWeight: 600 }}>{fmtK(a.cashOrMarketValue)}</span>
             </div>
           ))}
           <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 1.5fr 1fr', padding: '10px 14px', background: 'var(--bg-muted)', borderTop: '2px solid var(--border-strong)', alignItems: 'center' }}>
             <span style={{ fontWeight: 700, fontSize: 12 }}>Total Assets</span><span/>
-            <span style={{ textAlign: 'right', fontFamily: 'DM Mono, monospace', fontWeight: 800, fontSize: 14 }}>{fmtK(totalAssets)}</span>
+            <span style={{ textAlign: 'right', fontFamily: 'DM Sans', fontWeight: 800, fontSize: 14 }}>{fmtK(totalAssets)}</span>
           </div>
         </div>
       </div>
@@ -844,14 +844,14 @@ function SectionAssetsLiabilities({ ld }) {
             <div key={i} style={{ display: 'grid', gridTemplateColumns: '1fr 1.5fr 1fr 1fr', padding: '10px 14px', borderBottom: '1px solid var(--border-subtle)', fontSize: 13, alignItems: 'center' }}>
               <span style={{ color: 'var(--text-primary)' }}>{l.type}</span>
               <span style={{ color: 'var(--text-secondary)' }}>{l.creditor}</span>
-              <span style={{ textAlign: 'right', fontFamily: 'DM Mono, monospace' }}>{fmtK(l.monthly)}</span>
-              <span style={{ textAlign: 'right', fontFamily: 'DM Mono, monospace', fontWeight: 600 }}>{fmtK(l.balance)}</span>
+              <span style={{ textAlign: 'right', fontFamily: 'DM Sans' }}>{fmtK(l.monthly)}</span>
+              <span style={{ textAlign: 'right', fontFamily: 'DM Sans', fontWeight: 600 }}>{fmtK(l.balance)}</span>
             </div>
           ))}
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1.5fr 1fr 1fr', padding: '10px 14px', background: 'var(--bg-muted)', borderTop: '2px solid var(--border-strong)', alignItems: 'center' }}>
             <span style={{ fontWeight: 700, fontSize: 12 }}>Totals</span><span/>
-            <span style={{ textAlign: 'right', fontFamily: 'DM Mono, monospace', fontWeight: 800 }}>{fmtK(totalMonthlyLiab)}</span>
-            <span style={{ textAlign: 'right', fontFamily: 'DM Mono, monospace', fontWeight: 800, fontSize: 14 }}>{fmtK(totalLiabBalance)}</span>
+            <span style={{ textAlign: 'right', fontFamily: 'DM Sans', fontWeight: 800 }}>{fmtK(totalMonthlyLiab)}</span>
+            <span style={{ textAlign: 'right', fontFamily: 'DM Sans', fontWeight: 800, fontSize: 14 }}>{fmtK(totalLiabBalance)}</span>
           </div>
         </div>
       </div>

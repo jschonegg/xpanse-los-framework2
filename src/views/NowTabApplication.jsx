@@ -198,7 +198,7 @@ function PreApprovalCard({ borrowerName }) {
           <div style={{ display: 'flex', alignItems: 'center', background: '#fff', border: '1.5px solid #2453D6', borderRadius: 8, overflow: 'hidden' }}>
             <span style={{ padding: '6px 9px', fontSize: 13, fontWeight: 700, color: '#2453D6', background: '#EEF3FE' }}>$</span>
             <input value={amount} onChange={e => setAmount(e.target.value.replace(/[^0-9,]/g, ''))}
-              style={{ border: 'none', outline: 'none', padding: '6px 9px', fontSize: 13, fontWeight: 700, color: 'var(--text-primary)', width: 100, background: '#fff', fontFamily: 'JetBrains Mono, monospace' }}/>
+              style={{ border: 'none', outline: 'none', padding: '6px 9px', fontSize: 13, fontWeight: 700, color: 'var(--text-primary)', width: 100, background: '#fff', fontFamily: 'DM Sans' }}/>
           </div>
         </div>
         {[{ label: 'Loan Type', val: 'FHA 30yr Fixed' }, { label: 'Valid Through', val: 'Aug 18, 2026' }].map(f => (

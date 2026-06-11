@@ -413,7 +413,7 @@ export function TopNav({ route, onNavigate, currentLoan, urlaLoanId, urlaBorrowe
               >
                 {t.sub ? (
                   <>
-                    <span style={{ fontSize: 12, fontFamily: 'DM Mono', lineHeight: 1.2 }}>{t.label}</span>
+                    <span style={{ fontSize: 12, fontFamily: 'DM Sans', lineHeight: 1.2 }}>{t.label}</span>
                     <span style={{ fontSize: 10, opacity: 0.6, lineHeight: 1.2 }}>{t.sub}</span>
                   </>
                 ) : t.label}
@@ -448,7 +448,7 @@ export function TopNav({ route, onNavigate, currentLoan, urlaLoanId, urlaBorrowe
           <Icon name="search" size={13}/>
           <span>Search...</span>
           <span style={{
-            fontFamily: 'DM Mono', fontSize: 10.5, padding: '1px 5px',
+            fontFamily: 'DM Sans', fontSize: 10.5, padding: '1px 5px',
             background: 'rgba(255,255,255,0.08)', border: '1px solid rgba(255,255,255,0.1)',
             borderRadius: 4, color: 'rgba(255,255,255,0.28)', marginLeft: 4,
           }}>⌘K</span>
@@ -504,7 +504,7 @@ export function StatusBar({ activeCount = 0, attentionCount = 0 }) {
       <span>{syncLabel}</span>
       <Sep/>
       <span>Press <kbd style={{
-        fontFamily: 'DM Mono', fontSize: 11, padding: '1px 5px',
+        fontFamily: 'DM Sans', fontSize: 11, padding: '1px 5px',
         background: 'var(--bg-muted)', border: '1px solid var(--border-subtle)',
         borderRadius: 4, marginRight: 3, marginLeft: 1,
       }}>⌘K</kbd> for quick actions</span>

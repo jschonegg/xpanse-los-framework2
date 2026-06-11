@@ -119,7 +119,7 @@ function TaskRow({ task, selected, onSelect, checked, onToggle, onAction }) {
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 12, color: 'var(--text-tertiary)', marginBottom: 6 }}>
           <span style={{ color: 'var(--text-secondary)', fontWeight: 500 }}>{task.borrower.name}</span>
-          {task.borrower.loanId && <><span>·</span><span style={{ fontFamily: 'DM Mono', fontSize: 11.5 }}>{task.borrower.loanId}</span></>}
+          {task.borrower.loanId && <><span>·</span><span style={{ fontFamily: 'DM Sans', fontSize: 11.5 }}>{task.borrower.loanId}</span></>}
           {task.borrower.amount && <><span>·</span><span style={{ fontWeight: 500 }}>{fmtAmount(task.borrower.amount)}</span></>}
         </div>
         <div style={{ fontSize: 12.5, color: 'var(--text-secondary)', marginBottom: 8, lineHeight: 1.45 }}>
@@ -202,7 +202,7 @@ function TaskDetail({ task, onOpenLoan }) {
         <div style={{ display: 'flex', flexDirection: 'column', lineHeight: 1.25 }}>
           <span style={{ fontSize: 13.5, fontWeight: 600, color: 'var(--text-primary)' }}>{task.borrower.name}</span>
           {task.borrower.loanId && (
-            <span style={{ fontFamily: 'DM Mono', fontSize: 11.5, color: 'var(--text-tertiary)' }}>{task.borrower.loanId}</span>
+            <span style={{ fontFamily: 'DM Sans', fontSize: 11.5, color: 'var(--text-tertiary)' }}>{task.borrower.loanId}</span>
           )}
         </div>
       </div>
@@ -490,7 +490,7 @@ export function TasksSidebar({ onOpenLoan }) {
                 <div style={{ display: 'flex', alignItems: 'center', gap: 5, fontSize: 11, color: 'var(--text-tertiary)', marginBottom: 6 }}>
                   <Avatar initials={task.borrower.initials} size={16} color={task.borrower.avatarColor}/>
                   <span style={{ color: 'var(--text-secondary)' }}>{task.borrower.name}</span>
-                  {task.borrower.loanId && <><span>·</span><span style={{ fontFamily: 'DM Mono', fontSize: 10.5 }}>{task.borrower.loanId}</span></>}
+                  {task.borrower.loanId && <><span>·</span><span style={{ fontFamily: 'DM Sans', fontSize: 10.5 }}>{task.borrower.loanId}</span></>}
                 </div>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
                   <ActionChip icon={task.action.icon} label={task.action.label} size="sm"/>

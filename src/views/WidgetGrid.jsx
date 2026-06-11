@@ -66,7 +66,7 @@ export function PipelineSnapshotWidget() {
             <Icon name={s.icon} size={15} color={s.color}/>
           </div>
           <div>
-            <div style={{ fontSize: 22, fontWeight: 800, color: '#111827', letterSpacing: '-0.02em', fontFamily: 'DM Mono', lineHeight: 1.1 }}>{s.value}</div>
+            <div style={{ fontSize: 22, fontWeight: 800, color: '#111827', letterSpacing: '-0.02em', fontFamily: 'DM Sans', lineHeight: 1.1 }}>{s.value}</div>
             <div style={{ fontSize: 12, fontWeight: 600, color: '#374151', marginTop: 2 }}>{s.label}</div>
             <div style={{ fontSize: 11, color: '#9CA3AF', marginTop: 2 }}>{s.sub}</div>
           </div>
@@ -90,7 +90,7 @@ export function ClosingCountdownWidget() {
       {closings.map((c, i) => (
         <div key={c.loanId} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '8px 10px', background: i === 0 ? '#FFF7ED' : '#FAFAFA', border: '1px solid ' + (i === 0 ? '#FDE68A' : '#F3F4F6'), borderRadius: 8 }}>
           <div style={{ width: 36, textAlign: 'center', flexShrink: 0 }}>
-            <div style={{ fontSize: 17, fontWeight: 800, color: i === 0 ? '#D97706' : '#374151', fontFamily: 'DM Mono', lineHeight: 1 }}>{c.days}</div>
+            <div style={{ fontSize: 17, fontWeight: 800, color: i === 0 ? '#D97706' : '#374151', fontFamily: 'DM Sans', lineHeight: 1 }}>{c.days}</div>
             <div style={{ fontSize: 10, color: '#9CA3AF', fontWeight: 600 }}>days</div>
           </div>
           <div style={{ flex: 1, minWidth: 0 }}>
@@ -125,7 +125,7 @@ export function RateWatchWidget() {
           <div key={r.label} style={{ padding: '11px 13px', background: '#FAFAFA', border: '1px solid #F3F4F6', borderRadius: 9 }}>
             <div style={{ fontSize: 11, fontWeight: 600, color: '#9CA3AF', marginBottom: 4 }}>{r.label}</div>
             <div style={{ display: 'flex', alignItems: 'baseline', gap: 6 }}>
-              <span style={{ fontSize: 18, fontWeight: 800, fontFamily: 'DM Mono', color: '#111827', letterSpacing: '-0.02em' }}>{r.rate}</span>
+              <span style={{ fontSize: 18, fontWeight: 800, fontFamily: 'DM Sans', color: '#111827', letterSpacing: '-0.02em' }}>{r.rate}</span>
               <span style={{ fontSize: 12, fontWeight: 700, color: dirColor[r.dir] }}>{dirIcon[r.dir]}{r.change}</span>
             </div>
           </div>
@@ -148,7 +148,7 @@ export function ConditionsTrackerWidget() {
   return (
     <>
       <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 12 }}>
-        <span style={{ fontSize: 24, fontWeight: 800, fontFamily: 'DM Mono', color: '#111827' }}>{totalOpen}</span>
+        <span style={{ fontSize: 24, fontWeight: 800, fontFamily: 'DM Sans', color: '#111827' }}>{totalOpen}</span>
         <span style={{ fontSize: 13, color: '#6B7280' }}>open conditions across 8 loans</span>
       </div>
       <div style={{ display: 'flex', flexDirection: 'column', gap: 7 }}>
@@ -156,7 +156,7 @@ export function ConditionsTrackerWidget() {
           <div key={c.label}>
             <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 3 }}>
               <span style={{ fontSize: 13, color: '#374151', fontWeight: 500 }}>{c.label}</span>
-              <span style={{ fontSize: 12, fontFamily: 'DM Mono', color: c.open > 0 ? '#374151' : '#9CA3AF' }}>{c.open}/{c.total}</span>
+              <span style={{ fontSize: 12, fontFamily: 'DM Sans', color: c.open > 0 ? '#374151' : '#9CA3AF' }}>{c.open}/{c.total}</span>
             </div>
             <div style={{ height: 5, background: '#F3F4F6', borderRadius: 999, overflow: 'hidden' }}>
               <div style={{ width: `${(c.open / c.total) * 100}%`, height: '100%', background: c.color, borderRadius: 999, transition: 'width 0.3s' }}/>
@@ -260,7 +260,7 @@ export function FilesAtRiskWidget({ onOpenLoan }) {
             <div style={{ flex: 1, minWidth: 0 }}>
               <div style={{ display: 'flex', alignItems: 'baseline', gap: 6 }}>
                 <span style={{ fontSize: 13, fontWeight: 700, color: '#111827' }}>{r.borrower}</span>
-                <span style={{ fontSize: 11, color: '#9CA3AF', fontFamily: 'DM Mono' }}>{r.loanId}</span>
+                <span style={{ fontSize: 11, color: '#9CA3AF', fontFamily: 'DM Sans' }}>{r.loanId}</span>
               </div>
               <div style={{ fontSize: 12, color: '#4B5563', marginTop: 2, lineHeight: 1.4 }}>{r.risk}</div>
             </div>
@@ -312,7 +312,7 @@ export function ReadyForUWWidget({ onOpenLoan }) {
             <div style={{ flex: 1, minWidth: 0 }}>
               <div style={{ display: 'flex', alignItems: 'baseline', gap: 6 }}>
                 <span style={{ fontSize: 13, fontWeight: 700, color: '#111827' }}>{r.borrower}</span>
-                <span style={{ fontSize: 11, color: '#9CA3AF', fontFamily: 'DM Mono' }}>{r.loanId}</span>
+                <span style={{ fontSize: 11, color: '#9CA3AF', fontFamily: 'DM Sans' }}>{r.loanId}</span>
               </div>
               <div style={{ fontSize: 12, color: '#4B5563', marginTop: 2, lineHeight: 1.4 }}>{r.note}</div>
             </div>
@@ -360,13 +360,13 @@ export function LockClockWidget({ onOpenLoan }) {
             padding: '8px 0', borderTop: i === 0 ? 'none' : '1px solid #F3F4F6',
           }}>
             <div style={{ background: sev.bg, color: sev.fg, borderRadius: 7, padding: '5px 9px', textAlign: 'center', minWidth: 58, flexShrink: 0 }}>
-              <div style={{ fontSize: 13, fontWeight: 800, lineHeight: 1, fontFamily: 'DM Mono' }}>{r.days}d {r.hours}h</div>
+              <div style={{ fontSize: 13, fontWeight: 800, lineHeight: 1, fontFamily: 'DM Sans' }}>{r.days}d {r.hours}h</div>
               <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.06em', marginTop: 2 }}>LEFT</div>
             </div>
             <div style={{ flex: 1, minWidth: 0 }}>
               <div style={{ display: 'flex', alignItems: 'baseline', gap: 6 }}>
                 <span style={{ fontSize: 13, fontWeight: 700, color: '#111827' }}>{r.borrower}</span>
-                <span style={{ fontSize: 11, color: '#9CA3AF', fontFamily: 'DM Mono' }}>{r.loanId}</span>
+                <span style={{ fontSize: 11, color: '#9CA3AF', fontFamily: 'DM Sans' }}>{r.loanId}</span>
               </div>
               <div style={{ fontSize: 12, color: '#4B5563', marginTop: 2 }}>Locked at {r.rate}%</div>
             </div>
@@ -419,7 +419,7 @@ export function WaitingOnBorrowerWidget({ onOpenLoan }) {
             <div style={{ flex: 1, minWidth: 0 }}>
               <div style={{ display: 'flex', alignItems: 'baseline', gap: 6 }}>
                 <span style={{ fontSize: 13, fontWeight: 700, color: '#111827' }}>{r.borrower}</span>
-                <span style={{ fontSize: 11, color: '#9CA3AF', fontFamily: 'DM Mono' }}>{r.loanId}</span>
+                <span style={{ fontSize: 11, color: '#9CA3AF', fontFamily: 'DM Sans' }}>{r.loanId}</span>
               </div>
               <div style={{ fontSize: 12, color: '#4B5563', marginTop: 2 }}>{r.requested}</div>
               <div style={{ fontSize: 11, marginTop: 3, color: overdue ? '#EF4444' : '#9CA3AF', fontWeight: overdue ? 700 : 500 }}>

@@ -222,7 +222,7 @@ export function CommandPalette({ onClose, onNavigate, onOpenLoan, onOpenAi, onOp
             />
           )}
           {mode === 'new-loan' && <div style={{ flex: 1 }}/>}
-          <kbd style={{ fontFamily: 'DM Mono', fontSize: 11, padding: '2px 6px', background: 'var(--bg-muted)', border: '1px solid var(--border-subtle)', borderRadius: 5, color: 'var(--text-tertiary)', flexShrink: 0 }}>ESC</kbd>
+          <kbd style={{ fontFamily: 'DM Sans', fontSize: 11, padding: '2px 6px', background: 'var(--bg-muted)', border: '1px solid var(--border-subtle)', borderRadius: 5, color: 'var(--text-tertiary)', flexShrink: 0 }}>ESC</kbd>
         </div>
 
         {/* New Loan inline form */}
@@ -347,7 +347,7 @@ function NewLoanForm({ name, setName, amount, setAmount, onSubmit, onCancel }) {
 function KbdHint({ keys, label }) {
   return (
     <span style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
-      <kbd style={{ fontFamily: 'DM Mono', fontSize: 10, padding: '1px 5px', background: 'var(--bg-muted)', border: '1px solid var(--border-subtle)', borderRadius: 4 }}>{keys}</kbd>
+      <kbd style={{ fontFamily: 'DM Sans', fontSize: 10, padding: '1px 5px', background: 'var(--bg-muted)', border: '1px solid var(--border-subtle)', borderRadius: 4 }}>{keys}</kbd>
       {label}
     </span>
   );
@@ -369,7 +369,7 @@ function ResultRow({ item, active, onHover, onSelect }) {
             {item.recent && <span style={{ fontSize: 10.5, fontWeight: 600, color: 'var(--text-tertiary)', background: 'var(--bg-muted)', border: '1px solid var(--border-subtle)', padding: '1px 6px', borderRadius: 4 }}>Recent</span>}
           </div>
           <div style={{ fontSize: 12, color: 'var(--text-tertiary)', marginTop: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-            <span style={{ fontFamily: 'DM Mono', fontSize: 11 }}>{item.id}</span>
+            <span style={{ fontFamily: 'DM Sans', fontSize: 11 }}>{item.id}</span>
             <span style={{ margin: '0 5px' }}>·</span>
             {item.property}
           </div>
@@ -382,7 +382,7 @@ function ResultRow({ item, active, onHover, onSelect }) {
             <div style={{ width: 32, height: 4, borderRadius: 999, background: 'var(--bg-muted)', overflow: 'hidden' }}>
               <div style={{ width: `${item.health}%`, height: '100%', background: hc, borderRadius: 999 }}/>
             </div>
-            <span style={{ fontFamily: 'DM Mono', fontSize: 11, color: hc, fontWeight: 600 }}>{item.health}</span>
+            <span style={{ fontFamily: 'DM Sans', fontSize: 11, color: hc, fontWeight: 600 }}>{item.health}</span>
           </div>
           <Icon name="chevronRight" size={13} color="var(--text-tertiary)" strokeWidth={2}/>
         </div>
@@ -418,7 +418,7 @@ function ResultRow({ item, active, onHover, onSelect }) {
       </div>
       <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexShrink: 0 }}>
         {item.shortcut && (
-          <kbd style={{ fontFamily: 'DM Mono', fontSize: 11, padding: '2px 6px', background: 'var(--bg-muted)', border: '1px solid var(--border-subtle)', borderRadius: 5, color: 'var(--text-tertiary)' }}>⌘{item.shortcut}</kbd>
+          <kbd style={{ fontFamily: 'DM Sans', fontSize: 11, padding: '2px 6px', background: 'var(--bg-muted)', border: '1px solid var(--border-subtle)', borderRadius: 5, color: 'var(--text-tertiary)' }}>⌘{item.shortcut}</kbd>
         )}
         <Icon name="arrowRight" size={13} color="var(--text-tertiary)" strokeWidth={2}/>
       </div>

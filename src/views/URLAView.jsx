@@ -496,7 +496,7 @@ export function URLAView({ borrowerName = 'James Whitfield', loanId, onClose, on
         <div>
           <div style={{ fontSize: 15, fontWeight: 700 }}>Uniform Residential Loan Application (1003)</div>
           <div style={{ fontSize: 12, color: 'var(--text-tertiary)', marginTop: 2, display: 'flex', alignItems: 'center', gap: 6 }}>
-            {loanId && <span style={{ fontFamily: 'DM Mono', fontSize: 11, background: 'var(--bg-muted)', border: '1px solid var(--border-subtle)', borderRadius: 4, padding: '1px 6px' }}>{loanId}</span>}
+            {loanId && <span style={{ fontFamily: 'DM Sans', fontSize: 11, background: 'var(--bg-muted)', border: '1px solid var(--border-subtle)', borderRadius: 4, padding: '1px 6px' }}>{loanId}</span>}
             <span>{borrowerName} · {new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</span>
           </div>
         </div>

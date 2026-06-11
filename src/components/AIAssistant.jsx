@@ -394,7 +394,7 @@ function AICard({ action, onComplete, onSnooze }) {
           </span>
           <div style={{ flex: 1 }}/>
           {action.eta && <span style={{ fontSize: 11, color: 'var(--text-tertiary)', display: 'inline-flex', alignItems: 'center', gap: 3 }}><Icon name="clock" size={10}/>{action.eta}</span>}
-          <span style={{ fontSize: 11, fontFamily: 'DM Mono', color: 'var(--text-tertiary)' }}>{action.confidence}%</span>
+          <span style={{ fontSize: 11, fontFamily: 'DM Sans', color: 'var(--text-tertiary)' }}>{action.confidence}%</span>
         </div>
 
         <div style={{ fontSize: 13.5, fontWeight: 600, lineHeight: 1.3, marginBottom: 5 }}>{action.title}</div>
@@ -457,7 +457,7 @@ function NavCard({ action, onNavigate, onSnooze }) {
           <CategoryChip label={action.category}/>
           <NavDestChip label={action.navTabLabel}/>
           <div style={{ flex: 1 }}/>
-          <span style={{ fontSize: 11, fontFamily: 'DM Mono', color: 'var(--text-tertiary)' }}>{action.confidence}%</span>
+          <span style={{ fontSize: 11, fontFamily: 'DM Sans', color: 'var(--text-tertiary)' }}>{action.confidence}%</span>
         </div>
 
         <div style={{ fontSize: 13.5, fontWeight: 600, lineHeight: 1.3, marginBottom: 5 }}>{action.title}</div>

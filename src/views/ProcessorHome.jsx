@@ -289,7 +289,7 @@ export function ProcessorHomeView({ onNavigate, onOpenLoan, onOpenAi, onOpenDepo
                   <div style={{ flex: 1, minWidth: 0 }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
                       <span style={{ fontSize: 14, fontWeight: 600 }}>{loan.borrower}</span>
-                      <span style={{ fontSize: 11.5, color: 'var(--text-tertiary)', fontFamily: 'DM Mono' }}>{loan.loanId}</span>
+                      <span style={{ fontSize: 11.5, color: 'var(--text-tertiary)', fontFamily: 'DM Sans' }}>{loan.loanId}</span>
                       <StatusPill tone={loan.statusTone}>{loan.status}</StatusPill>
                     </div>
                     {/* Blocker */}
@@ -368,7 +368,7 @@ export function ProcessorHomeView({ onNavigate, onOpenLoan, onOpenAi, onOpenDepo
                   <div style={{ flex: 1, minWidth: 0 }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 2 }}>
                       <Avatar initials={task.initials} color={task.color} size={16}/>
-                      <span style={{ fontSize: 11, color: 'var(--text-tertiary)', fontFamily: 'DM Mono' }}>{task.loanId}</span>
+                      <span style={{ fontSize: 11, color: 'var(--text-tertiary)', fontFamily: 'DM Sans' }}>{task.loanId}</span>
                       {task.urgent && !task.done && (
                         <span style={{ fontSize: 9.5, fontWeight: 700, color: 'var(--status-red)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Urgent</span>
                       )}

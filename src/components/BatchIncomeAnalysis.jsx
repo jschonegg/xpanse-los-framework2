@@ -112,7 +112,7 @@ function LoanColumn({ loan, approved, flagged, onApprove, onFlag, scanning }) {
           }}>{loan.initials}</div>
           <div>
             <div style={{ fontSize: 13.5, fontWeight: 600, lineHeight: 1.2 }}>{loan.borrower}</div>
-            <div style={{ fontSize: 11, color: 'var(--text-tertiary)', fontFamily: 'DM Mono' }}>{loan.id}</div>
+            <div style={{ fontSize: 11, color: 'var(--text-tertiary)', fontFamily: 'DM Sans' }}>{loan.id}</div>
           </div>
           {approved && <StatusPill tone="green" style={{ marginLeft: 'auto' }}>Approved</StatusPill>}
           {flagged && <StatusPill tone="amber" style={{ marginLeft: 'auto' }}>Flagged</StatusPill>}
