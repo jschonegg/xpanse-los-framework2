@@ -1,7 +1,6 @@
 import React from 'react';
 import { Icon } from '../components/Icon';
 import { StatusPill } from '../components/Shell';
-import { StageTimelineStrip } from '../components/WorkspaceCards';
 
 // Gradient-header + white-body card, matching the LOApprovalView
 // "Conditional Approval" card. Tone drives the header bg only; body is white.
@@ -248,8 +247,6 @@ export function NowTabUnderwriting({ borrowerName = 'Sarah Anderson', loanId = '
           </div>
         </div>
       </div>
-
-      <StageTimelineStrip steps={STEPS} completed={completed} stageName="Underwriting"/>
 
       <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
 

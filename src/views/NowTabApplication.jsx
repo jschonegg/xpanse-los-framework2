@@ -3,7 +3,6 @@ import ReactDOM from 'react-dom';
 import { Icon } from '../components/Icon';
 import { StatusPill } from '../components/Shell';
 import { W2Viewer } from '../components/W2Viewer';
-import { StageTimelineStrip } from '../components/WorkspaceCards';
 import { URLAView } from './URLAView';
 
 function URLAWindow({ onClose, onSubmit, borrowerName, loanId }) {
@@ -254,8 +253,6 @@ export function NowTabApplication({ borrowerName = 'Marcus Johnson', loanId, loa
           </div>
         </div>
       </div>
-
-      <StageTimelineStrip steps={STEPS} completed={completed} stageName="Application"/>
 
       {/* Tabs */}
       <div style={{ display: 'flex', borderBottom: '1px solid var(--border-subtle)', marginBottom: 20 }}>

@@ -606,9 +606,18 @@ function NavigationBuilder({ sections, onChange }) {
   const [dropHint, setDropHint] = React.useState(null); // { sectionId } | 'tray' | { sectionId, idx }
   const [editingTitleId, setEditingTitleId] = React.useState(null);
   const [menuId, setMenuId] = React.useState(null);
+  const [creatingPage, setCreatingPage] = React.useState(false);
+  const [newPageName, setNewPageName] = React.useState('');
+
+  // Runtime custom pages from context are offered in the palette alongside the
+  // built-in system + custom pages.
+  const { customPages, addCustomPage } = useWorkflows();
+  const allPages = [...AVAILABLE_PAGES, ...customPages];
 
   const usedIds = new Set(sections.flatMap(s => s.pages.map(p => p.id)));
-  const tray = AVAILABLE_PAGES.filter(p => !usedIds.has(p.id));
+  const tray = allPages.filter(p => !usedIds.has(p.id));
+  const systemTray = tray.filter(p => p.kind === 'system');
+  const customTray = tray.filter(p => p.kind !== 'system');
 
   const setSections = (next) => onChange(next);
 
@@ -619,7 +628,7 @@ function NavigationBuilder({ sections, onChange }) {
     dragRef.current = null;
     setDropHint(null);
     if (!payload || payload.type !== 'page') return;
-    const page = getPage(payload.pageId);
+    const page = getPage(payload.pageId, customPages);
     if (!page) return;
     let next = removeFromAll(sections, payload.pageId);
     next = next.map(s => {
@@ -657,6 +666,13 @@ function NavigationBuilder({ sections, onChange }) {
   const renameSection = (id, title) => setSections(sections.map(s => s.id === id ? { ...s, title } : s));
   const deleteSection = (id) => { setSections(sections.filter(s => s.id !== id)); setMenuId(null); };
   const addSection = () => setSections([...sections, makeSection('New workflow section', [])]);
+
+  const createPage = () => {
+    const name = newPageName.trim();
+    setCreatingPage(false);
+    setNewPageName('');
+    if (name) addCustomPage(name); // lands in the Custom group; renders a blank placeholder in the loan view
+  };
 
   return (
     <div style={cardStyle}>
@@ -739,7 +755,12 @@ function NavigationBuilder({ sections, onChange }) {
                     }}>
                     <Icon name="grip" size={12} color="var(--text-tertiary)"/>
                     <Icon name={p.icon} size={14} color="var(--text-secondary)" strokeWidth={1.7}/>
-                    <span style={{ flex: 1, fontSize: 13, color: 'var(--text-primary)' }}>{p.label}</span>
+                    <div style={{ flex: 1, minWidth: 0, display: 'flex', alignItems: 'center', gap: 7 }}>
+                      <span style={{ fontSize: 13, color: 'var(--text-primary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{p.label}</span>
+                      {getPage(p.id, customPages)?.kind === 'custom' && (
+                        <span style={{ flexShrink: 0, fontSize: 9.5, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em', color: 'var(--ai-ink, #3F2FBF)', background: 'var(--ai-bg, #F4F1FE)', border: '1px solid var(--ai-border, #E4DEFA)', borderRadius: 999, padding: '1px 7px' }}>Custom</span>
+                      )}
+                    </div>
                     <button onClick={() => setSections(removeFromAll(sections, p.id))} aria-label={`Remove ${p.label}`}
                       style={{ width: 22, height: 22, borderRadius: 5, border: 'none', background: 'transparent', cursor: 'pointer', color: 'var(--text-tertiary)', display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}
                       onMouseEnter={e => e.currentTarget.style.color = 'var(--status-red)'}
@@ -758,38 +779,92 @@ function NavigationBuilder({ sections, onChange }) {
         <Icon name="plus" size={13} strokeWidth={2}/> Add Section
       </button>
 
-      {/* Available pages tray */}
+      {/* Available pages tray — split into System (out-of-the-box) and Custom */}
       <div style={{ marginTop: 18 }}>
-        <div style={{ display: 'flex', alignItems: 'baseline', gap: 8, marginBottom: 5 }}>
+        <div style={{ display: 'flex', alignItems: 'baseline', gap: 8, marginBottom: 6 }}>
           <span style={{ fontSize: 11.5, fontWeight: 600, color: 'var(--text-secondary)' }}>Available Pages</span>
-          <span style={{ fontSize: 11, color: 'var(--text-tertiary)' }}>Drag a page into a section above. Drag a page here to remove it from the workflow.</span>
-          <div style={{ flex: 1 }}/>
-          {/* Placeholder — custom page creation coming later. */}
-          <button type="button" title="Create a custom page (coming soon)"
-            style={{ display: 'inline-flex', alignItems: 'center', gap: 5, border: 'none', background: 'transparent', cursor: 'pointer', fontFamily: 'inherit', fontSize: 12, fontWeight: 600, color: 'var(--ai-primary)', padding: 0, whiteSpace: 'nowrap', flexShrink: 0 }}>
-            <Icon name="plus" size={12} strokeWidth={2.2}/> Create Page
-          </button>
+          <span style={{ fontSize: 11, color: 'var(--text-tertiary)' }}>Drag a page into a section above, or back here to remove it.</span>
         </div>
         <div
           onDragOver={(e) => { if (dragRef.current?.type === 'page') { e.preventDefault(); setDropHint('tray'); } }}
           onDrop={(e) => { if (dragRef.current?.type === 'page') { e.preventDefault(); dropPageToTray(); } }}
-          style={{ display: 'flex', flexWrap: 'wrap', gap: 7, padding: 12, borderRadius: 10, border: '1px dashed var(--border-default)', background: dropHint === 'tray' ? 'var(--bg-muted)' : 'var(--bg-app)', minHeight: 52 }}>
-          {tray.length === 0 ? (
-            <span style={{ fontSize: 12, color: 'var(--text-tertiary)', fontStyle: 'italic' }}>All pages are in use.</span>
-          ) : tray.map(p => (
-            <div key={p.id}
-              draggable
-              onDragStart={() => { dragRef.current = { type: 'page', from: 'tray', pageId: p.id }; }}
-              onDragEnd={() => { dragRef.current = null; setDropHint(null); }}
-              style={{ display: 'inline-flex', alignItems: 'center', gap: 7, padding: '6px 10px', background: 'var(--bg-surface)', border: '1px solid var(--border-subtle)', borderRadius: 999, cursor: 'grab', fontSize: 12.5 }}>
-              <Icon name={p.icon} size={13} color="var(--text-secondary)" strokeWidth={1.7}/>
-              {p.label}
+          style={{ display: 'flex', flexDirection: 'column', gap: 14, padding: 12, borderRadius: 10, border: '1px dashed var(--border-default)', background: dropHint === 'tray' ? 'var(--bg-muted)' : 'var(--bg-app)' }}>
+
+          {/* System / out-of-the-box pages */}
+          <div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 8 }}>
+              <Icon name="building" size={12} color="var(--text-tertiary)"/>
+              <span style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase', color: 'var(--text-secondary)' }}>System</span>
+              <span style={{ fontSize: 11, color: 'var(--text-tertiary)' }}>Out-of-the-box pages</span>
             </div>
-          ))}
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 7 }}>
+              {systemTray.length === 0 ? (
+                <span style={{ fontSize: 12, color: 'var(--text-tertiary)', fontStyle: 'italic' }}>All system pages are in use.</span>
+              ) : systemTray.map(p => (
+                <div key={p.id}
+                  draggable
+                  onDragStart={() => { dragRef.current = { type: 'page', from: 'tray', pageId: p.id }; }}
+                  onDragEnd={() => { dragRef.current = null; setDropHint(null); }}
+                  style={pageChipStyle(false)}>
+                  <Icon name={p.icon} size={13} color="var(--text-secondary)" strokeWidth={1.7}/>
+                  {p.label}
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <div style={{ height: 1, background: 'var(--border-subtle)' }}/>
+
+          {/* Custom pages */}
+          <div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 8 }}>
+              <Icon name="sliders" size={12} color="var(--ai-primary)"/>
+              <span style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase', color: 'var(--text-secondary)' }}>Custom</span>
+              <span style={{ fontSize: 11, color: 'var(--text-tertiary)' }}>Built for your org</span>
+            </div>
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 7, alignItems: 'center' }}>
+              {customTray.map(p => (
+                <div key={p.id}
+                  draggable
+                  onDragStart={() => { dragRef.current = { type: 'page', from: 'tray', pageId: p.id }; }}
+                  onDragEnd={() => { dragRef.current = null; setDropHint(null); }}
+                  style={pageChipStyle(true)}>
+                  <Icon name={p.icon} size={13} color="var(--ai-primary)" strokeWidth={1.7}/>
+                  {p.label}
+                </div>
+              ))}
+              {creatingPage ? (
+                <input autoFocus value={newPageName}
+                  onChange={e => setNewPageName(e.target.value)}
+                  onBlur={createPage}
+                  onKeyDown={e => { if (e.key === 'Enter') createPage(); if (e.key === 'Escape') { setCreatingPage(false); setNewPageName(''); } }}
+                  placeholder="New page name…"
+                  style={{ height: 30, padding: '0 12px', border: '1px solid var(--ai-primary)', borderRadius: 999, fontFamily: 'inherit', fontSize: 12.5, outline: 'none', minWidth: 160 }}/>
+              ) : (
+                <button type="button" onClick={() => setCreatingPage(true)}
+                  title="Create a new custom page (starts as a blank placeholder)"
+                  style={{ display: 'inline-flex', alignItems: 'center', gap: 5, height: 30, padding: '0 12px', border: '1px dashed var(--ai-border, #C9BEF5)', background: 'transparent', cursor: 'pointer', fontFamily: 'inherit', fontSize: 12.5, fontWeight: 600, color: 'var(--ai-primary)', borderRadius: 999 }}>
+                  <Icon name="plus" size={12} strokeWidth={2.2}/> Create new page
+                </button>
+              )}
+            </div>
+          </div>
         </div>
       </div>
     </div>
   );
+}
+
+// Page chip in the Available Pages tray. `tinted` marks custom pages so they
+// read as visually distinct from the system (out-of-the-box) pages.
+function pageChipStyle(tinted) {
+  return {
+    display: 'inline-flex', alignItems: 'center', gap: 7, padding: '6px 10px',
+    background: tinted ? 'var(--ai-bg, #F4F1FE)' : 'var(--bg-surface)',
+    border: `1px solid ${tinted ? 'var(--ai-border, #E4DEFA)' : 'var(--border-subtle)'}`,
+    borderRadius: 999, cursor: 'grab', fontSize: 12.5,
+    color: tinted ? 'var(--ai-ink, #3F2FBF)' : 'var(--text-primary)',
+  };
 }
 
 function menuItemStyle(kind) {

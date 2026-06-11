@@ -1,7 +1,6 @@
 import React from 'react';
 import { Icon } from '../components/Icon';
 import { StatusPill } from '../components/Shell';
-import { StageTimelineStrip } from '../components/WorkspaceCards';
 
 // Gradient-header + white-body card, matching the LOApprovalView style.
 function ActionCard({ tone = 'neutral', icon, iconBg, header, children, footer }) {
@@ -125,8 +124,6 @@ export function NowTabApproval({ borrowerName = 'Michael Oben', loanId = 'LN-202
           </div>
         </div>
       </div>
-
-      <StageTimelineStrip steps={STEPS} completed={completed} stageName="Approval"/>
 
       <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
 

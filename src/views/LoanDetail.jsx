@@ -384,8 +384,9 @@ function HeaderParties({ loanId }) {
 
 /* Loan Detail screen — "Sarah Anderson" Now view */
 
-function LoanHeader({ meta, loanId, onNavigatePipeline, onOpenComms }) {
+function LoanHeader({ meta, loan, loanId, onNavigatePipeline, onOpenComms }) {
   const statusTone = { Underwriting: 'blue', Approval: 'green', Closing: 'green', Processing: 'amber', Application: 'neutral', Funded: 'green' }[meta?.status] || 'neutral';
+  const discDates = getDisclosureDates(loan);
   const [showMenu, setShowMenu] = React.useState(false);
   const [showPropCard, setShowPropCard] = React.useState(false);
   const hoverTimerRef = React.useRef(null);
@@ -443,6 +444,22 @@ function LoanHeader({ meta, loanId, onNavigatePipeline, onOpenComms }) {
       <HeaderStat label="Purpose" value={meta?.purpose || '—'}/>
       <HeaderStat label="Loan Amount" value={meta?.amount || '$425,000'}/>
 
+      {/* Credit score + rate (with lock state) */}
+      <HeaderStat
+        label="Credit"
+        value={loan?.credit?.fico != null ? loan.credit.fico : '—'}
+        tone={creditHeaderTone(loan?.credit?.fico)}
+      />
+      <HeaderStat
+        label="Rate"
+        value={
+          <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5 }}>
+            <Icon name="lock" size={13} color={lockIconColor(loan?.lockStatus)} aria-hidden="true"/>
+            {loan?.rate != null ? `${loan.rate.toFixed(3)}%` : '—'}
+          </span>
+        }
+      />
+
       {/* DTI and LTV — hidden during Application stage (income/property
           not confirmed yet). Tone reflects risk thresholds. */}
       {meta?.status !== 'Application' && (
@@ -461,6 +478,10 @@ function LoanHeader({ meta, loanId, onNavigatePipeline, onOpenComms }) {
       )}
 
       <HeaderStat label="Est. Closing" value={meta?.closing || '2026-06-30'}/>
+
+      {/* Disclosure send dates */}
+      <HeaderStat label="Last LE Sent" value={isoToHuman(discDates.leSent)}/>
+      <HeaderStat label="Last CD Sent" value={isoToHuman(discDates.cdSent)}/>
 
       {/* Party avatars */}
       <HeaderParties loanId={loanId}/>
@@ -531,6 +552,18 @@ function ltvHeaderTone(ltv) {
   if (ltv > 80) return 'amber';
   return null;
 }
+function creditHeaderTone(fico) {
+  if (fico == null) return null;
+  if (fico < 620) return 'red';
+  if (fico < 680) return 'amber';
+  return null;
+}
+// Lock-state color for the Rate stat's padlock icon.
+function lockIconColor(lockStatus) {
+  if (lockStatus === 'Locked')   return 'var(--status-green)';
+  if (lockStatus === 'Expiring') return 'var(--status-red)';
+  return 'var(--text-tertiary)'; // Floating / not set
+}
 
 // ─── Configurable left-nav structure ────────────────────────────────────────
 // Tasks + Loan Story are "fixed" system links — always at the top, never
@@ -564,7 +597,7 @@ const DEFAULT_NAV_CONFIG = {
   ],
 };
 
-function LeftRail({ tab, onTab, onOpenURLA, dataSubTab, onDataSubTab, onOpenDocs, previewWorkflow }) {
+function LeftRail({ tab, onTab, onOpenURLA, dataSubTab, onDataSubTab, onOpenDocs, previewWorkflow, loan }) {
   // Groups state: open/closed + doc ordering per group
   const [groups, setGroups] = React.useState(
     DOC_GROUPS.map(g => ({ ...g, open: g.defaultOpen, docs: [...g.docs] }))
@@ -666,9 +699,10 @@ function LeftRail({ tab, onTab, onOpenURLA, dataSubTab, onDataSubTab, onOpenDocs
   // at the top; each configured page maps onto the existing content-tab id so
   // the content router and the 1003 sub-nav keep working unchanged.
   // When `previewWorkflow` is supplied (full-preview overlay from the Admin
-  // console), render that workflow's nav instead of the rule-matched one.
-  const { resolvedWorkflow } = useWorkflows();
-  const activeWorkflow = previewWorkflow || resolvedWorkflow;
+  // console), render that workflow's nav instead. Otherwise the workflow is
+  // resolved from this loan's own purpose + status (role-agnostic for now).
+  const { resolveWorkflowForLoan } = useWorkflows();
+  const activeWorkflow = previewWorkflow || resolveWorkflowForLoan(loan);
   const activeNav = React.useMemo(() => ({
     fixed: FIXED_SYSTEM_LINKS.map(l => ({ id: l.tab, label: l.label, icon: l.icon })),
     sections: (activeWorkflow?.sections || []).map(s => ({
@@ -1050,44 +1084,6 @@ function LeftRail({ tab, onTab, onOpenURLA, dataSubTab, onDataSubTab, onOpenDocs
             Add category
           </button>
         )}
-      </div>
-
-      {/* Footer — applied-workflow indicator. Shows which workflow (configured
-          in the Admin console) currently drives this loan nav. */}
-      <div style={{
-        borderTop: '1px solid var(--border-subtle)',
-        padding: '10px 12px',
-        background: 'var(--bg-surface)',
-        flexShrink: 0, position: 'relative',
-      }}>
-        {/* Preview-context switcher temporarily removed — keep for later revival.
-        {ctxOpen && (
-          <div style={{
-            position: 'absolute', left: 8, right: 8, bottom: 'calc(100% + 6px)', zIndex: 40,
-            background: 'var(--bg-surface)', border: '1px solid var(--border-subtle)', borderRadius: 10,
-            boxShadow: '0 10px 32px rgba(0,0,0,0.16)', padding: 12, maxHeight: 400, overflowY: 'auto',
-          }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 10 }}>
-              <span style={{ fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em', color: 'var(--text-tertiary)' }}>Preview context</span>
-              <div style={{ flex: 1 }}/>
-              <button onClick={() => setCtxOpen(false)} aria-label="Close preview context" style={{ border: 'none', background: 'transparent', cursor: 'pointer', color: 'var(--text-tertiary)', display: 'flex' }}><Icon name="x" size={14}/></button>
-            </div>
-            <div style={{ fontSize: 11, color: 'var(--text-tertiary)', lineHeight: 1.45, marginBottom: 10 }}>
-              Mock user + loan attributes that determine which workflow this loan view uses.
-            </div>
-            <PreviewContextSwitcher compact/>
-          </div>
-        )}
-        */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: 9, width: '100%' }}>
-          <span style={{ width: 24, height: 24, borderRadius: 6, background: 'var(--bg-muted)', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, color: 'var(--text-secondary)' }}>
-            <Icon name="workflow" size={13}/>
-          </span>
-          <span style={{ minWidth: 0, flex: 1 }}>
-            <span style={{ display: 'block', fontSize: 9, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em', color: 'var(--text-tertiary)' }}>Workflow</span>
-            <span style={{ display: 'block', fontSize: 12, fontWeight: 600, color: 'var(--text-primary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{activeWorkflow?.name || 'Default'}</span>
-          </span>
-        </div>
       </div>
 
     </aside>
@@ -1851,6 +1847,22 @@ const STAGE_SUB_MILESTONES = {
   ],
 };
 
+// Per-loan, per-stage completion overrides (completed sub-milestone count).
+// Milestones don't always complete in strict stage order — teams work several
+// stages in parallel — so these demo loans show partial progress across
+// multiple, non-sequential milestones at once. Loans without an entry fall back
+// to the sequential default in getStageSubMilestones(). Counts are clamped to
+// each stage's total. (Stage totals: Application 8, Processing 6, Underwriting
+// 5, Approval 5, Closing 6, Funded 4.)
+const STAGE_PROGRESS_OVERRIDES = {
+  // Sarah Anderson — in UW, but Approval/Closing prep already started.
+  'LN-2024-0234': { Underwriting: 3, Approval: 2, Closing: 1 },
+  // David Chen — moved into Processing without fully finishing Application.
+  'LN-2024-0189': { Application: 6, Processing: 3, Underwriting: 1 },
+  // Thomas Park — Closing items started ahead of Approval (cash-out refi).
+  'LN-2024-0312': { Processing: 4, Underwriting: 2, Closing: 2 },
+};
+
 const TODAY_ISO = '2026-05-27';
 function daysBackToISO(daysBack) {
   const d = new Date(TODAY_ISO + 'T00:00:00');
@@ -1895,6 +1907,13 @@ function getStageSubMilestones(loan, stageId) {
     stageDurationDays = STAGE_AVG_DAYS[stageId] || 7;
   }
 
+  // Non-linear override: some loans complete milestones out of stage order.
+  const override = STAGE_PROGRESS_OVERRIDES[loan.id]?.[stageId];
+  if (override != null) {
+    completedCount = Math.max(0, Math.min(total, override));
+    if (!stageStartedDaysAgo) stageStartedDaysAgo = stageDurationDays;
+  }
+
   const milestones = list.map((label, i) => {
     if (i >= completedCount) return { label, date: null, completed: false };
     // Distribute completion dates across the stage's actual duration
@@ -1932,38 +1951,26 @@ const TRID_ITEMS = [
 
 // Quick-scan doc statuses: Rate / LE / CD — derived from the canonical
 // `lockStatus` and `disclosures` fields so they always match the loan's stage.
-function getDocStatuses(loan) {
-  if (!loan) return null;
-
-  // Rate lock
-  let rate;
-  switch (loan.lockStatus) {
-    case 'Locked':   rate = { value: 'Locked',   tone: 'green',   short: 'Locked' };   break;
-    case 'Expiring': rate = { value: `Exp ${loan.lockDays ?? 0}d`, tone: 'red', short: 'Expiring' }; break;
-    case 'Floating': rate = { value: 'Floating', tone: 'neutral', short: 'Floating' }; break;
-    default:         rate = { value: 'Not set',  tone: 'neutral', short: 'Not set' };
-  }
-
-  // LE / CD from disclosures
+// Derive "last sent" dates for the LE and CD from the loan's disclosure state.
+// There are no explicit sent-date fields, so anchor to the closing date: the
+// LE goes out early in the file; the CD lands a few days before closing.
+function getDisclosureDates(loan) {
+  if (!loan || !loan.closingDate) return { leSent: null, cdSent: null };
   const d = (loan.disclosures || '').toLowerCase();
-  let le, cd;
-  if (d === 'funded' || d.startsWith('cd ')) {
-    // CD prepared / acknowledged / funded → LE already sent, CD progressed
-    le = { value: 'Sent',   tone: 'green' };
-    cd = {
-      value: d === 'cd acknowledged' || d === 'funded' ? 'Sent' : 'Prepared',
-      tone:  'green',
-    };
-  } else if (d.includes('le sent')) {
-    le = { value: 'Sent',    tone: 'green'   };
-    cd = { value: 'Pending', tone: 'neutral' };
-  } else {
-    // 'pending', 'le pending', null, etc.
-    le = { value: 'Pending', tone: 'neutral' };
-    cd = { value: 'Pending', tone: 'neutral' };
-  }
-
-  return { rate, le, cd };
+  // Parse the ISO parts into a *local* date so day math doesn't drift across
+  // the UTC/local boundary (new Date('YYYY-MM-DD') is parsed as UTC).
+  const [cy, cm, cd2] = loan.closingDate.split('-').map(Number);
+  const isoMinus = (days) => {
+    const x = new Date(cy, cm - 1, cd2);
+    x.setDate(x.getDate() - days);
+    return `${x.getFullYear()}-${String(x.getMonth() + 1).padStart(2, '0')}-${String(x.getDate()).padStart(2, '0')}`;
+  };
+  const leWasSent = d === 'le sent' || d.startsWith('cd ') || d === 'funded';
+  const cdWasSent = d === 'cd acknowledged' || d === 'funded';
+  return {
+    leSent: leWasSent ? isoMinus(45) : null,
+    cdSent: cdWasSent ? isoMinus(6) : null,
+  };
 }
 
 // For demo purposes: non-Application loans have all 6 received. Application
@@ -2016,18 +2023,12 @@ function LoanStatusBar({ meta, loan }) {
       <div style={{ flex: 1, display: 'flex', alignItems: 'center', gap: 12, minWidth: 0, position: 'relative', cursor: 'default' }}>
         <StatusPill tone={statusTone}>{meta?.status || 'Underwriting'}</StatusPill>
 
-        {/* Progress track with stage-dot overlay */}
-        <div style={{ flex: 1, position: 'relative', minWidth: 80, height: 22, display: 'flex', alignItems: 'center' }}>
-          <div style={{ width: '100%', height: 6, borderRadius: 999, background: 'var(--bg-muted)', position: 'relative' }}>
-            <div style={{
-              width: `${progress}%`, height: '100%', borderRadius: 999,
-              background: 'var(--text-primary)',
-              transition: 'width 0.4s ease',
-            }}/>
-          </div>
-          {/* Dots positioned on top of the track at each stage's pct */}
+        {/* Per-milestone progress — each milestone has its own bar that fills
+            independently (milestones aren't strictly sequential, so there's no
+            single 'current' stage). */}
+        <div style={{ flex: 1, display: 'flex', alignItems: 'center', gap: 10, minWidth: 80 }}>
           {PIPELINE_STAGES.map(stage => (
-            <StageDotOverlay
+            <StageSegment
               key={stage.id}
               stage={stage}
               loan={loan}
@@ -2064,98 +2065,45 @@ function LoanStatusBar({ meta, loan }) {
         </div>
       </div>
 
-      {/* Divider */}
-      <div style={{ width: 1, height: 22, background: 'var(--border-subtle)', flexShrink: 0 }}/>
-
-      {/* Doc/rate quick-scan chips */}
-      {(() => {
-        const docs = getDocStatuses(loan);
-        if (!docs) return null;
-        return (
-          <div style={{ display: 'flex', alignItems: 'center', gap: 14, flexShrink: 0 }}>
-            <DocStatusChip label="Rate" {...docs.rate}/>
-            <DocStatusChip label="LE"   {...docs.le}/>
-            <DocStatusChip label="CD"   {...docs.cd}/>
-          </div>
-        );
-      })()}
     </div>
   );
 }
 
-function DocStatusChip({ label, value, tone }) {
-  const map = {
-    green:   { dot: 'var(--status-green)',   text: 'var(--status-green)'   },
-    amber:   { dot: 'var(--status-amber)',   text: 'var(--status-amber)'   },
-    red:     { dot: 'var(--status-red)',     text: 'var(--status-red)'     },
-    neutral: { dot: 'var(--border-default)', text: 'var(--text-tertiary)'  },
-  };
-  const c = map[tone] || map.neutral;
-  return (
-    <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-      <span style={{
-        fontSize: 10.5, fontWeight: 700, color: 'var(--text-tertiary)',
-        letterSpacing: '0.06em', textTransform: 'uppercase',
-      }}>
-        {label}
-      </span>
-      <span style={{
-        width: 8, height: 8, borderRadius: 999, flexShrink: 0,
-        background: tone === 'neutral' ? 'transparent' : c.dot,
-        border:     tone === 'neutral' ? `1.5px solid ${c.dot}` : 'none',
-      }}/>
-      <span style={{ fontSize: 12, fontWeight: 600, color: c.text }}>
-        {value}
-      </span>
-    </div>
-  );
-}
-
-// ── Stage dot on the progress bar — click to open a sub-milestone popover ─
-function StageDotOverlay({ stage, loan, isOpen, onToggle }) {
-  const order = PIPELINE_STAGES.map(s => s.id);
-  const stageIdx = order.indexOf(stage.id);
-  const currentIdx = order.indexOf(loan?.status);
-  const isDone    = stageIdx < currentIdx;
-  const isCurrent = stageIdx === currentIdx;
-  // Equidistant positioning — each stage's dot sits at the end of its slice
-  const positionPct = ((stageIdx + 1) / PIPELINE_STAGES.length) * 100;
-
-  // All dots share the same diameter for a consistent click target; upcoming
-  // gets the thickest border so it stands out against the bar.
-  const size   = 12;
-  const bg     = 'var(--bg-surface)';
-  const border = isCurrent ? '2px solid var(--text-primary)'
-               : isDone    ? '2px solid var(--text-primary)'
-               : '2.5px solid var(--text-secondary)';
-  const ring   = isOpen    ? '0 0 0 4px rgba(110,89,232,0.18)'
-               : isCurrent ? '0 0 0 3px rgba(15,16,20,0.10)'
-               : 'none';
+// ── Per-milestone segment: a dot + its own progress bar that fills based on
+// that stage's sub-milestone completion, independent of the other stages.
+// Click to open the sub-milestone popover. No 'current' stage concept.
+function StageSegment({ stage, loan, isOpen, onToggle }) {
+  const { completed, total } = getStageSubMilestones(loan, stage.id);
+  const pct = total ? Math.round((completed / total) * 100) : 0;
+  const done = pct >= 100;
+  const started = pct > 0;
+  // Complete → green; in-progress → amber warning; not started → muted.
+  const fillColor = done ? 'var(--status-green)' : 'var(--status-amber)';
+  const dotColor = done ? 'var(--status-green)' : started ? 'var(--status-amber)' : 'var(--border-default)';
 
   return (
     <div
       className="stage-dot-trigger"
-      style={{
-        position: 'absolute',
-        left: `${positionPct}%`,
-        top: '50%',
-        transform: 'translate(-50%, -50%)',
-        width: 22, height: 22,
-        display: 'flex', alignItems: 'center', justifyContent: 'center',
-        cursor: 'pointer',
-        zIndex: 2,
-      }}
       onClick={(e) => { e.stopPropagation(); onToggle(); }}
-      title={stage.label}
-      aria-label={`${stage.label} stage — ${isDone ? 'complete' : isCurrent ? 'in progress' : 'upcoming'}`}
+      title={`${stage.label} — ${completed}/${total} complete`}
+      aria-label={`${stage.label}: ${pct}% complete`}
+      style={{ flex: 1, minWidth: 0, position: 'relative', cursor: 'pointer', display: 'flex', flexDirection: 'column', gap: 4 }}
     >
-      <div style={{
-        width: size, height: size, borderRadius: 999,
-        background: bg, border, boxShadow: ring,
-        display: 'flex', alignItems: 'center', justifyContent: 'center',
-        transition: 'all 0.15s',
-      }}>
-        {isDone && <Icon name="check" size={8} color="var(--text-primary)" strokeWidth={3.5}/>}
+      <div style={{ display: 'flex', alignItems: 'center', gap: 5, minWidth: 0 }}>
+        <span style={{
+          width: 6, height: 6, borderRadius: 999, flexShrink: 0, background: dotColor,
+          boxShadow: isOpen ? '0 0 0 3px rgba(110,89,232,0.18)' : 'none', transition: 'box-shadow 0.15s',
+        }}/>
+        <span style={{
+          fontSize: 10, fontWeight: 600, letterSpacing: '0.01em',
+          color: started ? 'var(--text-secondary)' : 'var(--text-tertiary)',
+          overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+        }}>
+          {stage.label}
+        </span>
+      </div>
+      <div style={{ height: 5, borderRadius: 999, background: 'var(--bg-muted)', overflow: 'hidden' }}>
+        <div style={{ width: `${pct}%`, height: '100%', background: fillColor, borderRadius: 999, transition: 'width 0.4s ease' }}/>
       </div>
       {isOpen && <StageMilestonesPopover stage={stage} loan={loan}/>}
     </div>
@@ -2911,7 +2859,7 @@ function LoanDetailView({ loanId, tab, onTab, persona = 'LO', previewWorkflow = 
     <div style={{ display: 'flex', flexDirection: 'column', flex: 1, minHeight: 0, overflow: 'hidden' }}>
       {/* Fixed top: loan summary + status bar + (optional) FEMA banner */}
       <div style={{ flexShrink: 0 }}>
-        <LoanHeader meta={meta} loanId={loanId || 'LN-2024-0234'} onOpenComms={openCommsWindow}/>
+        <LoanHeader meta={meta} loan={loan} loanId={loanId || 'LN-2024-0234'} onOpenComms={openCommsWindow}/>
         <LoanStatusBar meta={meta} loan={loan}/>
         {/* <StageTrack meta={meta} loanId={loanId || 'LN-2024-0234'}/> */}
         {loan.fema && <FEMABanner fema={loan.fema}/>}
@@ -2920,7 +2868,7 @@ function LoanDetailView({ loanId, tab, onTab, persona = 'LO', previewWorkflow = 
       {/* Scrollable region: LeftRail + Main + ToolsPanel.
           Only <main> scrolls vertically; the rails handle their own overflow. */}
       <div style={{ display: 'flex', flex: 1, minHeight: 0, overflow: 'hidden' }}>
-        <LeftRail tab={localTab} onTab={handleTab} onOpenURLA={openURLA} dataSubTab={dataSubTab} onDataSubTab={setDataSubTab} onOpenDocs={openDocsWindow} previewWorkflow={previewWorkflow}/>
+        <LeftRail tab={localTab} onTab={handleTab} onOpenURLA={openURLA} dataSubTab={dataSubTab} onDataSubTab={setDataSubTab} onOpenDocs={openDocsWindow} previewWorkflow={previewWorkflow} loan={loan}/>
 
         {/* Main */}
         <main style={{ flex: 1, padding: '24px 28px 40px', overflowY: 'auto', display: 'flex', flexDirection: 'column', minHeight: 0 }}>
@@ -2938,12 +2886,16 @@ function LoanDetailView({ loanId, tab, onTab, persona = 'LO', previewWorkflow = 
            : localTab === 'services' ? <ServicesTab/>
            : localTab === 'borrowerSummary' ? <BorrowerSummaryView loanId={loanId} apps={urlaApps} setApps={setUrlaApps} activeApp={urlaActiveApp} setActiveApp={setUrlaActiveApp} onUpdateApp={updateActiveUrlaApp}/>
            : localTab === 'urla1003' ? <URLA1003View loanId={loanId} apps={urlaApps} setApps={setUrlaApps} activeApp={urlaActiveApp} setActiveApp={setUrlaActiveApp}/>
-           : isApplication ? <NowTabApplication borrowerName={meta.borrower} loanId={loanId} loan={loan} onOpenURLA={openURLA}/>
-           : meta.status === 'Processing' ? <NowTabProcessing borrowerName={meta.borrower} loanId={loanId} loan={loan}/>
-           : meta.status === 'Underwriting' ? <NowTabUnderwriting borrowerName={meta.borrower} loanId={loanId} loan={loan} fema={loan.fema || null}/>
-           : meta.status === 'Closing' ? <NowTabClosing borrowerName={meta.borrower} loanId={loanId} loan={loan}/>
-           : meta.status === 'Approval' ? (persona === 'LO' ? <LOApprovalView loanId={loanId}/> : <NowTabApproval borrowerName={meta.borrower} loanId={loanId} loan={loan}/>)
-           : <NowTab/>}
+           : (!localTab || localTab === 'now') ? (
+               isApplication ? <NowTabApplication borrowerName={meta.borrower} loanId={loanId} loan={loan} onOpenURLA={openURLA}/>
+               : meta.status === 'Processing' ? <NowTabProcessing borrowerName={meta.borrower} loanId={loanId} loan={loan}/>
+               : meta.status === 'Underwriting' ? <NowTabUnderwriting borrowerName={meta.borrower} loanId={loanId} loan={loan} fema={loan.fema || null}/>
+               : meta.status === 'Closing' ? <NowTabClosing borrowerName={meta.borrower} loanId={loanId} loan={loan}/>
+               : meta.status === 'Approval' ? (persona === 'LO' ? <LOApprovalView loanId={loanId}/> : <NowTabApproval borrowerName={meta.borrower} loanId={loanId} loan={loan}/>)
+               : <NowTab/>
+             )
+           /* Any configured page without built-out content renders a blank placeholder. */
+           : <PlaceholderTab label={humanizeTab(localTab)}/>}
         </main>
 
         <ToolsPanel onOpenURLA={openURLA} onOpenComms={openCommsWindow} onOpenDocs={openDocsWindow} onOpenIncome={openIncomeWindow} onOpenNotes={openNotesWindow}/>
@@ -3083,6 +3035,33 @@ function DocumentsWorkspaceTab() {
       }}>
         This workspace is empty. Document organization, version tracking, and bulk
         actions will live here.
+      </div>
+    </div>
+  );
+}
+
+// Turn a content-tab / page id into a readable title for placeholder pages.
+function humanizeTab(tab) {
+  if (!tab) return 'Page';
+  const cleaned = String(tab)
+    .replace(/^custom[-_]/, '')          // drop the custom- prefix
+    .replace(/[-_]p_[a-z0-9_]+$/i, '')   // drop the generated id suffix
+    .replace(/[-_]/g, ' ')               // hyphens/underscores → spaces
+    .replace(/([a-z0-9])([A-Z])/g, '$1 $2') // split camelCase
+    .trim();
+  return cleaned ? cleaned.replace(/\b\w/g, c => c.toUpperCase()) : 'Page';
+}
+
+// Blank placeholder shown for a configured page whose content isn't built yet.
+function PlaceholderTab({ label }) {
+  return (
+    <div style={{ padding: '64px 24px', textAlign: 'center', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 12 }}>
+      <div style={{ width: 56, height: 56, borderRadius: 14, background: 'var(--bg-muted)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        <Icon name="doc" size={26} color="var(--text-tertiary)" strokeWidth={1.6}/>
+      </div>
+      <div style={{ fontSize: 17, fontWeight: 600, color: 'var(--text-primary)', letterSpacing: '-0.01em' }}>{label || 'Page'}</div>
+      <div style={{ fontSize: 13, color: 'var(--text-tertiary)', maxWidth: 380, lineHeight: 1.55 }}>
+        This page is a placeholder — content for <strong style={{ color: 'var(--text-secondary)' }}>{label || 'this page'}</strong> hasn’t been built yet.
       </div>
     </div>
   );
