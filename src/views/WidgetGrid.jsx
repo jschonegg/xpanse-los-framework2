@@ -831,7 +831,7 @@ function CatalogDrawer({ activeIds, onAdd, onClose }) {
 }
 
 // ─── Main WidgetGrid ──────────────────────────────────────────────────────────
-export function WidgetGrid({ renderWidget, hiddenIds, hideSectionLabel, hideToolbar, externalEditMode, onExternalEditToggle }) {
+export function WidgetGrid({ renderWidget, hiddenIds, hideSectionLabel, hideToolbar, externalEditMode, onExternalEditToggle, externalCatalogOpen, onExternalCatalogToggle }) {
   const [layout,   setLayout]   = React.useState(loadLayout);
   const [internalEditMode, setInternalEditMode] = React.useState(false);
   const controlled = externalEditMode !== undefined;
@@ -845,7 +845,12 @@ export function WidgetGrid({ renderWidget, hiddenIds, hideSectionLabel, hideTool
     if (prevEditMode.current && !editMode) saveLayout(layout);
     prevEditMode.current = editMode;
   }, [editMode, layout]);
-  const [catalog,  setCatalog]  = React.useState(false);
+  const [internalCatalog, setInternalCatalog] = React.useState(false);
+  const catalogControlled = externalCatalogOpen !== undefined;
+  const catalog = catalogControlled ? externalCatalogOpen : internalCatalog;
+  const setCatalog = catalogControlled
+    ? (val) => onExternalCatalogToggle?.(typeof val === 'function' ? val(catalog) : val)
+    : setInternalCatalog;
 
   // Drag-and-drop state
   const dragIdx = React.useRef(null);

@@ -1289,6 +1289,9 @@ export function HomeView({ onNavigate, onOpenLoan }) {
   // Dashboard customize toggle (homePolishV2): lifted up so the Customize button
   // can live next to the "Your dashboard" label instead of orphaned below the Leaderboard.
   const [dashEditMode, setDashEditMode] = React.useState(false);
+  // Catalog open state, also lifted so the Add widget button can live in the
+  // top toolbar next to Customize/Done.
+  const [dashCatalogOpen, setDashCatalogOpen] = React.useState(false);
   const hiddenWidgetIds = [
     ...(flags.yourDayCustomizable && prefs.show_loan_health_monitor === false ? ['loan-health-monitor'] : []),
     // When aiInsightsUnderScorecard is ON, the AI Coach brief is rendered
@@ -1497,6 +1500,15 @@ export function HomeView({ onNavigate, onOpenLoan }) {
               <span style={{ fontSize: 12, fontWeight: 700, letterSpacing: '0.07em', textTransform: 'uppercase', color: '#9CA3AF', flex: 1 }}>
                 {flags.homePolishV2 && dashEditMode ? '✦ Drag to reorder · click × to remove' : 'Your dashboard'}
               </span>
+              {flags.homePolishV2 && dashEditMode && (
+                <button onClick={() => setDashCatalogOpen(true)} style={{
+                  display: 'flex', alignItems: 'center', gap: 5, padding: '5px 12px',
+                  border: '1.5px solid #7E68FA', borderRadius: 7, background: '#7E68FA12',
+                  color: '#7E68FA', fontFamily: 'inherit', fontSize: 13, fontWeight: 700, cursor: 'pointer',
+                }}>
+                  <Icon name="plus" size={13} color="#7E68FA" strokeWidth={2.5}/> Add widget
+                </button>
+              )}
               {flags.homePolishV2 && (
                 <button onClick={() => setDashEditMode(e => !e)} style={{
                   display: 'flex', alignItems: 'center', gap: 5, padding: '5px 12px',
@@ -1542,6 +1554,8 @@ export function HomeView({ onNavigate, onOpenLoan }) {
             hideToolbar={flags.homePolishV2}
             externalEditMode={flags.homePolishV2 ? dashEditMode : undefined}
             onExternalEditToggle={flags.homePolishV2 ? setDashEditMode : undefined}
+            externalCatalogOpen={flags.homePolishV2 ? dashCatalogOpen : undefined}
+            onExternalCatalogToggle={flags.homePolishV2 ? setDashCatalogOpen : undefined}
             renderWidget={(id) => {
             if (id === 'leaderboard')       return <Leaderboard/>;
             if (id === 'company-feed')      return <CompanyFeedWidget feed={FEED}/>;
