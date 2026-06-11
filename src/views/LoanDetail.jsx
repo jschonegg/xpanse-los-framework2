@@ -384,8 +384,9 @@ function HeaderParties({ loanId }) {
 
 /* Loan Detail screen — "Sarah Anderson" Now view */
 
-function LoanHeader({ meta, loanId, onNavigatePipeline, onOpenComms }) {
+function LoanHeader({ meta, loan, loanId, onNavigatePipeline, onOpenComms }) {
   const statusTone = { Underwriting: 'blue', Approval: 'green', Closing: 'green', Processing: 'amber', Application: 'neutral', Funded: 'green' }[meta?.status] || 'neutral';
+  const discDates = getDisclosureDates(loan);
   const [showMenu, setShowMenu] = React.useState(false);
   const [showPropCard, setShowPropCard] = React.useState(false);
   const hoverTimerRef = React.useRef(null);
@@ -443,6 +444,22 @@ function LoanHeader({ meta, loanId, onNavigatePipeline, onOpenComms }) {
       <HeaderStat label="Purpose" value={meta?.purpose || '—'}/>
       <HeaderStat label="Loan Amount" value={meta?.amount || '$425,000'}/>
 
+      {/* Credit score + rate (with lock state) */}
+      <HeaderStat
+        label="Credit"
+        value={loan?.credit?.fico != null ? loan.credit.fico : '—'}
+        tone={creditHeaderTone(loan?.credit?.fico)}
+      />
+      <HeaderStat
+        label="Rate"
+        value={
+          <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5 }}>
+            <Icon name="lock" size={13} color={lockIconColor(loan?.lockStatus)} aria-hidden="true"/>
+            {loan?.rate != null ? `${loan.rate.toFixed(3)}%` : '—'}
+          </span>
+        }
+      />
+
       {/* DTI and LTV — hidden during Application stage (income/property
           not confirmed yet). Tone reflects risk thresholds. */}
       {meta?.status !== 'Application' && (
@@ -461,6 +478,10 @@ function LoanHeader({ meta, loanId, onNavigatePipeline, onOpenComms }) {
       )}
 
       <HeaderStat label="Est. Closing" value={meta?.closing || '2026-06-30'}/>
+
+      {/* Disclosure send dates */}
+      <HeaderStat label="Last LE Sent" value={isoToHuman(discDates.leSent)}/>
+      <HeaderStat label="Last CD Sent" value={isoToHuman(discDates.cdSent)}/>
 
       {/* Party avatars */}
       <HeaderParties loanId={loanId}/>
@@ -530,6 +551,18 @@ function ltvHeaderTone(ltv) {
   if (ltv > 95) return 'red';
   if (ltv > 80) return 'amber';
   return null;
+}
+function creditHeaderTone(fico) {
+  if (fico == null) return null;
+  if (fico < 620) return 'red';
+  if (fico < 680) return 'amber';
+  return null;
+}
+// Lock-state color for the Rate stat's padlock icon.
+function lockIconColor(lockStatus) {
+  if (lockStatus === 'Locked')   return 'var(--status-green)';
+  if (lockStatus === 'Expiring') return 'var(--status-red)';
+  return 'var(--text-tertiary)'; // Floating / not set
 }
 
 // ─── Configurable left-nav structure ────────────────────────────────────────
@@ -1932,38 +1965,26 @@ const TRID_ITEMS = [
 
 // Quick-scan doc statuses: Rate / LE / CD — derived from the canonical
 // `lockStatus` and `disclosures` fields so they always match the loan's stage.
-function getDocStatuses(loan) {
-  if (!loan) return null;
-
-  // Rate lock
-  let rate;
-  switch (loan.lockStatus) {
-    case 'Locked':   rate = { value: 'Locked',   tone: 'green',   short: 'Locked' };   break;
-    case 'Expiring': rate = { value: `Exp ${loan.lockDays ?? 0}d`, tone: 'red', short: 'Expiring' }; break;
-    case 'Floating': rate = { value: 'Floating', tone: 'neutral', short: 'Floating' }; break;
-    default:         rate = { value: 'Not set',  tone: 'neutral', short: 'Not set' };
-  }
-
-  // LE / CD from disclosures
+// Derive "last sent" dates for the LE and CD from the loan's disclosure state.
+// There are no explicit sent-date fields, so anchor to the closing date: the
+// LE goes out early in the file; the CD lands a few days before closing.
+function getDisclosureDates(loan) {
+  if (!loan || !loan.closingDate) return { leSent: null, cdSent: null };
   const d = (loan.disclosures || '').toLowerCase();
-  let le, cd;
-  if (d === 'funded' || d.startsWith('cd ')) {
-    // CD prepared / acknowledged / funded → LE already sent, CD progressed
-    le = { value: 'Sent',   tone: 'green' };
-    cd = {
-      value: d === 'cd acknowledged' || d === 'funded' ? 'Sent' : 'Prepared',
-      tone:  'green',
-    };
-  } else if (d.includes('le sent')) {
-    le = { value: 'Sent',    tone: 'green'   };
-    cd = { value: 'Pending', tone: 'neutral' };
-  } else {
-    // 'pending', 'le pending', null, etc.
-    le = { value: 'Pending', tone: 'neutral' };
-    cd = { value: 'Pending', tone: 'neutral' };
-  }
-
-  return { rate, le, cd };
+  // Parse the ISO parts into a *local* date so day math doesn't drift across
+  // the UTC/local boundary (new Date('YYYY-MM-DD') is parsed as UTC).
+  const [cy, cm, cd2] = loan.closingDate.split('-').map(Number);
+  const isoMinus = (days) => {
+    const x = new Date(cy, cm - 1, cd2);
+    x.setDate(x.getDate() - days);
+    return `${x.getFullYear()}-${String(x.getMonth() + 1).padStart(2, '0')}-${String(x.getDate()).padStart(2, '0')}`;
+  };
+  const leWasSent = d === 'le sent' || d.startsWith('cd ') || d === 'funded';
+  const cdWasSent = d === 'cd acknowledged' || d === 'funded';
+  return {
+    leSent: leWasSent ? isoMinus(45) : null,
+    cdSent: cdWasSent ? isoMinus(6) : null,
+  };
 }
 
 // For demo purposes: non-Application loans have all 6 received. Application
@@ -2064,49 +2085,6 @@ function LoanStatusBar({ meta, loan }) {
         </div>
       </div>
 
-      {/* Divider */}
-      <div style={{ width: 1, height: 22, background: 'var(--border-subtle)', flexShrink: 0 }}/>
-
-      {/* Doc/rate quick-scan chips */}
-      {(() => {
-        const docs = getDocStatuses(loan);
-        if (!docs) return null;
-        return (
-          <div style={{ display: 'flex', alignItems: 'center', gap: 14, flexShrink: 0 }}>
-            <DocStatusChip label="Rate" {...docs.rate}/>
-            <DocStatusChip label="LE"   {...docs.le}/>
-            <DocStatusChip label="CD"   {...docs.cd}/>
-          </div>
-        );
-      })()}
-    </div>
-  );
-}
-
-function DocStatusChip({ label, value, tone }) {
-  const map = {
-    green:   { dot: 'var(--status-green)',   text: 'var(--status-green)'   },
-    amber:   { dot: 'var(--status-amber)',   text: 'var(--status-amber)'   },
-    red:     { dot: 'var(--status-red)',     text: 'var(--status-red)'     },
-    neutral: { dot: 'var(--border-default)', text: 'var(--text-tertiary)'  },
-  };
-  const c = map[tone] || map.neutral;
-  return (
-    <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-      <span style={{
-        fontSize: 10.5, fontWeight: 700, color: 'var(--text-tertiary)',
-        letterSpacing: '0.06em', textTransform: 'uppercase',
-      }}>
-        {label}
-      </span>
-      <span style={{
-        width: 8, height: 8, borderRadius: 999, flexShrink: 0,
-        background: tone === 'neutral' ? 'transparent' : c.dot,
-        border:     tone === 'neutral' ? `1.5px solid ${c.dot}` : 'none',
-      }}/>
-      <span style={{ fontSize: 12, fontWeight: 600, color: c.text }}>
-        {value}
-      </span>
     </div>
   );
 }
@@ -2911,7 +2889,7 @@ function LoanDetailView({ loanId, tab, onTab, persona = 'LO', previewWorkflow = 
     <div style={{ display: 'flex', flexDirection: 'column', flex: 1, minHeight: 0, overflow: 'hidden' }}>
       {/* Fixed top: loan summary + status bar + (optional) FEMA banner */}
       <div style={{ flexShrink: 0 }}>
-        <LoanHeader meta={meta} loanId={loanId || 'LN-2024-0234'} onOpenComms={openCommsWindow}/>
+        <LoanHeader meta={meta} loan={loan} loanId={loanId || 'LN-2024-0234'} onOpenComms={openCommsWindow}/>
         <LoanStatusBar meta={meta} loan={loan}/>
         {/* <StageTrack meta={meta} loanId={loanId || 'LN-2024-0234'}/> */}
         {loan.fema && <FEMABanner fema={loan.fema}/>}
