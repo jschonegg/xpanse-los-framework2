@@ -2000,18 +2000,12 @@ function LoanStatusBar({ meta, loan }) {
       <div style={{ flex: 1, display: 'flex', alignItems: 'center', gap: 12, minWidth: 0, position: 'relative', cursor: 'default' }}>
         <StatusPill tone={statusTone}>{meta?.status || 'Underwriting'}</StatusPill>
 
-        {/* Progress track with stage-dot overlay */}
-        <div style={{ flex: 1, position: 'relative', minWidth: 80, height: 22, display: 'flex', alignItems: 'center' }}>
-          <div style={{ width: '100%', height: 6, borderRadius: 999, background: 'var(--bg-muted)', position: 'relative' }}>
-            <div style={{
-              width: `${progress}%`, height: '100%', borderRadius: 999,
-              background: 'var(--text-primary)',
-              transition: 'width 0.4s ease',
-            }}/>
-          </div>
-          {/* Dots positioned on top of the track at each stage's pct */}
+        {/* Per-milestone progress — each milestone has its own bar that fills
+            independently (milestones aren't strictly sequential, so there's no
+            single 'current' stage). */}
+        <div style={{ flex: 1, display: 'flex', alignItems: 'center', gap: 10, minWidth: 80 }}>
           {PIPELINE_STAGES.map(stage => (
-            <StageDotOverlay
+            <StageSegment
               key={stage.id}
               stage={stage}
               loan={loan}
@@ -2052,51 +2046,40 @@ function LoanStatusBar({ meta, loan }) {
   );
 }
 
-// ── Stage dot on the progress bar — click to open a sub-milestone popover ─
-function StageDotOverlay({ stage, loan, isOpen, onToggle }) {
-  const order = PIPELINE_STAGES.map(s => s.id);
-  const stageIdx = order.indexOf(stage.id);
-  const currentIdx = order.indexOf(loan?.status);
-  const isDone    = stageIdx < currentIdx;
-  const isCurrent = stageIdx === currentIdx;
-  // Equidistant positioning — each stage's dot sits at the end of its slice
-  const positionPct = ((stageIdx + 1) / PIPELINE_STAGES.length) * 100;
-
-  // All dots share the same diameter for a consistent click target; upcoming
-  // gets the thickest border so it stands out against the bar.
-  const size   = 12;
-  const bg     = 'var(--bg-surface)';
-  const border = isCurrent ? '2px solid var(--text-primary)'
-               : isDone    ? '2px solid var(--text-primary)'
-               : '2.5px solid var(--text-secondary)';
-  const ring   = isOpen    ? '0 0 0 4px rgba(110,89,232,0.18)'
-               : isCurrent ? '0 0 0 3px rgba(15,16,20,0.10)'
-               : 'none';
+// ── Per-milestone segment: a dot + its own progress bar that fills based on
+// that stage's sub-milestone completion, independent of the other stages.
+// Click to open the sub-milestone popover. No 'current' stage concept.
+function StageSegment({ stage, loan, isOpen, onToggle }) {
+  const { completed, total } = getStageSubMilestones(loan, stage.id);
+  const pct = total ? Math.round((completed / total) * 100) : 0;
+  const done = pct >= 100;
+  const started = pct > 0;
+  const fillColor = done ? 'var(--status-green)' : 'var(--text-primary)';
+  const dotColor = done ? 'var(--status-green)' : started ? 'var(--text-primary)' : 'var(--border-default)';
 
   return (
     <div
       className="stage-dot-trigger"
-      style={{
-        position: 'absolute',
-        left: `${positionPct}%`,
-        top: '50%',
-        transform: 'translate(-50%, -50%)',
-        width: 22, height: 22,
-        display: 'flex', alignItems: 'center', justifyContent: 'center',
-        cursor: 'pointer',
-        zIndex: 2,
-      }}
       onClick={(e) => { e.stopPropagation(); onToggle(); }}
-      title={stage.label}
-      aria-label={`${stage.label} stage — ${isDone ? 'complete' : isCurrent ? 'in progress' : 'upcoming'}`}
+      title={`${stage.label} — ${completed}/${total} complete`}
+      aria-label={`${stage.label}: ${pct}% complete`}
+      style={{ flex: 1, minWidth: 0, position: 'relative', cursor: 'pointer', display: 'flex', flexDirection: 'column', gap: 4 }}
     >
-      <div style={{
-        width: size, height: size, borderRadius: 999,
-        background: bg, border, boxShadow: ring,
-        display: 'flex', alignItems: 'center', justifyContent: 'center',
-        transition: 'all 0.15s',
-      }}>
-        {isDone && <Icon name="check" size={8} color="var(--text-primary)" strokeWidth={3.5}/>}
+      <div style={{ display: 'flex', alignItems: 'center', gap: 5, minWidth: 0 }}>
+        <span style={{
+          width: 6, height: 6, borderRadius: 999, flexShrink: 0, background: dotColor,
+          boxShadow: isOpen ? '0 0 0 3px rgba(110,89,232,0.18)' : 'none', transition: 'box-shadow 0.15s',
+        }}/>
+        <span style={{
+          fontSize: 10, fontWeight: 600, letterSpacing: '0.01em',
+          color: started ? 'var(--text-secondary)' : 'var(--text-tertiary)',
+          overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+        }}>
+          {stage.label}
+        </span>
+      </div>
+      <div style={{ height: 5, borderRadius: 999, background: 'var(--bg-muted)', overflow: 'hidden' }}>
+        <div style={{ width: `${pct}%`, height: '100%', background: fillColor, borderRadius: 999, transition: 'width 0.4s ease' }}/>
       </div>
       {isOpen && <StageMilestonesPopover stage={stage} loan={loan}/>}
     </div>
