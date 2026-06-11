@@ -755,7 +755,12 @@ function NavigationBuilder({ sections, onChange }) {
                     }}>
                     <Icon name="grip" size={12} color="var(--text-tertiary)"/>
                     <Icon name={p.icon} size={14} color="var(--text-secondary)" strokeWidth={1.7}/>
-                    <span style={{ flex: 1, fontSize: 13, color: 'var(--text-primary)' }}>{p.label}</span>
+                    <div style={{ flex: 1, minWidth: 0, display: 'flex', alignItems: 'center', gap: 7 }}>
+                      <span style={{ fontSize: 13, color: 'var(--text-primary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{p.label}</span>
+                      {getPage(p.id, customPages)?.kind === 'custom' && (
+                        <span style={{ flexShrink: 0, fontSize: 9.5, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em', color: 'var(--ai-ink, #3F2FBF)', background: 'var(--ai-bg, #F4F1FE)', border: '1px solid var(--ai-border, #E4DEFA)', borderRadius: 999, padding: '1px 7px' }}>Custom</span>
+                      )}
+                    </div>
                     <button onClick={() => setSections(removeFromAll(sections, p.id))} aria-label={`Remove ${p.label}`}
                       style={{ width: 22, height: 22, borderRadius: 5, border: 'none', background: 'transparent', cursor: 'pointer', color: 'var(--text-tertiary)', display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}
                       onMouseEnter={e => e.currentTarget.style.color = 'var(--status-red)'}
