@@ -87,7 +87,7 @@ export function ClosingTimelineCard({ loan, targetClosing }) {
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14 }}>
         <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--text-primary)' }}>Closing timeline</div>
         {closingLabel && (
-          <div style={{ fontSize: 12, color: 'var(--text-tertiary)', fontFamily: 'DM Mono' }}>
+          <div style={{ fontSize: 12, color: 'var(--text-tertiary)', fontFamily: 'DM Sans' }}>
             Target {closingLabel}
             {daysToClose != null && (
               <span> · {daysToClose < 0 ? `${Math.abs(daysToClose)}d overdue` : daysToClose === 0 ? 'today' : `${daysToClose}d away`}</span>
@@ -131,7 +131,7 @@ export function ClosingTimelineCard({ loan, targetClosing }) {
               marginTop: 6, textAlign: 'center', lineHeight: 1.3,
             }}>{step.label}</div>
             <div style={{
-              fontSize: 10, marginTop: 2, fontFamily: 'DM Mono',
+              fontSize: 10, marginTop: 2, fontFamily: 'DM Sans',
               color: step.active ? '#2453D6' : 'var(--text-tertiary)',
             }}>{step.date}</div>
           </div>
@@ -262,7 +262,7 @@ export function StageTimelineStrip({ steps, completed, title, stageName }) {
         </div>
         <div style={{ display: 'flex', alignItems: 'baseline', gap: 6 }}>
           <span style={{
-            fontFamily: 'DM Mono', fontSize: 13, fontWeight: 700,
+            fontFamily: 'DM Sans', fontSize: 13, fontWeight: 700,
             color: allDone ? 'var(--status-green)' : 'var(--text-primary)',
           }}>
             {completionPct}%

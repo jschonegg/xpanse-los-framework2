@@ -151,7 +151,7 @@ export function LOApprovalView() {
                 ].map(s => (
                   <div key={s.label}>
                     <div style={{ fontSize: 10, color: '#8B95A6', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 3, fontWeight: 600 }}>{s.label}</div>
-                    <div style={{ fontSize: 13, fontWeight: 700, color: '#0B1B2B', fontFamily: s.mono ? 'JetBrains Mono, monospace' : 'inherit' }}>{s.value}</div>
+                    <div style={{ fontSize: 13, fontWeight: 700, color: '#0B1B2B', fontFamily: s.mono ? 'DM Sans' : 'inherit' }}>{s.value}</div>
                   </div>
                 ))}
               </div>
@@ -323,7 +323,7 @@ export function LOApprovalView() {
                 }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                     <div style={{ fontSize: 14, fontWeight: 700, color: '#0B1B2B' }}>{opt.days}-day extension</div>
-                    <div style={{ fontSize: 14, fontWeight: 700, color: '#2453D6', fontFamily: 'JetBrains Mono, monospace' }}>{opt.fee}</div>
+                    <div style={{ fontSize: 14, fontWeight: 700, color: '#2453D6', fontFamily: 'DM Sans' }}>{opt.fee}</div>
                   </div>
                   <div style={{ fontSize: 12, color: '#8B95A6', marginTop: 4 }}>New expiry: {opt.expires} · {opt.note}</div>
                   {opt.days === 30 && (

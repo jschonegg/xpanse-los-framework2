@@ -103,7 +103,7 @@ const inputStyle = {
 function TextInput({ value, onChange, placeholder, mono }) {
   return (
     <input value={value} onChange={e => onChange(e.target.value)} placeholder={placeholder}
-      style={{ ...inputStyle, fontFamily: mono ? 'DM Mono' : 'inherit' }}/>
+      style={{ ...inputStyle, fontFamily: mono ? 'DM Sans' : 'inherit' }}/>
   );
 }
 
@@ -426,7 +426,7 @@ function AppearancePanel({ prefs, set }) {
         ].map(s => (
           <div key={s.keys} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '6px 0', borderBottom: '1px solid var(--border-subtle)' }}>
             <span style={{ fontSize: 13, color: 'var(--text-secondary)' }}>{s.action}</span>
-            <kbd style={{ fontSize: 11, fontFamily: 'DM Mono', background: 'var(--bg-muted)', border: '1px solid var(--border-subtle)', borderRadius: 5, padding: '2px 7px', color: 'var(--text-secondary)' }}>{s.keys}</kbd>
+            <kbd style={{ fontSize: 11, fontFamily: 'DM Sans', background: 'var(--bg-muted)', border: '1px solid var(--border-subtle)', borderRadius: 5, padding: '2px 7px', color: 'var(--text-secondary)' }}>{s.keys}</kbd>
           </div>
         ))}
       </div>

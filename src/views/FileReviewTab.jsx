@@ -154,7 +154,7 @@ function ChecklistItem({ item, onStatusChange, onNoteChange }) {
           }}>{item.label}</span>
           <SourceTag source={item.source}/>
           {item.received && (
-            <span style={{ fontSize: 11, color: 'var(--text-tertiary)', fontFamily: 'DM Mono' }}>{item.received}</span>
+            <span style={{ fontSize: 11, color: 'var(--text-tertiary)', fontFamily: 'DM Sans' }}>{item.received}</span>
           )}
         </div>
 

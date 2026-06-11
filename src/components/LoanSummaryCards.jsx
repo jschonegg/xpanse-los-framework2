@@ -213,7 +213,7 @@ function CreditCard({ loan }) {
           ].map(b => (
             <div key={b.label}>
               <div style={{ fontSize: 9.5, fontWeight: 600, color: 'var(--text-tertiary)', letterSpacing: '0.05em' }}>{b.label}</div>
-              <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-primary)', marginTop: 1, fontFamily: 'DM Mono' }}>
+              <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-primary)', marginTop: 1, fontFamily: 'DM Sans' }}>
                 {b.score ?? '—'}
               </div>
             </div>
@@ -349,7 +349,7 @@ function ProductCard({ loan }) {
           <span style={{
             fontSize: 22, fontWeight: 600, letterSpacing: '-0.02em',
             color: 'var(--ai-primary, #6E59E8)',
-            fontFamily: 'DM Mono',
+            fontFamily: 'DM Sans',
           }}>
             {loan?.rate != null ? `${loan.rate.toFixed(3)}%` : '—'}
           </span>

@@ -135,7 +135,7 @@ function LoanHeaderStrip() {
     }}>
       {/* Loan ID + borrower */}
       <div style={{ minWidth: 160 }}>
-        <div style={{ fontSize: 11, color: T.textTert, fontFamily: 'JetBrains Mono, monospace', letterSpacing: '0.04em' }}>LN-2024-0234</div>
+        <div style={{ fontSize: 11, color: T.textTert, fontFamily: 'DM Sans', letterSpacing: '0.04em' }}>LN-2024-0234</div>
         <div style={{ fontSize: 15, fontWeight: 700, color: T.text, marginTop: 1 }}>Marcus & Emily Chen</div>
       </div>
 
@@ -151,14 +151,14 @@ function LoanHeaderStrip() {
         ].map(s => (
           <div key={s.label}>
             <div style={{ fontSize: 10.5, color: T.textTert, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.06em' }}>{s.label}</div>
-            <div style={{ fontSize: 13, fontWeight: 600, color: T.text, marginTop: 2, fontFamily: s.mono ? 'JetBrains Mono, monospace' : 'inherit' }}>{s.value}</div>
+            <div style={{ fontSize: 13, fontWeight: 600, color: T.text, marginTop: 2, fontFamily: s.mono ? 'DM Sans' : 'inherit' }}>{s.value}</div>
           </div>
         ))}
 
         {/* LTV/DTI/FICO */}
         <div>
           <div style={{ fontSize: 10.5, color: T.textTert, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.06em' }}>LTV / DTI / FICO</div>
-          <div style={{ fontSize: 13, fontWeight: 600, color: T.text, marginTop: 2, fontFamily: 'JetBrains Mono, monospace' }}>80% · 38% · 742</div>
+          <div style={{ fontSize: 13, fontWeight: 600, color: T.text, marginTop: 2, fontFamily: 'DM Sans' }}>80% · 38% · 742</div>
         </div>
 
         {/* AUS */}
@@ -287,7 +287,7 @@ function LeftColumn({ selectedId, setSelectedId, activeTab, setActiveTab }) {
         ].map(r => (
           <div key={r.label} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: 5 }}>
             <span style={{ fontSize: 12, color: T.textTert }}>{r.label}</span>
-            <span style={{ fontSize: 12, fontWeight: r.bold ? 700 : 500, color: T.text, fontFamily: r.mono ? 'JetBrains Mono, monospace' : 'inherit' }}>{r.value}</span>
+            <span style={{ fontSize: 12, fontWeight: r.bold ? 700 : 500, color: T.text, fontFamily: r.mono ? 'DM Sans' : 'inherit' }}>{r.value}</span>
           </div>
         ))}
         <div style={{ height: 1, background: T.border, margin: '8px 0' }}/>
@@ -395,7 +395,7 @@ function CenterColumn() {
           <div>
             <div style={{ fontSize: 18, fontWeight: 800, color: T.text, letterSpacing: '-0.02em' }}>Verify $12,500 deposit on 4/12/2026</div>
             <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 6, flexWrap: 'wrap' }}>
-              <span style={{ fontSize: 12.5, color: T.textSec, fontFamily: 'JetBrains Mono, monospace' }}>Wells Fargo Checking ••4892</span>
+              <span style={{ fontSize: 12.5, color: T.textSec, fontFamily: 'DM Sans' }}>Wells Fargo Checking ••4892</span>
               <span style={{ color: T.borderStrong }}>·</span>
               <span style={{ fontSize: 12.5, color: T.textSec }}>Statement: Apr 1 – Apr 30, 2026</span>
               <span style={{ color: T.borderStrong }}>·</span>
@@ -442,14 +442,14 @@ function CenterColumn() {
           }}>
             {/* File icon */}
             <svg width="16" height="16" fill="none" stroke={T.textTert} strokeWidth="1.8" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
-            <span style={{ fontSize: 12, color: T.textSec, fontFamily: 'JetBrains Mono, monospace', flex: 1 }}>WellsFargo_Checking_4892_Apr2026.pdf</span>
+            <span style={{ fontSize: 12, color: T.textSec, fontFamily: 'DM Sans', flex: 1 }}>WellsFargo_Checking_4892_Apr2026.pdf</span>
             {/* Classification chips */}
             <span style={{ fontSize: 11, fontWeight: 600, background: T.green50, color: T.green, padding: '2px 8px', borderRadius: 5 }}>Classified: Bank Statement</span>
             <span style={{ fontSize: 11, fontWeight: 600, background: T.primary50, color: T.primary, padding: '2px 8px', borderRadius: 5 }}>2 mo · req'd</span>
             {/* Page nav */}
             <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginLeft: 6 }}>
               <button onClick={() => setPage(p => Math.max(1, p - 1))} style={{ width: 24, height: 24, borderRadius: 4, border: `1px solid ${T.borderStrong}`, background: T.surface, cursor: 'pointer', fontSize: 13 }}>‹</button>
-              <span style={{ fontSize: 12, color: T.textSec, fontFamily: 'JetBrains Mono, monospace' }}>{page}/4</span>
+              <span style={{ fontSize: 12, color: T.textSec, fontFamily: 'DM Sans' }}>{page}/4</span>
               <button onClick={() => setPage(p => Math.min(4, p + 1))} style={{ width: 24, height: 24, borderRadius: 4, border: `1px solid ${T.borderStrong}`, background: T.surface, cursor: 'pointer', fontSize: 13 }}>›</button>
             </div>
             {/* Toolbar icons */}
@@ -497,7 +497,7 @@ function CenterColumn() {
                 </div>
                 <div style={{ textAlign: 'right' }}>
                   <div style={{ fontSize: 11, color: '#666', marginBottom: 2 }}>Account #</div>
-                  <div style={{ fontSize: 12, fontWeight: 600, color: '#111', fontFamily: 'JetBrains Mono, monospace' }}>****4892</div>
+                  <div style={{ fontSize: 12, fontWeight: 600, color: '#111', fontFamily: 'DM Sans' }}>****4892</div>
                 </div>
               </div>
 
@@ -511,7 +511,7 @@ function CenterColumn() {
                 ].map(s => (
                   <div key={s.label} style={{ padding: '10px 14px', borderRight: '1px solid #E5E7EB' }}>
                     <div style={{ fontSize: 10, color: '#888', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 4 }}>{s.label}</div>
-                    <div style={{ fontSize: 13, fontWeight: s.bold ? 700 : 600, color: s.color || '#111', fontFamily: 'JetBrains Mono, monospace' }}>{s.value}</div>
+                    <div style={{ fontSize: 13, fontWeight: s.bold ? 700 : 600, color: s.color || '#111', fontFamily: 'DM Sans' }}>{s.value}</div>
                   </div>
                 ))}
               </div>
@@ -536,7 +536,7 @@ function CenterColumn() {
                           borderLeft: flagged ? '3px solid #D97706' : '3px solid transparent',
                           position: 'relative',
                         }}>
-                          <td style={{ padding: '5px 6px', fontFamily: 'JetBrains Mono, monospace', color: flagged ? '#7A3D00' : '#333', fontWeight: flagged ? 700 : 400 }}>{tx.date}</td>
+                          <td style={{ padding: '5px 6px', fontFamily: 'DM Sans', color: flagged ? '#7A3D00' : '#333', fontWeight: flagged ? 700 : 400 }}>{tx.date}</td>
                           <td style={{ padding: '5px 6px', color: flagged ? '#7A3D00' : '#222', fontWeight: flagged ? 700 : 400 }}>
                             {tx.desc}
                             {flagged && (
@@ -547,11 +547,11 @@ function CenterColumn() {
                             )}
                           </td>
                           <td style={{
-                            padding: '5px 6px', textAlign: 'right', fontFamily: 'JetBrains Mono, monospace',
+                            padding: '5px 6px', textAlign: 'right', fontFamily: 'DM Sans',
                             fontWeight: flagged ? 700 : 500,
                             color: flagged ? '#7A3D00' : tx.type === 'credit' ? T.green : '#333',
                           }}>{tx.amount}</td>
-                          <td style={{ padding: '5px 6px', textAlign: 'right', fontFamily: 'JetBrains Mono, monospace', color: flagged ? '#7A3D00' : '#333', fontWeight: flagged ? 700 : 400 }}>{tx.balance}</td>
+                          <td style={{ padding: '5px 6px', textAlign: 'right', fontFamily: 'DM Sans', color: flagged ? '#7A3D00' : '#333', fontWeight: flagged ? 700 : 400 }}>{tx.balance}</td>
                         </tr>
                       );
                     })}
@@ -799,7 +799,7 @@ export function LargeDepositReviewView({ onBack }) {
   return (
     <div style={{
       display: 'flex', flexDirection: 'column',
-      height: '100vh', fontFamily: 'Inter, -apple-system, sans-serif',
+      height: '100vh', fontFamily: 'DM Sans',
       fontSize: 13, color: T.text, background: T.bg, overflow: 'hidden',
     }}>
       <AppNav onBack={onBack}/>

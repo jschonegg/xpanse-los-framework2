@@ -73,7 +73,7 @@ function CompletenessBar({ done, total }) {
         <div style={{ width: `${pct}%`, height: '100%', background: color, borderRadius: 999, transition: 'width 0.3s' }}/>
       </div>
       <span style={{
-        fontSize: 11, color: '#6B7280', fontFamily: 'DM Mono',
+        fontSize: 11, color: '#6B7280', fontFamily: 'DM Sans',
         minWidth: 36, textAlign: 'right', flexShrink: 0,
       }}>{done}/{total}</span>
     </div>
@@ -130,7 +130,7 @@ function AISignal({ loan }) {
         <Icon name={m.icon} size={11} strokeWidth={1.9}/>
         {loan.aiStatus}
       </span>
-      <span style={{ fontSize: 10, color: '#9CA3AF', fontFamily: 'DM Mono' }}>{conf}%</span>
+      <span style={{ fontSize: 10, color: '#9CA3AF', fontFamily: 'DM Sans' }}>{conf}%</span>
     </span>
   );
 }
@@ -178,7 +178,7 @@ function LoanHealthRow({ loan, onOpen }) {
           <div style={{ fontSize: 13, fontWeight: 700, color: '#111827', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
             {loan.borrower}
           </div>
-          <div style={{ fontSize: 11, color: '#9CA3AF', fontFamily: 'DM Mono' }}>
+          <div style={{ fontSize: 11, color: '#9CA3AF', fontFamily: 'DM Sans' }}>
             {loan.id} · ${(loan.amount/1000).toFixed(0)}K
           </div>
         </div>
@@ -191,7 +191,7 @@ function LoanHealthRow({ loan, onOpen }) {
       <div style={{
         fontSize: 13, fontWeight: 700,
         color: loan.days > 7 ? '#D97706' : loan.days > 3 ? '#374151' : '#9CA3AF',
-        fontFamily: 'DM Mono',
+        fontFamily: 'DM Sans',
       }}>{loan.days}d</div>
 
       {/* Conditions completeness */}

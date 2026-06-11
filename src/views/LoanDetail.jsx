@@ -277,17 +277,17 @@ function PropertyCard({ loanId, property }) {
         <div style={{ display: 'flex', gap: 8 }}>
           <div style={{ flex: 1, background: 'var(--bg-muted)', borderRadius: 8, padding: '9px 11px' }}>
             <div style={{ fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em', color: 'var(--text-tertiary)', marginBottom: 3 }}>Est. Value</div>
-            <div style={{ fontSize: 15, fontWeight: 800, fontFamily: 'DM Mono' }}>${(p.estimatedValue / 1000).toFixed(0)}K</div>
+            <div style={{ fontSize: 15, fontWeight: 800, fontFamily: 'DM Sans' }}>${(p.estimatedValue / 1000).toFixed(0)}K</div>
             <div style={{ fontSize: 11, color: 'var(--text-tertiary)', marginTop: 2 }}>${p.pricePerSqft}/sqft</div>
           </div>
           <div style={{ flex: 1, background: 'var(--bg-muted)', borderRadius: 8, padding: '9px 11px' }}>
             <div style={{ fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em', color: 'var(--text-tertiary)', marginBottom: 3 }}>Market Trend</div>
-            <div style={{ fontSize: 15, fontWeight: 800, fontFamily: 'DM Mono', color: '#059669' }}>{p.marketTrend}</div>
+            <div style={{ fontSize: 15, fontWeight: 800, fontFamily: 'DM Sans', color: '#059669' }}>{p.marketTrend}</div>
             <div style={{ fontSize: 11, color: 'var(--text-tertiary)', marginTop: 2 }}>Median ${(p.medianNeighborhood / 1000).toFixed(0)}K</div>
           </div>
           <div style={{ flex: 1, background: 'var(--bg-muted)', borderRadius: 8, padding: '9px 11px' }}>
             <div style={{ fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em', color: 'var(--text-tertiary)', marginBottom: 3 }}>On Market</div>
-            <div style={{ fontSize: 15, fontWeight: 800, fontFamily: 'DM Mono' }}>{p.daysOnMarket}d</div>
+            <div style={{ fontSize: 15, fontWeight: 800, fontFamily: 'DM Sans' }}>{p.daysOnMarket}d</div>
             <div style={{ fontSize: 11, color: 'var(--text-tertiary)', marginTop: 2 }}>Schools: {p.schoolRating}/10</div>
           </div>
         </div>
@@ -311,7 +311,7 @@ function PropertyCard({ loanId, property }) {
             {p.nearbyComps.map((c, i) => (
               <div key={i} style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12, padding: '5px 9px', background: 'var(--bg-muted)', borderRadius: 6 }}>
                 <span style={{ color: 'var(--text-secondary)' }}>{c.addr}</span>
-                <span style={{ fontWeight: 700, fontFamily: 'DM Mono', color: 'var(--text-primary)' }}>{c.sold}</span>
+                <span style={{ fontWeight: 700, fontFamily: 'DM Sans', color: 'var(--text-primary)' }}>{c.sold}</span>
                 <span style={{ color: 'var(--text-tertiary)' }}>{c.daysAgo}d ago</span>
               </div>
             ))}
@@ -417,7 +417,7 @@ function LoanHeader({ meta, loan, loanId, onNavigatePipeline, onOpenComms }) {
           display: 'flex', alignItems: 'center', gap: 10,
           marginTop: 4, fontSize: 12.5, color: 'var(--text-tertiary)',
         }}>
-          <span style={{ fontFamily: 'DM Mono', fontWeight: 500 }}>{loanId}</span>
+          <span style={{ fontFamily: 'DM Sans', fontWeight: 500 }}>{loanId}</span>
           <span>•</span>
           <a
             href={`https://maps.google.com/?q=${encodeURIComponent(meta?.property || '1842 Oak Street, Denver CO 80202')}`}
@@ -1274,7 +1274,7 @@ function LibraryPanel({ mode = 'rail', onOpenURLA }) {
         }}>
           <Icon name="book" size={13} color="var(--text-secondary)" strokeWidth={1.85}/>
           <span style={{ fontSize: 12.5, fontWeight: 600, flex: 1 }}>Library</span>
-          <span style={{ fontSize: 11, color: 'var(--text-tertiary)', fontFamily: 'DM Mono' }}>{tabCounts[activeTab]}</span>
+          <span style={{ fontSize: 11, color: 'var(--text-tertiary)', fontFamily: 'DM Sans' }}>{tabCounts[activeTab]}</span>
           <Icon name={collapsed ? 'chevronUp' : 'chevronDown'} size={12} color="var(--text-tertiary)"/>
         </button>
         {!collapsed && <>{tabBar}{searchBar}{itemList}{footer}</>}
@@ -1301,7 +1301,7 @@ function LibraryPanel({ mode = 'rail', onOpenURLA }) {
       }}>
         <Icon name="book" size={14} color="var(--text-secondary)" strokeWidth={1.85}/>
         <span style={{ fontSize: 13, fontWeight: 600, flex: 1 }}>Library</span>
-        <span style={{ fontSize: 11.5, color: 'var(--text-tertiary)', fontFamily: 'DM Mono' }}>{tabCounts[activeTab]}</span>
+        <span style={{ fontSize: 11.5, color: 'var(--text-tertiary)', fontFamily: 'DM Sans' }}>{tabCounts[activeTab]}</span>
         <Icon name={collapsed ? 'chevronUp' : 'chevronDown'} size={12} color="var(--text-tertiary)"/>
       </button>
       {!collapsed && <>{tabBar}{searchBar}{itemList}{footer}</>}
@@ -2038,7 +2038,7 @@ function LoanStatusBar({ meta, loan }) {
           ))}
         </div>
 
-        <span style={{ fontFamily: 'DM Mono', fontSize: 12, fontWeight: 600, color: 'var(--text-secondary)', minWidth: 32, textAlign: 'right' }}>
+        <span style={{ fontFamily: 'DM Sans', fontSize: 12, fontWeight: 600, color: 'var(--text-secondary)', minWidth: 32, textAlign: 'right' }}>
           {progress}%
         </span>
       </div>
@@ -2055,7 +2055,7 @@ function LoanStatusBar({ meta, loan }) {
           TRID
         </span>
         <span style={{
-          fontFamily: 'DM Mono', fontSize: 12, fontWeight: 600,
+          fontFamily: 'DM Sans', fontSize: 12, fontWeight: 600,
           color: isComplete ? 'var(--status-green)' : 'var(--text-primary)',
         }}>
           {trid.received}<span style={{ color: 'var(--text-tertiary)' }}>/{trid.total}</span>
@@ -3565,7 +3565,7 @@ function StoryEvent({ event }) {
 
       <div style={{ flex: 1, minWidth: 0, paddingTop: 2 }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
-          <span style={{ fontSize: 12.5, color: 'var(--text-tertiary)', fontFamily: 'DM Mono', fontWeight: 500 }}>
+          <span style={{ fontSize: 12.5, color: 'var(--text-tertiary)', fontFamily: 'DM Sans', fontWeight: 500 }}>
             {event.time}
           </span>
           <span style={{ fontSize: 14, fontWeight: 600 }}>{event.title}</span>
@@ -3687,7 +3687,7 @@ function FieldPair({ label, value, mono, readOnly }) {
           style={{
             width: '100%', padding: '4px 7px',
             fontSize: 15, fontWeight: 500, letterSpacing: '-0.005em',
-            fontFamily: mono ? 'DM Mono' : 'inherit',
+            fontFamily: mono ? 'DM Sans' : 'inherit',
             border: '1.5px solid var(--ai-primary)', borderRadius: 5,
             outline: 'none', background: 'var(--bg-surface)',
             color: 'var(--text-primary)', boxSizing: 'border-box',
@@ -3699,7 +3699,7 @@ function FieldPair({ label, value, mono, readOnly }) {
           title={readOnly ? undefined : 'Click to edit'}
           style={{
             fontSize: 17, fontWeight: 500, letterSpacing: '-0.005em',
-            fontFamily: mono ? 'DM Mono' : 'inherit',
+            fontFamily: mono ? 'DM Sans' : 'inherit',
             cursor: readOnly ? 'default' : 'text',
             padding: '3px 7px', margin: '0 -7px',
             borderRadius: 5, border: '1.5px solid transparent',

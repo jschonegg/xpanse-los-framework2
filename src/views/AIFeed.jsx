@@ -133,7 +133,7 @@ function ConfidenceBar({ value }) {
       <div style={{ width: 40, height: 3, borderRadius: 999, background: 'var(--bg-muted)', overflow: 'hidden' }}>
         <div style={{ width: `${value}%`, height: '100%', background: color, borderRadius: 999 }}/>
       </div>
-      <span style={{ fontFamily: 'DM Mono', fontSize: 11, color, fontWeight: 600 }}>{value}%</span>
+      <span style={{ fontFamily: 'DM Sans', fontSize: 11, color, fontWeight: 600 }}>{value}%</span>
     </div>
   );
 }
@@ -208,7 +208,7 @@ function FeedCard({ item, onAct, onDismiss }) {
           }}>{item.loan.initials}</div>
           <span style={{ fontSize: 12.5, fontWeight: 500 }}>{item.loan.borrower}</span>
           <StatusDot status={item.loan.status}/>
-          <span style={{ fontFamily: 'DM Mono', fontSize: 11, color: 'var(--text-tertiary)' }}>{item.loan.id}</span>
+          <span style={{ fontFamily: 'DM Sans', fontSize: 11, color: 'var(--text-tertiary)' }}>{item.loan.id}</span>
         </div>
         <div style={{ flex: 1 }}/>
         <span style={{ fontSize: 12, color: 'var(--text-tertiary)' }}>AI confidence</span>

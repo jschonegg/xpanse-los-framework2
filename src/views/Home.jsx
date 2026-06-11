@@ -175,7 +175,7 @@ function Leaderboard() {
               <span style={{ fontSize: 14, fontWeight: 700, color: 'var(--text-primary)', letterSpacing: '-0.01em' }}>Camp Hill Branch</span>
               <span style={{
                 fontSize: 10, fontWeight: 700, letterSpacing: '0.06em',
-                color: 'var(--primary-700)', background: 'var(--primary-50)',
+                color: 'var(--ai-ink)', background: 'var(--ai-bg)',
                 padding: '2px 7px', borderRadius: 4, textTransform: 'uppercase',
               }}>#1 in region</span>
             </div>
@@ -201,7 +201,7 @@ function Leaderboard() {
                     <span style={{
                       fontSize: 22, fontWeight: 800, letterSpacing: '-0.02em',
                       color: isNps ? npsHex : 'var(--text-primary)',
-                      lineHeight: 1.05, fontFamily: 'DM Mono',
+                      lineHeight: 1.05, fontFamily: 'DM Sans',
                     }}>{s.value}</span>
                     {isNps && (
                       <span style={{
@@ -324,7 +324,7 @@ function Leaderboard() {
 
                 {/* Value */}
                 <div style={{ textAlign: 'right', flexShrink: 0, minWidth: 70 }}>
-                  <div style={{ fontSize: 14, fontWeight: 700, fontFamily: 'DM Mono', color: '#111827' }}>
+                  <div style={{ fontSize: 14, fontWeight: 700, fontFamily: 'DM Sans', color: '#111827' }}>
                     {metaDef.fmt(p[metric])}
                   </div>
                   <div style={{ fontSize: 11, color: '#9CA3AF', marginTop: 1 }}>
@@ -353,7 +353,7 @@ function Leaderboard() {
                     {LB_METRICS.map(m => (
                       <div key={m.id}>
                         <div style={{ fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em', color: '#9CA3AF', marginBottom: 3 }}>{m.label}</div>
-                        <div style={{ fontSize: 14, fontWeight: 700, fontFamily: 'DM Mono', color: m.id === metric ? (isYou ? '#7E68FA' : '#111827') : '#374151' }}>
+                        <div style={{ fontSize: 14, fontWeight: 700, fontFamily: 'DM Sans', color: m.id === metric ? (isYou ? '#7E68FA' : '#111827') : '#374151' }}>
                           {m.fmt(p[m.id])}
                         </div>
                       </div>
@@ -644,7 +644,7 @@ function TaskDrawerCD({ onComplete }) {
         ].map(r => (
           <div key={r.label} style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 7, fontSize: 13 }}>
             <span style={{ color: '#5A6577' }}>{r.label}</span>
-            <span style={{ fontWeight: 600, color: '#0B1B2B', fontFamily: 'JetBrains Mono, monospace', fontSize: 13 }}>{r.value}</span>
+            <span style={{ fontWeight: 600, color: '#0B1B2B', fontFamily: 'DM Sans', fontSize: 13 }}>{r.value}</span>
           </div>
         ))}
       </div>
@@ -685,7 +685,7 @@ function TaskDrawerLock({ onComplete }) {
         ].map(r => (
           <div key={r.label} style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 7, fontSize: 13 }}>
             <span style={{ color: '#5A6577' }}>{r.label}</span>
-            <span style={{ fontWeight: 600, color: '#0B1B2B', fontFamily: 'JetBrains Mono, monospace', fontSize: 13 }}>{r.value}</span>
+            <span style={{ fontWeight: 600, color: '#0B1B2B', fontFamily: 'DM Sans', fontSize: 13 }}>{r.value}</span>
           </div>
         ))}
       </div>
@@ -694,7 +694,7 @@ function TaskDrawerLock({ onComplete }) {
         <div key={opt.days} onClick={() => !done && setSelected(opt.days)} style={{ padding: '13px 15px', borderRadius: 10, cursor: done ? 'default' : 'pointer', border: `2px solid ${selected === opt.days ? '#2453D6' : '#E5E8F0'}`, background: selected === opt.days ? '#EEF3FE' : '#F9FAFC', transition: 'all 0.12s' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between' }}>
             <span style={{ fontSize: 14, fontWeight: 700, color: '#0B1B2B' }}>{opt.days}-day · expires {opt.expires}</span>
-            <span style={{ fontSize: 14, fontWeight: 700, color: '#2453D6', fontFamily: 'JetBrains Mono, monospace' }}>{opt.fee}</span>
+            <span style={{ fontSize: 14, fontWeight: 700, color: '#2453D6', fontFamily: 'DM Sans' }}>{opt.fee}</span>
           </div>
           <div style={{ fontSize: 12, color: '#8B95A6', marginTop: 3 }}>{opt.note}</div>
         </div>
@@ -868,7 +868,7 @@ function TaskDrawer({ task, onClose, onComplete }) {
               {/* Borrower avatar + name */}
               <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
                 <div style={{ width: 28, height: 28, borderRadius: 7, background: task.color, color: '#fff', fontSize: 10, fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>{task.initials}</div>
-                <span style={{ fontSize: 12, color: '#8B95A6', fontFamily: 'JetBrains Mono, monospace' }}>{task.loanId}</span>
+                <span style={{ fontSize: 12, color: '#8B95A6', fontFamily: 'DM Sans' }}>{task.loanId}</span>
               </div>
               <div style={{ fontSize: 17, fontWeight: 800, color: '#0B1B2B', letterSpacing: '-0.01em', lineHeight: 1.2 }}>{drawerData.title}</div>
               <div style={{ fontSize: 13, color: '#8B95A6', marginTop: 4 }}>{drawerData.subtitle}</div>
@@ -1170,7 +1170,7 @@ function MiniDonut({ pct, size = 56, stroke = 6 }) {
         position: 'absolute', inset: 0, display: 'flex',
         alignItems: 'center', justifyContent: 'center',
         fontSize: 14, fontWeight: 800, color: '#111827',
-        fontFamily: 'DM Mono',
+        fontFamily: 'DM Sans',
       }}>{pct}%</div>
     </div>
   );
@@ -1211,7 +1211,7 @@ function ScorecardStrip() {
     <div style={{ minWidth: 0 }}>
       <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase', color: '#9CA3AF', marginBottom: 4 }}>{label}</div>
       <div style={{ display: 'flex', alignItems: 'baseline', gap: 8 }}>
-        <span style={{ fontSize: 17, fontWeight: 800, color: '#111827', letterSpacing: '-0.015em', fontFamily: 'DM Mono' }}>{value}</span>
+        <span style={{ fontSize: 17, fontWeight: 800, color: '#111827', letterSpacing: '-0.015em', fontFamily: 'DM Sans' }}>{value}</span>
         <span style={{ fontSize: 11, fontWeight: 700, color: '#059669', background: '#E6F5EF', padding: '2px 6px', borderRadius: 999 }}>{delta}</span>
       </div>
     </div>
@@ -1449,7 +1449,7 @@ export function HomeView({ onNavigate, onOpenLoan }) {
                     <span style={{ color: `rgba(255,255,255,${flags.homePolishV2 ? '0.7' : '0.4'})`, fontSize: 12, lineHeight: 1 }}>↗</span>
                   )}
                 </div>
-                <div style={{ fontSize: 22, fontWeight: 800, letterSpacing: '-0.02em', lineHeight: 1, fontFamily: 'DM Mono' }}>{t.value}</div>
+                <div style={{ fontSize: 22, fontWeight: 800, letterSpacing: '-0.02em', lineHeight: 1, fontFamily: 'DM Sans' }}>{t.value}</div>
                 <div style={{ fontSize: 11, fontWeight: 600, color: 'rgba(255,255,255,0.92)', marginTop: 4 }}>{t.label}</div>
                 <div style={{ fontSize: 10, color: sev.subColor, marginTop: 1 }}>{t.sub}</div>
               </button>);

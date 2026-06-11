@@ -1,92 +1,41 @@
-@import url('https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Public+Sans:ital,wght@0,300..800;1,300..800&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600;9..40,700&display=swap');
 
 :root {
-  /* ── Neutrals ─────────────────────────────────────────── */
-  --neutral-0:   #FFFFFF;
-  --neutral-50:  #F5F5F5;
-  --neutral-100: #E0E0E0;
-  --neutral-200: #C8C8C8;
-  --neutral-300: #A0A0A0;
-  --neutral-400: #737373;
-  --neutral-500: #5A5A5A;
-  --neutral-600: #4E4E4E;
-  --neutral-700: #2E2E2E;
-  --neutral-800: #2E2E2E;
-  --neutral-900: #1A1A1A;
+  /* Surfaces */
+  --bg-app: #FAFAF9;
+  --bg-surface: #FFFFFF;
+  --bg-muted: #F6F6F4;
+  --bg-elev: #FFFFFF;
 
-  /* ── Primary — Electric Lavender ─────────────────────── */
-  --primary-50:  #E1E6FF;
-  --primary-100: #E1E6FF;
-  --primary-200: #BDC5FF;
-  --primary-300: #96A3FF;
-  --primary-400: #6F83FF;
-  --primary-500: #5166FE;
-  --primary-600: #3F4CED;
-  --primary-700: #2D3AB2;
-  --primary-800: #1A1F66;
-  --primary-900: #00023C;
+  /* Text */
+  --text-primary: #0E1014;
+  --text-secondary: #5F6368;
+  --text-tertiary: #8B8F95;
+  --text-on-dark: #FFFFFF;
 
-  /* ── Status ──────────────────────────────────────────── */
-  --success-lightest: #E6F5F0;
-  --success-light:    #8AD1BB;
-  --success-main:     #009B6C;
-  --success-dark:     #00553B;
+  /* Borders */
+  --border-subtle: #ECECEA;
+  --border-default: #E2E2DF;
+  --border-strong: #C9C9C5;
 
-  --warning-lightest: #FFF6E6;
-  --warning-light:    #FFE2B0;
-  --warning-main:     #B58B00;
-  --warning-dark:     #8C6C00;
+  /* AI / brand purple */
+  --ai-primary: #6D5BF6;
+  --ai-primary-hover: #5C49E8;
+  --ai-ink: #4A39C9;
+  --ai-bg: #F2EFFD;
+  --ai-bg-strong: #E8E3FC;
+  --ai-border: #DFD7FB;
+  --ai-tint: #B7A8FE;
 
-  --error-lightest:   #FFEAEE;
-  --error-light:      #FF728D;
-  --error-main:       #DF002B;
-  --error-dark:       #9E001F;
-
-  --info-lightest:    #E6F5F9;
-  --info-light:       #54BED4;
-  --info-main:        #009EBF;
-  --info-dark:        #005769;
-
-  /* ── Surfaces ────────────────────────────────────────── */
-  --bg-app:      var(--neutral-50);
-  --bg-surface:  var(--neutral-0);
-  --bg-muted:    var(--neutral-100);
-  --bg-elev:     var(--neutral-0);
-
-  /* ── Text ────────────────────────────────────────────── */
-  --text-primary:   var(--neutral-900);
-  --text-secondary: var(--neutral-500);
-  --text-tertiary:  var(--neutral-400);
-  --text-on-dark:   var(--neutral-0);
-
-  /* ── Borders ─────────────────────────────────────────── */
-  --border-subtle:  var(--neutral-100);
-  --border-default: var(--neutral-200);
-  --border-strong:  var(--neutral-300);
-
-  /* ── Brand / AI — Electric Lavender ──────────────────── */
-  --ai-primary:        var(--primary-500);
-  --ai-primary-hover:  var(--primary-600);
-  --ai-ink:            var(--primary-700);
-  --ai-bg:             var(--primary-50);
-  --ai-bg-strong:      var(--primary-100);
-  --ai-border:         var(--primary-200);
-  --ai-tint:           var(--primary-300);
-
-  /* ── Status (semantic aliases) ───────────────────────── */
-  --status-blue:     var(--primary-700);
-  --status-blue-bg:  var(--primary-100);
-  --status-green:    var(--success-main);
-  --status-green-bg: var(--success-lightest);
-  --status-amber:    var(--warning-main);
-  --status-amber-bg: var(--warning-lightest);
-  --status-red:      var(--error-main);
-  --status-red-bg:   var(--error-lightest);
-
-  /* ── Font families ───────────────────────────────────── */
-  --font-display: 'Loos Extended', 'Public Sans', system-ui, -apple-system, sans-serif;
-  --font-heading: 'Loos Normal', 'Public Sans', system-ui, -apple-system, sans-serif;
-  --font-body:    'Public Sans', system-ui, -apple-system, sans-serif;
+  /* Status */
+  --status-blue: #1B5BB8;
+  --status-blue-bg: #DCE9FB;
+  --status-green: #1F7A45;
+  --status-green-bg: #DFF1E5;
+  --status-amber: #9C6A1A;
+  --status-amber-bg: #FBEFD2;
+  --status-red: #C2362A;
+  --status-red-bg: #FBE3DF;
 
   /* Card accent bgs */
   --card-red-bg: #FDF3F1;
@@ -100,7 +49,7 @@
   --shadow-sm: 0 1px 2px rgba(15, 17, 21, 0.04);
   --shadow-md: 0 2px 6px rgba(15, 17, 21, 0.05), 0 1px 2px rgba(15, 17, 21, 0.04);
   --shadow-lg: 0 12px 32px -8px rgba(15, 17, 21, 0.12), 0 4px 12px rgba(15, 17, 21, 0.05);
-  --shadow-fab: 0 12px 28px -6px rgba(45, 58, 178, 0.45), 0 4px 12px rgba(45, 58, 178, 0.2);
+  --shadow-fab: 0 12px 28px -6px rgba(74, 57, 201, 0.45), 0 4px 12px rgba(74, 57, 201, 0.2);
 
   /* Radii */
   --r-xs: 6px;
@@ -138,10 +87,7 @@ button:focus-visible, [role="tab"]:focus-visible {
 html, body {
   margin: 0;
   padding: 0;
-  font-family: var(--font-body);
-  font-size: 16px;
-  font-weight: 400;
-  line-height: 130%;
+  font-family: 'DM Sans', system-ui, -apple-system, sans-serif;
   color: var(--text-primary);
   background: var(--bg-app);
   -webkit-font-smoothing: antialiased;
@@ -158,46 +104,6 @@ body {
 
 button { font-family: inherit; cursor: pointer; }
 input, select, textarea { font-family: inherit; }
-
-/* ── Desktop typography — matches DS Headline-1 through Body Small ────────
-   H1/H2 → Loos Extended Bold · H3/H4/H6 → Loos Normal Medium · H5 → Public Sans SemiBold.
-   All Loos faces fall back to Public Sans until Loos is loaded. */
-h1, h2, h3, h4, h5, h6 {
-  color: var(--text-primary);
-  margin: 0;
-  line-height: 120%;
-}
-/* In-app scale (DS Headline tokens are tuned for marketing; UI headings are
-   stepped down ~50% to preserve scannability inside dense dashboards). */
-h1 { font-family: var(--font-display); font-size: 30px; font-weight: 700; letter-spacing: -0.02em; }
-h2 { font-family: var(--font-display); font-size: 24px; font-weight: 700; letter-spacing: -0.015em; }
-h3 { font-family: var(--font-heading); font-size: 20px; font-weight: 600; letter-spacing: -0.01em; }
-h4 { font-family: var(--font-heading); font-size: 17px; font-weight: 600; }
-h5 { font-family: var(--font-body);    font-size: 15px; font-weight: 600; }
-h6 { font-family: var(--font-heading); font-size: 13px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em; color: var(--text-tertiary); }
-
-/* Utility text classes mapped to DS tokens */
-.body-lg          { font-family: var(--font-body); font-size: 18px; font-weight: 400; line-height: 130%; }
-.body-lg-bold     { font-family: var(--font-body); font-size: 18px; font-weight: 600; line-height: 130%; }
-.body             { font-family: var(--font-body); font-size: 16px; font-weight: 400; line-height: 130%; }
-.body-bold        { font-family: var(--font-body); font-size: 16px; font-weight: 600; line-height: 130%; }
-.body-sm          { font-family: var(--font-body); font-size: 14px; font-weight: 400; line-height: 120%; }
-.body-sm-bold     { font-family: var(--font-body); font-size: 14px; font-weight: 600; line-height: 120%; }
-.caption          { font-family: var(--font-body); font-size: 13px; font-weight: 400; line-height: 110%; }
-.overline         { font-family: var(--font-body); font-size: 13px; font-weight: 400; line-height: 110%; text-transform: uppercase; letter-spacing: 0.08em; }
-
-.eyebrow {
-  display: inline-flex; align-items: center; gap: 7px;
-  font-size: 11px; font-weight: 600;
-  letter-spacing: 0.14em; text-transform: uppercase;
-  color: var(--text-tertiary);
-}
-.eyebrow::before {
-  content: ''; width: 5px; height: 5px; border-radius: 999px;
-  background: currentColor; opacity: 0.7;
-}
-.lede    { font-family: var(--font-body); font-size: 18px; line-height: 130%; color: var(--text-secondary); max-width: 56ch; }
-.display { font-family: var(--font-display); font-size: 61px; font-weight: 700; line-height: 120%; color: var(--text-primary); }
 
 /* Buttons */
 .btn {
@@ -265,7 +171,7 @@ h6 { font-family: var(--font-heading); font-size: 13px; font-weight: 600; text-t
 }
 .input:focus {
   border-color: var(--ai-tint);
-  box-shadow: 0 0 0 3px rgba(81, 102, 255, 0.18);
+  box-shadow: 0 0 0 3px rgba(109, 91, 246, 0.12);
 }
 
 /* Scrollbars */
