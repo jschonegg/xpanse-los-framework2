@@ -1847,6 +1847,22 @@ const STAGE_SUB_MILESTONES = {
   ],
 };
 
+// Per-loan, per-stage completion overrides (completed sub-milestone count).
+// Milestones don't always complete in strict stage order — teams work several
+// stages in parallel — so these demo loans show partial progress across
+// multiple, non-sequential milestones at once. Loans without an entry fall back
+// to the sequential default in getStageSubMilestones(). Counts are clamped to
+// each stage's total. (Stage totals: Application 8, Processing 6, Underwriting
+// 5, Approval 5, Closing 6, Funded 4.)
+const STAGE_PROGRESS_OVERRIDES = {
+  // Sarah Anderson — in UW, but Approval/Closing prep already started.
+  'LN-2024-0234': { Underwriting: 3, Approval: 2, Closing: 1 },
+  // David Chen — moved into Processing without fully finishing Application.
+  'LN-2024-0189': { Application: 6, Processing: 3, Underwriting: 1 },
+  // Thomas Park — Closing items started ahead of Approval (cash-out refi).
+  'LN-2024-0312': { Processing: 4, Underwriting: 2, Closing: 2 },
+};
+
 const TODAY_ISO = '2026-05-27';
 function daysBackToISO(daysBack) {
   const d = new Date(TODAY_ISO + 'T00:00:00');
@@ -1889,6 +1905,13 @@ function getStageSubMilestones(loan, stageId) {
     completedCount = 0;
     stageStartedDaysAgo = 0;
     stageDurationDays = STAGE_AVG_DAYS[stageId] || 7;
+  }
+
+  // Non-linear override: some loans complete milestones out of stage order.
+  const override = STAGE_PROGRESS_OVERRIDES[loan.id]?.[stageId];
+  if (override != null) {
+    completedCount = Math.max(0, Math.min(total, override));
+    if (!stageStartedDaysAgo) stageStartedDaysAgo = stageDurationDays;
   }
 
   const milestones = list.map((label, i) => {
@@ -2054,8 +2077,9 @@ function StageSegment({ stage, loan, isOpen, onToggle }) {
   const pct = total ? Math.round((completed / total) * 100) : 0;
   const done = pct >= 100;
   const started = pct > 0;
-  const fillColor = done ? 'var(--status-green)' : 'var(--text-primary)';
-  const dotColor = done ? 'var(--status-green)' : started ? 'var(--text-primary)' : 'var(--border-default)';
+  // Complete → green; in-progress → amber warning; not started → muted.
+  const fillColor = done ? 'var(--status-green)' : 'var(--status-amber)';
+  const dotColor = done ? 'var(--status-green)' : started ? 'var(--status-amber)' : 'var(--border-default)';
 
   return (
     <div
