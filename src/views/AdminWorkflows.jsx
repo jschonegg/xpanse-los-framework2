@@ -1189,43 +1189,228 @@ function WorkflowNavPage() {
   );
 }
 
-// ─── Admin landing (placeholder) ────────────────────────────────────────────
+// ─── Admin home: dashboard primitives ───────────────────────────────────────
+// Lightweight, dependency-free SVG charts. All metrics on the admin home are
+// placeholder/demo figures: aggregate counts come from the seeded LOANS demo
+// data, and the time-series are static sample arrays — there is no live
+// telemetry behind this page yet.
+
+// Tiny inline sparkline for KPI cards.
+function MiniSpark({ data, color, width = 88, height = 34 }) {
+  const max = Math.max(...data), min = Math.min(...data);
+  const span = max - min || 1;
+  const stepX = width / (data.length - 1);
+  const y = (v) => height - 3 - ((v - min) / span) * (height - 6);
+  const pts = data.map((v, i) => `${(i * stepX).toFixed(1)},${y(v).toFixed(1)}`);
+  const line = 'M' + pts.join(' L');
+  const last = data[data.length - 1];
+  return (
+    <svg width={width} height={height} viewBox={`0 0 ${width} ${height}`} style={{ flexShrink: 0, overflow: 'visible' }} aria-hidden="true">
+      <path d={`${line} L${width},${height} L0,${height} Z`} fill={color} fillOpacity={0.1}/>
+      <path d={line} fill="none" stroke={color} strokeWidth={1.8} strokeLinejoin="round" strokeLinecap="round"/>
+      <circle cx={width} cy={y(last)} r={2.6} fill={color}/>
+    </svg>
+  );
+}
+
+// KPI stat card with optional trend pill + sparkline.
+function MetricCard({ icon, label, value, sub, delta, deltaTone = 'green', spark, sparkColor }) {
+  const tone = {
+    green: { fg: 'var(--status-green)', bg: 'var(--status-green-bg)' },
+    red:   { fg: 'var(--status-red)',   bg: 'var(--status-red-bg)' },
+    neutral: { fg: 'var(--text-secondary)', bg: 'var(--bg-muted)' },
+  }[deltaTone];
+  return (
+    <div style={{ ...cardStyle, padding: 16, display: 'flex', flexDirection: 'column', gap: 12 }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 9 }}>
+        <div style={{ width: 32, height: 32, borderRadius: 8, background: 'var(--bg-muted)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+          <Icon name={icon} size={16} color="var(--text-secondary)" strokeWidth={1.7}/>
+        </div>
+        <span style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-tertiary)' }}>{label}</span>
+        {delta && (
+          <span style={{ marginLeft: 'auto', display: 'inline-flex', alignItems: 'center', gap: 3, fontSize: 11, fontWeight: 700, color: tone.fg, background: tone.bg, padding: '2px 7px', borderRadius: 999 }}>
+            <Icon name="trendingUp" size={11} strokeWidth={2.2}/>{delta}
+          </span>
+        )}
+      </div>
+      <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', gap: 10 }}>
+        <div style={{ minWidth: 0 }}>
+          <div style={{ fontSize: 25, fontWeight: 750, letterSpacing: '-0.02em', lineHeight: 1 }}>{value}</div>
+          {sub && <div style={{ fontSize: 11.5, color: 'var(--text-tertiary)', marginTop: 6 }}>{sub}</div>}
+        </div>
+        {spark && <MiniSpark data={spark} color={sparkColor || 'var(--ai-primary)'}/>}
+      </div>
+    </div>
+  );
+}
+
+// Section card with a title row.
+function ChartCard({ title, helper, right, children }) {
+  return (
+    <div style={{ ...cardStyle, display: 'flex', flexDirection: 'column' }}>
+      <div style={{ display: 'flex', alignItems: 'baseline', gap: 8, marginBottom: 16 }}>
+        <h3 style={{ margin: 0, fontSize: 13.5, fontWeight: 700, letterSpacing: '-0.01em' }}>{title}</h3>
+        {helper && <span style={{ fontSize: 11.5, color: 'var(--text-tertiary)' }}>{helper}</span>}
+        {right && <div style={{ marginLeft: 'auto' }}>{right}</div>}
+      </div>
+      {children}
+    </div>
+  );
+}
+
+// Donut / ring chart with a centered total.
+function Donut({ data, size = 132, stroke = 22, centerTop, centerBottom }) {
+  const total = data.reduce((s, d) => s + d.value, 0) || 1;
+  const r = (size - stroke) / 2;
+  const cx = size / 2, cy = size / 2;
+  const circ = 2 * Math.PI * r;
+  let acc = 0;
+  return (
+    <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`} aria-hidden="true">
+      <circle cx={cx} cy={cy} r={r} fill="none" stroke="var(--bg-muted)" strokeWidth={stroke}/>
+      {data.map((d, i) => {
+        const dash = (d.value / total) * circ;
+        const seg = (
+          <circle key={i} cx={cx} cy={cy} r={r} fill="none" stroke={d.color} strokeWidth={stroke}
+            strokeDasharray={`${dash} ${circ - dash}`} strokeDashoffset={-acc}
+            transform={`rotate(-90 ${cx} ${cy})`}/>
+        );
+        acc += dash;
+        return seg;
+      })}
+      {centerTop != null && <text x={cx} y={cy - 1} textAnchor="middle" fontSize={22} fontWeight={750} fill="var(--text-primary)" style={{ letterSpacing: '-0.02em' }}>{centerTop}</text>}
+      {centerBottom && <text x={cx} y={cy + 15} textAnchor="middle" fontSize={10} fill="var(--text-tertiary)" style={{ textTransform: 'uppercase', letterSpacing: '0.06em' }}>{centerBottom}</text>}
+    </svg>
+  );
+}
+
+// One service row in the system-health panel.
+function ServiceRow({ name, status, uptime, latency, last }) {
+  const ok = status === 'operational';
+  const tone = ok ? { fg: 'var(--status-green)', label: 'Operational' } : { fg: 'var(--status-amber)', label: 'Degraded' };
+  return (
+    <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '10px 0', borderBottom: last ? 'none' : '1px solid var(--border-subtle)' }}>
+      <span style={{ width: 8, height: 8, borderRadius: 999, background: tone.fg, flexShrink: 0, boxShadow: `0 0 0 3px ${ok ? 'var(--status-green-bg)' : 'var(--status-amber-bg)'}` }}/>
+      <div style={{ flex: 1, minWidth: 0 }}>
+        <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-primary)' }}>{name}</div>
+        <div style={{ fontSize: 11, color: 'var(--text-tertiary)' }}>{tone.label} · {latency} avg</div>
+      </div>
+      <div style={{ textAlign: 'right', flexShrink: 0 }}>
+        <div style={{ fontSize: 12.5, fontWeight: 700, color: 'var(--text-secondary)', fontVariantNumeric: 'tabular-nums' }}>{uptime}</div>
+        <div style={{ fontSize: 10.5, color: 'var(--text-tertiary)' }}>30-day uptime</div>
+      </div>
+    </div>
+  );
+}
+
+// ─── Admin home (dashboard) ─────────────────────────────────────────────────
 function AdminLanding({ onOpen }) {
+  // Demo platform metrics — there is no live telemetry behind this page yet,
+  // so the time-series and role counts are static sample data.
+  const usersSeries  = [108, 112, 116, 119, 123, 128, 131, 136, 139, 142];
+  const totalSeries  = [150, 153, 156, 158, 160, 162, 164, 166, 167, 168];
+  const uptimeSeries = [99.9, 99.95, 99.99, 99.97, 100, 99.98, 99.96, 99.99, 99.98, 99.98];
+  const apiSeries    = [38, 41, 39, 44, 46, 43, 48, 47, 49, 48];
+
+  // Users per role (demo) — drives the donut + legend below.
+  const rolePalette = ['var(--status-blue)', 'var(--ai-primary)', 'var(--status-amber)', 'var(--status-green)', '#3A8294', 'var(--text-tertiary)'];
+  const roleData = [
+    { key: 'Loan Officer', value: 58 },
+    { key: 'Processor',    value: 34 },
+    { key: 'Manager',      value: 27 },
+    { key: 'Underwriter',  value: 22 },
+    { key: 'Closer',       value: 18 },
+    { key: 'Admin',        value: 9 },
+  ].map((r, i) => ({ ...r, color: rolePalette[i % rolePalette.length] }));
+  const totalUsers  = roleData.reduce((s, r) => s + r.value, 0);
+  const activeUsers = 142;
+
+  const services = [
+    { name: 'API Gateway',            status: 'operational', uptime: '99.99%', latency: '82ms' },
+    { name: 'Database Cluster',       status: 'operational', uptime: '99.98%', latency: '14ms' },
+    { name: 'Document Service',       status: 'operational', uptime: '99.95%', latency: '120ms' },
+    { name: 'AI / OCR Engine',        status: 'degraded',    uptime: '99.21%', latency: '410ms' },
+    { name: 'Integrations · AUS, Credit', status: 'operational', uptime: '99.90%', latency: '210ms' },
+  ];
+  const degraded = services.filter(s => s.status !== 'operational');
+  const allOk = degraded.length === 0;
+
   return (
     <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', minHeight: 0, overflowY: 'auto' }}>
       <div style={{ padding: '20px 28px 16px', borderBottom: '1px solid var(--border-subtle)', background: 'var(--bg-surface)' }}>
-        <h1 style={{ margin: 0, fontSize: 20, fontWeight: 700, letterSpacing: '-0.015em' }}>Admin Console</h1>
+        <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--text-tertiary)', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 4 }}>Admin Console</div>
+        <h1 style={{ margin: 0, fontSize: 20, fontWeight: 700, letterSpacing: '-0.015em' }}>Dashboard</h1>
         <p style={{ margin: '4px 0 0', fontSize: 13, color: 'var(--text-tertiary)', maxWidth: 760, lineHeight: 1.5 }}>
-          Configure platform-wide settings for your loan origination system. Select a category to begin.
+          System health, platform usage, and user metrics at a glance. Figures shown are placeholder demo data.
         </p>
       </div>
-      <div style={{ padding: 28, flex: 1 }}>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: 16, maxWidth: 960 }}>
-          {ADMIN_CATEGORIES.map(cat => (
-            <button key={cat.id} onClick={() => onOpen(cat)}
-              style={{
-                textAlign: 'left', border: '1px solid var(--border-subtle)', borderRadius: 12,
-                background: 'var(--bg-surface)', padding: 18, fontFamily: 'inherit', cursor: 'pointer',
-                display: 'flex', flexDirection: 'column', gap: 10, minHeight: 132,
-                transition: 'border-color 0.12s, box-shadow 0.12s',
-              }}
-              onMouseEnter={e => { e.currentTarget.style.borderColor = 'var(--text-primary)'; e.currentTarget.style.boxShadow = '0 1px 3px rgba(0,0,0,0.06)'; }}
-              onMouseLeave={e => { e.currentTarget.style.borderColor = 'var(--border-subtle)'; e.currentTarget.style.boxShadow = 'none'; }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                <div style={{ width: 38, height: 38, borderRadius: 10, background: 'var(--bg-muted)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                  <Icon name={cat.icon} size={18} color="var(--text-secondary)" strokeWidth={1.6}/>
-                </div>
-                <div style={{ fontSize: 14.5, fontWeight: 700 }}>{cat.label}</div>
-                {!cat.ready && <span style={{ marginLeft: 'auto', fontSize: 9.5, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.04em', color: 'var(--text-tertiary)', background: 'var(--bg-muted)', padding: '2px 7px', borderRadius: 999 }}>Placeholder</span>}
+
+      <div style={{ padding: 24, display: 'flex', flexDirection: 'column', gap: 18, maxWidth: 1160 }}>
+
+        {/* KPI row */}
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(212px, 1fr))', gap: 14 }}>
+          <MetricCard icon="command" label="Active users" value={activeUsers} sub="18 online now" delta="+12" spark={usersSeries} sparkColor="var(--ai-primary)"/>
+          <MetricCard icon="building" label="Total users" value={totalUsers} sub={`${activeUsers} active · ${totalUsers - activeUsers} pending invite`} delta="+6" deltaTone="neutral" spark={totalSeries} sparkColor="var(--status-blue)"/>
+          <MetricCard icon="zap" label="System uptime" value="99.98%" sub="Last 30 days · 0 incidents" spark={uptimeSeries} sparkColor="var(--status-green)"/>
+          <MetricCard icon="trendingUp" label="API requests · 24h" value="48.2k" sub="Across all services" delta="+6.1%" spark={apiSeries} sparkColor="var(--status-green)"/>
+        </div>
+
+        {/* Charts row */}
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(340px, 1fr))', gap: 16 }}>
+          <ChartCard title="Users by role" helper="Provisioned accounts">
+            <div style={{ display: 'flex', alignItems: 'center', gap: 20 }}>
+              <Donut data={roleData} centerTop={totalUsers} centerBottom="Users"/>
+              <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', gap: 9 }}>
+                {roleData.map(d => (
+                  <div key={d.key} style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                    <span style={{ width: 9, height: 9, borderRadius: 3, background: d.color, flexShrink: 0 }}/>
+                    <span style={{ flex: 1, fontSize: 12.5, color: 'var(--text-secondary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{d.key}</span>
+                    <span style={{ fontSize: 12.5, fontWeight: 700, color: 'var(--text-primary)', fontVariantNumeric: 'tabular-nums' }}>{d.value}</span>
+                  </div>
+                ))}
               </div>
-              <div style={{ fontSize: 12.5, color: 'var(--text-tertiary)', lineHeight: 1.5 }}>{cat.desc}</div>
-              <div style={{ marginTop: 'auto', display: 'flex', alignItems: 'center', gap: 5, fontSize: 12.5, fontWeight: 600, color: 'var(--text-primary)' }}>Open <Icon name="arrowRight" size={13}/></div>
-            </button>
-          ))}
+            </div>
+          </ChartCard>
+
+          <ChartCard title="Service status"
+            right={<span style={{ display: 'inline-flex', alignItems: 'center', gap: 5, fontSize: 11, fontWeight: 700, color: allOk ? 'var(--status-green)' : 'var(--status-amber)', background: allOk ? 'var(--status-green-bg)' : 'var(--status-amber-bg)', borderRadius: 999, padding: '2px 9px' }}>{allOk ? 'All healthy' : `${degraded.length} degraded`}</span>}>
+            <div>
+              {services.map((s, i) => <ServiceRow key={s.name} {...s} last={i === services.length - 1}/>)}
+            </div>
+          </ChartCard>
         </div>
-        <div style={{ marginTop: 24, fontSize: 12, color: 'var(--text-tertiary)', fontStyle: 'italic' }}>
-          Most console modules are placeholders for now — Loan Configuration is the live one.
+
+        {/* Configuration quick-access */}
+        <div>
+          <div style={{ display: 'flex', alignItems: 'baseline', gap: 8, margin: '6px 0 12px' }}>
+            <h3 style={{ margin: 0, fontSize: 13.5, fontWeight: 700, letterSpacing: '-0.01em' }}>Configuration</h3>
+            <span style={{ fontSize: 11.5, color: 'var(--text-tertiary)' }}>Jump into a console module</span>
+          </div>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: 16 }}>
+            {ADMIN_CATEGORIES.map(cat => (
+              <button key={cat.id} onClick={() => onOpen(cat)}
+                style={{
+                  textAlign: 'left', border: '1px solid var(--border-subtle)', borderRadius: 12,
+                  background: 'var(--bg-surface)', padding: 18, fontFamily: 'inherit', cursor: 'pointer',
+                  display: 'flex', flexDirection: 'column', gap: 10, minHeight: 132,
+                  transition: 'border-color 0.12s, box-shadow 0.12s',
+                }}
+                onMouseEnter={e => { e.currentTarget.style.borderColor = 'var(--text-primary)'; e.currentTarget.style.boxShadow = '0 1px 3px rgba(0,0,0,0.06)'; }}
+                onMouseLeave={e => { e.currentTarget.style.borderColor = 'var(--border-subtle)'; e.currentTarget.style.boxShadow = 'none'; }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                  <div style={{ width: 38, height: 38, borderRadius: 10, background: 'var(--bg-muted)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                    <Icon name={cat.icon} size={18} color="var(--text-secondary)" strokeWidth={1.6}/>
+                  </div>
+                  <div style={{ fontSize: 14.5, fontWeight: 700 }}>{cat.label}</div>
+                  {!cat.ready && <span style={{ marginLeft: 'auto', fontSize: 9.5, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.04em', color: 'var(--text-tertiary)', background: 'var(--bg-muted)', padding: '2px 7px', borderRadius: 999 }}>Placeholder</span>}
+                </div>
+                <div style={{ fontSize: 12.5, color: 'var(--text-tertiary)', lineHeight: 1.5 }}>{cat.desc}</div>
+                <div style={{ marginTop: 'auto', display: 'flex', alignItems: 'center', gap: 5, fontSize: 12.5, fontWeight: 600, color: 'var(--text-primary)' }}>Open <Icon name="arrowRight" size={13}/></div>
+              </button>
+            ))}
+          </div>
         </div>
+
       </div>
     </div>
   );
