@@ -271,5 +271,26 @@ export function buildDefaultWorkflows() {
       updatedAt: new Date().toISOString(),
       updatedBy: 'Admin',
     },
+    {
+      id: 'sales-cashout',
+      name: 'Sales Cash-out Refinance Workflow',
+      description: 'Navigation for sales originating cash-out refinances — offer details and validation up front.',
+      status: 'active',
+      priority: 15,
+      rules: {
+        logic: 'AND',
+        conditions: [
+          makeCondition('role', 'is', 'Sales'),
+          makeCondition('loanPurpose', 'is', 'Cash-out Refinance'),
+        ],
+        groups: [],
+      },
+      sections: [
+        makeSection('Intake', ['offer-details', 'borrower-info', '1003', 'loan-validation', 'disclosures']),
+        makeSection('Review', ['details-of-transaction', 'pricing']),
+      ],
+      updatedAt: new Date().toISOString(),
+      updatedBy: 'Admin',
+    },
   ];
 }
