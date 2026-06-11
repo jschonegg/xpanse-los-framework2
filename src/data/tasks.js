@@ -19,6 +19,7 @@ export const TASKS = [
   {
     id: 't-001',
     type: 'phone',
+    loanTab: 'pricing', // rate quote → Pricing & Lock
     title: 'Call back on rate quote',
     description: 'Quoted 7.125% Friday. He asked for a callback Monday AM. No reply to SMS.',
     action: { label: 'Call', icon: 'phone' },
@@ -33,6 +34,7 @@ export const TASKS = [
   {
     id: 't-002',
     type: 'rate',
+    loanTab: 'pricing', // lock extension → Pricing & Lock
     title: 'Confirm Anderson lock extension',
     description: 'Lock expires Thu. Market drifted +0.125 — extend now or repricing risk.',
     action: { label: 'Rate watch', icon: 'trendingUp' },
@@ -47,6 +49,7 @@ export const TASKS = [
   {
     id: 't-003',
     type: 'email',
+    loanTab: 'credit', // refresh credit pull → Credit & Liabilities
     title: 'Pre-approval expires Friday',
     description: 'Pre-approval issued 88d ago. House-hunting since April — refresh credit pull.',
     action: { label: 'Follow-up', icon: 'arrowRight' },
@@ -61,6 +64,7 @@ export const TASKS = [
   {
     id: 't-004',
     type: 'email',
+    loanTab: 'conditions', // UW conditions → Conditions
     title: 'Send conditional approval letter',
     description: 'UW cleared with 2 conditions. Listing agent asked for letter by tonight.',
     action: { label: 'Email', icon: 'mail' },
@@ -75,6 +79,7 @@ export const TASKS = [
   {
     id: 't-005',
     type: 'file',
+    loanTab: 'documents', // missing docs → Documents
     title: 'Chase missing W-2s',
     description: 'Need 2023 W-2 + last 30d paystubs. Borrower said he’d send Friday.',
     action: { label: 'Docs', icon: 'doc' },
@@ -89,6 +94,7 @@ export const TASKS = [
   {
     id: 't-006',
     type: 'meeting',
+    loanTab: 'closing', // CD + closing logistics → Closing
     title: 'Pre-closing walkthrough call',
     description: 'CTC issued. Walk through CD, wire instructions, day-of closing logistics.',
     action: { label: 'Meeting', icon: 'book' },

@@ -1054,6 +1054,14 @@ export function PipelineView({ onOpenLoan, persona = 'LO', intent }) {
     </div>
   );
 
+  // Opening a loan from the pipeline list lands on the Tasks tab ('now') by
+  // default. Explicit deep-links (the per-row quick-actions, e.g. Message
+  // borrower / View conditions) pass their own tab and keep it.
+  const openLoanFromList = React.useCallback(
+    (id, tab) => onOpenLoan(id, tab || 'now'),
+    [onOpenLoan]
+  );
+
   // Pipeline & Hybrid match the Home page edge-to-edge layout;
   // Tasks stays contained at a comfortable reading width.
   const wrapperStyle = viewMode === 'tasks'
@@ -1370,7 +1378,7 @@ export function PipelineView({ onOpenLoan, persona = 'LO', intent }) {
                     No loans match your filters
                   </div>
                 </td></tr>
-              ) : renderRows(visibleLoans, groupBy, activeColumns, onOpenLoan, cellPad, rowHeight, {
+              ) : renderRows(visibleLoans, groupBy, activeColumns, openLoanFromList, cellPad, rowHeight, {
                 editingCell, setEditingCell, updateCell,
                 rowMenu, setRowMenu, duplicateLoan, deleteLoan,
                 selected, setSelected,

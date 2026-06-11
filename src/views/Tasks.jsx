@@ -246,7 +246,9 @@ function TaskDetail({ task, onOpenLoan }) {
         </button>
         {task.borrower.loanId && (
           <button
-            onClick={() => onOpenLoan && onOpenLoan(task.borrower.loanId)}
+            // Coming from a task → open the loan on the page relevant to this
+            // task (e.g. Documents, Pricing). Falls back to Tasks if unmapped.
+            onClick={() => onOpenLoan && onOpenLoan(task.borrower.loanId, task.loanTab || 'now')}
             style={{
               flex: 1, height: 38, borderRadius: 8,
               border: '1px solid var(--border-default)', background: 'var(--bg-surface)',
