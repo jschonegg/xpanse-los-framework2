@@ -23,6 +23,7 @@ const defaults = {
   consistentCardHeaders: true,
   homeReorderV1: true,
   aiInsightsUnderScorecard: true,
+  homePolishV2: true,
 };
 
 function readOverrides() {

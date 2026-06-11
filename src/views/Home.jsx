@@ -164,8 +164,8 @@ function Leaderboard() {
   return (
     <div style={{ background: '#fff', border: '1px solid #E5E7EB', borderRadius: 16, overflow: 'hidden' }}>
 
-      {/* ── Branch stats strip (flag: leaderboardBranchStats) ── */}
-      {flags.leaderboardBranchStats && (
+      {/* ── Branch stats strip (flag: leaderboardBranchStats; suppressed in homePolishV2 to avoid double header) ── */}
+      {flags.leaderboardBranchStats && !flags.homePolishV2 && (
         <div style={{ padding: '14px 18px', background: 'linear-gradient(180deg, #FAFAFB 0%, #fff 100%)', borderBottom: '1px solid #F3F4F6' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 10 }}>
             <span style={{ fontSize: 13, fontWeight: 700, color: '#111827', letterSpacing: '-0.01em' }}>Camp Hill Branch</span>
@@ -1182,6 +1182,34 @@ function ScorecardStrip() {
       </div>
     </div>
   );
+  if (flags.homePolishV2) {
+    return (
+      <div style={{
+        background: '#fff',
+        border: '1px solid #E5E7EB',
+        borderRadius: 12,
+        padding: '14px 18px',
+        marginBottom: 18,
+        display: 'flex', alignItems: 'center', gap: 18,
+      }}>
+        {/* Denser layout: donut + tight label group hug the left, stats on the right with no big empty gutter. */}
+        <MiniDonut pct={SCORECARD.pct}/>
+        <div style={{ minWidth: 0, marginRight: 8 }}>
+          <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase', color: '#9CA3AF', marginBottom: 2 }}>This month</div>
+          <div style={{ fontSize: 14, fontWeight: 700, color: '#111827', letterSpacing: '-0.01em' }}>
+            {SCORECARD.units.current} of {SCORECARD.units.total} units · <span style={{ color: '#6B7280', fontWeight: 600 }}>{SCORECARD.units.deltaLabel}</span>
+          </div>
+          <div style={{ fontSize: 11, color: '#9CA3AF', marginTop: 1 }}>On pace for 13.8</div>
+        </div>
+        <div style={{ width: 1, alignSelf: 'stretch', background: '#F3F4F6' }}/>
+        <div style={{ display: 'flex', gap: 28, flex: 1, justifyContent: 'space-around' }}>
+          <Stat label="Volume"       value={SCORECARD.volume.value}      delta={SCORECARD.volume.deltaLabel}/>
+          <Stat label="Pull-through" value={SCORECARD.pullThrough.value} delta={SCORECARD.pullThrough.deltaLabel}/>
+          <Stat label="App-to-close" value={SCORECARD.appToClose.value}  delta={SCORECARD.appToClose.deltaLabel}/>
+        </div>
+      </div>
+    );
+  }
   return (
     <div style={{
       background: '#fff',
@@ -1224,6 +1252,9 @@ export function HomeView({ onNavigate, onOpenLoan }) {
     return () => window.removeEventListener(PREFS_EVENT, onChange);
   }, []);
   const showYourDay = !flags.yourDayCustomizable || prefs.show_your_day_sidebar !== false;
+  // Dashboard customize toggle (homePolishV2): lifted up so the Customize button
+  // can live next to the "Your dashboard" label instead of orphaned below the Leaderboard.
+  const [dashEditMode, setDashEditMode] = React.useState(false);
   const hiddenWidgetIds = [
     ...(flags.yourDayCustomizable && prefs.show_loan_health_monitor === false ? ['loan-health-monitor'] : []),
     // When aiInsightsUnderScorecard is ON, the AI Coach brief is rendered
@@ -1254,7 +1285,7 @@ export function HomeView({ onNavigate, onOpenLoan }) {
       <div style={{
         background: 'linear-gradient(135deg, #1a1535 0%, #1e1b4b 40%, #1a1d3a 100%)',
         borderBottom: '1px solid rgba(255,255,255,0.07)',
-        padding: '14px 32px 20px',
+        padding: flags.homePolishV2 ? '12px 32px 12px' : '14px 32px 20px',
         flexShrink: 0,
         position: 'relative',
         overflow: 'hidden',
@@ -1381,7 +1412,7 @@ export function HomeView({ onNavigate, onOpenLoan }) {
                     <Icon name={t.icon} size={12} strokeWidth={1.85}/>
                   </div>
                   {t.severity !== 'critical' && (
-                    <span style={{ color: 'rgba(255,255,255,0.4)', fontSize: 12, lineHeight: 1 }}>↗</span>
+                    <span style={{ color: `rgba(255,255,255,${flags.homePolishV2 ? '0.7' : '0.4'})`, fontSize: 12, lineHeight: 1 }}>↗</span>
                   )}
                 </div>
                 <div style={{ fontSize: 22, fontWeight: 800, letterSpacing: '-0.02em', lineHeight: 1, fontFamily: 'DM Mono' }}>{t.value}</div>
@@ -1428,18 +1459,56 @@ export function HomeView({ onNavigate, onOpenLoan }) {
               → loan-level WidgetGrid → Lakeside Feed.
               When OFF, fall back to the original ordering. */}
           {flags.homeReorderV1 && (
-            <div style={{ fontSize: 12, fontWeight: 700, letterSpacing: '0.07em', textTransform: 'uppercase', color: '#9CA3AF', marginBottom: 18 }}>
-              Your dashboard
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 18 }}>
+              <span style={{ fontSize: 12, fontWeight: 700, letterSpacing: '0.07em', textTransform: 'uppercase', color: '#9CA3AF', flex: 1 }}>
+                {flags.homePolishV2 && dashEditMode ? '✦ Drag to reorder · click × to remove' : 'Your dashboard'}
+              </span>
+              {flags.homePolishV2 && (
+                <button onClick={() => setDashEditMode(e => !e)} style={{
+                  display: 'flex', alignItems: 'center', gap: 5, padding: '5px 12px',
+                  border: '1px solid #E5E7EB', borderRadius: 7,
+                  background: dashEditMode ? '#111827' : '#fff',
+                  color: dashEditMode ? '#fff' : '#374151',
+                  fontFamily: 'inherit', fontSize: 13, fontWeight: 600, cursor: 'pointer',
+                }}>
+                  {dashEditMode
+                    ? <>✓ Done</>
+                    : <><Icon name="settings" size={12} color="#6B7280"/> Customize</>
+                  }
+                </button>
+              )}
             </div>
           )}
           {flags.homeReorderV1 && <ScorecardStrip/>}
           {flags.homeReorderV1 && <div style={{ height: 14 }}/>}
-          {flags.homeReorderV1 && flags.aiInsightsUnderScorecard && <AIInsightsCards onOpenLoan={onOpenLoan}/>}
+          {flags.homeReorderV1 && flags.aiInsightsUnderScorecard && (
+            flags.homePolishV2 ? (
+              <div style={{ background: '#fff', border: '1px solid #E5E7EB', borderRadius: 14, overflow: 'hidden' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '14px 18px', borderBottom: '1px solid #F3F4F6' }}>
+                  <div style={{ width: 22, height: 22, borderRadius: 6, background: '#7E68FA18', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                    <Icon name="sparkle" size={12} color="#7E68FA"/>
+                  </div>
+                  <span style={{ fontSize: 13, fontWeight: 700, color: '#111827' }}>AI Coach insights</span>
+                </div>
+                <div style={{ padding: '14px 18px' }}>
+                  <AIInsightsCards onOpenLoan={onOpenLoan}/>
+                </div>
+              </div>
+            ) : (
+              <AIInsightsCards onOpenLoan={onOpenLoan}/>
+            )
+          )}
           {flags.homeReorderV1 && flags.aiInsightsUnderScorecard && <div style={{ height: 14 }}/>}
           {flags.homeReorderV1 && <Leaderboard/>}
           {flags.homeReorderV1 && <div style={{ height: 14 }}/>}
 
-          <WidgetGrid hiddenIds={hiddenWidgetIds} hideSectionLabel={flags.homeReorderV1} renderWidget={(id) => {
+          <WidgetGrid
+            hiddenIds={hiddenWidgetIds}
+            hideSectionLabel={flags.homeReorderV1}
+            hideToolbar={flags.homePolishV2}
+            externalEditMode={flags.homePolishV2 ? dashEditMode : undefined}
+            onExternalEditToggle={flags.homePolishV2 ? setDashEditMode : undefined}
+            renderWidget={(id) => {
             if (id === 'leaderboard')       return <Leaderboard/>;
             if (id === 'company-feed')      return <CompanyFeedWidget feed={FEED}/>;
             if (id === 'ai-actions')        return <AIActionsWidget actions={visibleAI} onOpen={onOpenLoan} onDismiss={(aid) => setDoneAI(prev => new Set([...prev, aid]))}/>;
