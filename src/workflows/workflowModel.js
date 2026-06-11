@@ -31,6 +31,9 @@ export const SYSTEM_PAGES = [
   { id: 'closing',               label: 'Closing',                icon: 'calculator',  tab: 'closing',            kind: 'system' },
   { id: 'details-of-transaction',label: 'Details of Transaction', icon: 'calculator',  tab: 'detailsOfTransaction', kind: 'system' },
   { id: 'disclosures',           label: 'Disclosures',            icon: 'doc',         tab: 'disclosures',        kind: 'system' },
+  { id: 'aus',                   label: 'AUS',                    icon: 'zap',         tab: 'aus',                kind: 'system' },
+  { id: 'offers',                label: 'Offers',                 icon: 'listCheck',   tab: 'offers',             kind: 'system' },
+  { id: 'declarations',          label: 'Declarations',           icon: 'checkCircle', tab: 'declarations',       kind: 'system' },
 ];
 
 export const CUSTOM_PAGES = [
@@ -221,8 +224,9 @@ export function buildDefaultWorkflows() {
       priority: 999,
       rules: { logic: 'AND', conditions: [], groups: [] },
       sections: [
-        makeSection('Forms', ['borrower-info', '1003']),
-        makeSection('Workspaces', ['conditions', 'credit', 'pricing', 'documents', 'closing', 'disclosures']),
+        makeSection('Intake', ['borrower-info', 'loan-scenarios', 'credit', 'savings-calculator', 'aus', 'loan-validation']),
+        makeSection('Pricing', ['pricing', 'offers']),
+        makeSection('Finalize', ['details-of-transaction', 'declarations', '1003']),
       ],
       updatedAt: new Date().toISOString(),
       updatedBy: 'System',
