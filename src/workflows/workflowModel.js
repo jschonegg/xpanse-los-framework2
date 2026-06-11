@@ -15,31 +15,52 @@ export const FIXED_SYSTEM_LINKS = [
   { id: 'loan-story', label: 'Loan Story', icon: 'book',   tab: 'story' },
 ];
 
-// Every page an admin can place into a workflow section. `tab` is the existing
-// Loan Level View content id; several 1003 subsections intentionally share the
-// 'urla1003' content tab (the 1003 view contains those sections).
-export const AVAILABLE_PAGES = [
-  { id: 'borrower-summary',  label: 'Borrower Summary',   icon: 'doc',        tab: 'borrowerSummary' },
-  { id: 'borrower-info',     label: 'Borrower Info',      icon: 'doc',        tab: 'borrowerSummary' },
-  { id: '1003',              label: '1003',               icon: 'doc',        tab: 'urla1003' },
-  { id: 'assets-liabilities',label: 'Assets & Liabilities', icon: 'database', tab: 'urla1003' },
-  { id: 'real-estate-owned', label: 'Real Estate Owned',  icon: 'home',       tab: 'urla1003' },
-  { id: 'loan-property',     label: 'Loan & Property',    icon: 'home',       tab: 'urla1003' },
-  { id: 'declarations',      label: 'Declarations',       icon: 'checkCircle',tab: 'urla1003' },
-  { id: 'file-review',       label: 'File Review',        icon: 'listCheck',  tab: 'filereview' },
-  { id: 'conditions',        label: 'Conditions',         icon: 'listCheck',  tab: 'conditions', badge: 4 },
-  { id: 'aus',               label: 'AUS',                icon: 'zap',        tab: 'aus' },
-  { id: 'credit-liabilities',label: 'Credit & Liabilities', icon: 'database', tab: 'credit' },
-  { id: 'pricing-lock',      label: 'Pricing & Lock',     icon: 'dollar',     tab: 'pricing' },
-  { id: 'documents',         label: 'Documents',          icon: 'doc',        tab: 'documents' },
-  { id: 'closing',           label: 'Closing',            icon: 'calculator', tab: 'closing' },
-  { id: 'audit',             label: 'Audit',              icon: 'fileSearch', tab: 'audit' },
-  { id: 'services',          label: 'Services',           icon: 'settings',   tab: 'services' },
+// Every page an admin can place into a workflow section. `kind` distinguishes
+// system (out-of-the-box) pages from custom ones. `tab` is the Loan Level View
+// content id each page activates; pages whose tab has no built-out content yet
+// render a blank placeholder in the loan view (the content router falls back to
+// PlaceholderTab for any tab it doesn't explicitly handle).
+export const SYSTEM_PAGES = [
+  { id: '1003',                  label: '1003',                   icon: 'doc',         tab: 'urla1003',           kind: 'system' },
+  { id: 'conditions',            label: 'Conditions',             icon: 'listCheck',   tab: 'conditions', badge: 4, kind: 'system' },
+  { id: 'credit',                label: 'Credit',                 icon: 'database',    tab: 'credit',             kind: 'system' },
+  { id: 'liabilities-reo',       label: 'Liabilities & REO',      icon: 'home',        tab: 'liabilitiesReo',     kind: 'system' },
+  { id: 'loan-scenarios',        label: 'Loan Scenarios',         icon: 'trendingUp',  tab: 'loanScenarios',      kind: 'system' },
+  { id: 'pricing',               label: 'Pricing',                icon: 'dollar',      tab: 'pricing',            kind: 'system' },
+  { id: 'documents',             label: 'Documents',              icon: 'doc',         tab: 'documents',          kind: 'system' },
+  { id: 'closing',               label: 'Closing',                icon: 'calculator',  tab: 'closing',            kind: 'system' },
+  { id: 'details-of-transaction',label: 'Details of Transaction', icon: 'calculator',  tab: 'detailsOfTransaction', kind: 'system' },
+  { id: 'disclosures',           label: 'Disclosures',            icon: 'doc',         tab: 'disclosures',        kind: 'system' },
 ];
+
+export const CUSTOM_PAGES = [
+  { id: 'borrower-info',         label: 'Borrower Info',          icon: 'doc',         tab: 'borrowerSummary',    kind: 'custom' },
+  { id: 'savings-calculator',    label: 'Savings Calculator',     icon: 'calculator',  tab: 'savingsCalculator',  kind: 'custom' },
+  { id: 'loan-validation',       label: 'Loan Validation',        icon: 'checkCircle', tab: 'loanValidation',     kind: 'custom' },
+  { id: 'offer-details',         label: 'Offer Details',          icon: 'doc',         tab: 'offerDetails',       kind: 'custom' },
+  { id: 'rate-sheet',            label: 'Rate Sheet',             icon: 'dollar',      tab: 'rateSheet',          kind: 'custom' },
+];
+
+export const AVAILABLE_PAGES = [...SYSTEM_PAGES, ...CUSTOM_PAGES];
 
 const PAGE_BY_ID = AVAILABLE_PAGES.reduce((m, p) => { m[p.id] = p; return m; }, {});
 
-export function getPage(id) { return PAGE_BY_ID[id] || null; }
+// Look a page up across the built-in set plus any runtime-created custom pages
+// (passed in by callers that have access to the workflow context).
+export function getPage(id, extraPages = []) {
+  return PAGE_BY_ID[id] || extraPages.find(p => p.id === id) || null;
+}
+
+// Factory for an admin-created custom page. The new page maps to its own
+// content tab, which has no built-out content, so it renders a blank
+// placeholder in the loan view until real content is wired up.
+export function makeCustomPage(label) {
+  const clean = (label || '').trim() || 'Untitled Page';
+  const slug = clean.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') || 'page';
+  const id = `custom-${slug}-${newId('p')}`;
+  const tab = `custom_${slug.replace(/-/g, '_')}`;
+  return { id, label: clean, icon: 'doc', tab, kind: 'custom', placeholder: true };
+}
 
 // page id → Loan Level View content tab id (used by the loan nav renderer).
 export const PAGE_CONTENT_TAB = AVAILABLE_PAGES.reduce((m, p) => { m[p.id] = p.tab; return m; }, {});
@@ -176,7 +197,7 @@ export function buildDefaultWorkflows() {
       rules: { logic: 'AND', conditions: [], groups: [] },
       sections: [
         makeSection('Forms', ['borrower-info', '1003']),
-        makeSection('Workspaces', ['file-review', 'conditions', 'aus', 'credit-liabilities', 'pricing-lock', 'documents', 'closing', 'audit', 'services']),
+        makeSection('Workspaces', ['conditions', 'credit', 'pricing', 'documents', 'closing', 'disclosures']),
       ],
       updatedAt: new Date().toISOString(),
       updatedBy: 'System',
@@ -197,9 +218,9 @@ export function buildDefaultWorkflows() {
         groups: [],
       },
       sections: [
-        makeSection('Intake', ['borrower-summary', '1003', 'credit-liabilities']),
-        makeSection('Processing', ['file-review', 'conditions', 'documents']),
-        makeSection('Decisioning', ['aus', 'pricing-lock']),
+        makeSection('Intake', ['borrower-info', '1003', 'credit']),
+        makeSection('Processing', ['conditions', 'documents']),
+        makeSection('Decisioning', ['pricing', 'loan-scenarios']),
       ],
       updatedAt: new Date().toISOString(),
       updatedBy: 'Admin',
@@ -220,10 +241,10 @@ export function buildDefaultWorkflows() {
         groups: [],
       },
       sections: [
-        makeSection('Intake', ['borrower-summary', '1003', 'credit-liabilities']),
-        makeSection('Review', ['file-review', 'aus', 'pricing-lock']),
+        makeSection('Intake', ['borrower-info', '1003', 'credit']),
+        makeSection('Review', ['liabilities-reo', 'pricing']),
         makeSection('Conditions', ['conditions', 'documents']),
-        makeSection('Closing Prep', ['closing', 'audit']),
+        makeSection('Closing Prep', ['closing', 'disclosures']),
       ],
       updatedAt: new Date().toISOString(),
       updatedBy: 'Admin',
@@ -243,9 +264,9 @@ export function buildDefaultWorkflows() {
         groups: [],
       },
       sections: [
-        makeSection('Review', ['file-review', 'credit-liabilities', 'aus']),
+        makeSection('Review', ['credit', 'liabilities-reo']),
         makeSection('Conditions', ['conditions', 'documents']),
-        makeSection('Audit', ['audit']),
+        makeSection('Decisioning', ['details-of-transaction', 'pricing']),
       ],
       updatedAt: new Date().toISOString(),
       updatedBy: 'Admin',

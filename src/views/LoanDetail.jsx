@@ -2916,12 +2916,16 @@ function LoanDetailView({ loanId, tab, onTab, persona = 'LO', previewWorkflow = 
            : localTab === 'services' ? <ServicesTab/>
            : localTab === 'borrowerSummary' ? <BorrowerSummaryView loanId={loanId} apps={urlaApps} setApps={setUrlaApps} activeApp={urlaActiveApp} setActiveApp={setUrlaActiveApp} onUpdateApp={updateActiveUrlaApp}/>
            : localTab === 'urla1003' ? <URLA1003View loanId={loanId} apps={urlaApps} setApps={setUrlaApps} activeApp={urlaActiveApp} setActiveApp={setUrlaActiveApp}/>
-           : isApplication ? <NowTabApplication borrowerName={meta.borrower} loanId={loanId} loan={loan} onOpenURLA={openURLA}/>
-           : meta.status === 'Processing' ? <NowTabProcessing borrowerName={meta.borrower} loanId={loanId} loan={loan}/>
-           : meta.status === 'Underwriting' ? <NowTabUnderwriting borrowerName={meta.borrower} loanId={loanId} loan={loan} fema={loan.fema || null}/>
-           : meta.status === 'Closing' ? <NowTabClosing borrowerName={meta.borrower} loanId={loanId} loan={loan}/>
-           : meta.status === 'Approval' ? (persona === 'LO' ? <LOApprovalView loanId={loanId}/> : <NowTabApproval borrowerName={meta.borrower} loanId={loanId} loan={loan}/>)
-           : <NowTab/>}
+           : (!localTab || localTab === 'now') ? (
+               isApplication ? <NowTabApplication borrowerName={meta.borrower} loanId={loanId} loan={loan} onOpenURLA={openURLA}/>
+               : meta.status === 'Processing' ? <NowTabProcessing borrowerName={meta.borrower} loanId={loanId} loan={loan}/>
+               : meta.status === 'Underwriting' ? <NowTabUnderwriting borrowerName={meta.borrower} loanId={loanId} loan={loan} fema={loan.fema || null}/>
+               : meta.status === 'Closing' ? <NowTabClosing borrowerName={meta.borrower} loanId={loanId} loan={loan}/>
+               : meta.status === 'Approval' ? (persona === 'LO' ? <LOApprovalView loanId={loanId}/> : <NowTabApproval borrowerName={meta.borrower} loanId={loanId} loan={loan}/>)
+               : <NowTab/>
+             )
+           /* Any configured page without built-out content renders a blank placeholder. */
+           : <PlaceholderTab label={humanizeTab(localTab)}/>}
         </main>
 
         <ToolsPanel onOpenURLA={openURLA} onOpenComms={openCommsWindow} onOpenDocs={openDocsWindow} onOpenIncome={openIncomeWindow} onOpenNotes={openNotesWindow}/>
@@ -3061,6 +3065,33 @@ function DocumentsWorkspaceTab() {
       }}>
         This workspace is empty. Document organization, version tracking, and bulk
         actions will live here.
+      </div>
+    </div>
+  );
+}
+
+// Turn a content-tab / page id into a readable title for placeholder pages.
+function humanizeTab(tab) {
+  if (!tab) return 'Page';
+  const cleaned = String(tab)
+    .replace(/^custom[-_]/, '')          // drop the custom- prefix
+    .replace(/[-_]p_[a-z0-9_]+$/i, '')   // drop the generated id suffix
+    .replace(/[-_]/g, ' ')               // hyphens/underscores → spaces
+    .replace(/([a-z0-9])([A-Z])/g, '$1 $2') // split camelCase
+    .trim();
+  return cleaned ? cleaned.replace(/\b\w/g, c => c.toUpperCase()) : 'Page';
+}
+
+// Blank placeholder shown for a configured page whose content isn't built yet.
+function PlaceholderTab({ label }) {
+  return (
+    <div style={{ padding: '64px 24px', textAlign: 'center', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 12 }}>
+      <div style={{ width: 56, height: 56, borderRadius: 14, background: 'var(--bg-muted)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        <Icon name="doc" size={26} color="var(--text-tertiary)" strokeWidth={1.6}/>
+      </div>
+      <div style={{ fontSize: 17, fontWeight: 600, color: 'var(--text-primary)', letterSpacing: '-0.01em' }}>{label || 'Page'}</div>
+      <div style={{ fontSize: 13, color: 'var(--text-tertiary)', maxWidth: 380, lineHeight: 1.55 }}>
+        This page is a placeholder — content for <strong style={{ color: 'var(--text-secondary)' }}>{label || 'this page'}</strong> hasn’t been built yet.
       </div>
     </div>
   );
