@@ -1,4 +1,6 @@
 import React from 'react';
+import { flags } from '../flags';
+import { PERSONAS, findPersonaByCredentials } from '../personas';
 
 const LOGIN_CSS = `
 .lx-stage { min-height: 100vh; display: flex; background: var(--bg-app, #F8F8F6); font-family: inherit; }
@@ -183,6 +185,7 @@ export function LoginScreen({ onLogin }) {
   const [remember, setRemember] = React.useState(true);
   const [email, setEmail] = React.useState('');
   const [password, setPassword] = React.useState('');
+  const [error, setError] = React.useState('');
 
   React.useEffect(() => {
     if (document.getElementById('lx-login-css')) return;
@@ -194,8 +197,17 @@ export function LoginScreen({ onLogin }) {
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    onLogin();
+    if (!flags.personaLogin) { onLogin(); return; }
+    // Empty form = fast-path to LO (legacy demo behavior).
+    if (!email && !password) { onLogin('LO'); return; }
+    const match = findPersonaByCredentials(email, password);
+    if (!match) { setError('No persona matches those credentials. See the demo accounts below.'); return; }
+    setError('');
+    onLogin(match.id);
   };
+
+  // SSO buttons jump straight to LO since they don't carry credentials.
+  const ssoLogin = () => onLogin(flags.personaLogin ? 'LO' : undefined);
 
   return (
     <div className="lx-stage" style={{ '--lx-a': '#1B1F66', '--lx-b': '#00023C', '--lx-glow': '#3F4CED' }}>
@@ -275,12 +287,38 @@ export function LoginScreen({ onLogin }) {
             <a className="lx-link" href="#">Forgot password?</a>
           </div>
 
+          {flags.personaLogin && error && (
+            <div style={{
+              fontSize: 12.5, color: '#B91C1C', background: '#FEF2F2',
+              border: '1px solid #FECACA', borderRadius: 8, padding: '8px 10px',
+              marginBottom: 10,
+            }}>{error}</div>
+          )}
+
           <button type="submit" className="lx-btn-primary">Sign in</button>
+
+          {flags.personaLogin && (
+            <div style={{
+              marginTop: 14, padding: '10px 12px',
+              background: 'rgba(126,104,250,0.06)', border: '1px solid rgba(126,104,250,0.18)',
+              borderRadius: 8, fontSize: 11.5, color: '#374151',
+            }}>
+              <div style={{ fontSize: 10.5, fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', color: '#6B7280', marginBottom: 5 }}>
+                Demo accounts · password <span style={{ fontFamily: 'DM Mono', color: '#111827' }}>xpanse</span>
+              </div>
+              {PERSONAS.map(p => (
+                <div key={p.id} style={{ display: 'flex', justifyContent: 'space-between', gap: 12, padding: '2px 0' }}>
+                  <span style={{ fontFamily: 'DM Mono', color: '#111827' }}>{p.email}</span>
+                  <span style={{ color: '#6B7280' }}>{p.role}</span>
+                </div>
+              ))}
+            </div>
+          )}
 
           <div className="lx-divider">or continue with</div>
           <div className="lx-sso">
-            <button type="button" className="lx-btn-sso" onClick={onLogin}><GoogleG/> Google</button>
-            <button type="button" className="lx-btn-sso" onClick={onLogin}>
+            <button type="button" className="lx-btn-sso" onClick={ssoLogin}><GoogleG/> Google</button>
+            <button type="button" className="lx-btn-sso" onClick={ssoLogin}>
               <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor"><path d="M12 1 3 5v6c0 5.5 3.8 10.7 9 12 5.2-1.3 9-6.5 9-12V5l-9-4Zm0 6a3 3 0 1 1 0 6 3 3 0 0 1 0-6Z"/></svg>
               SAML / Okta SSO
             </button>

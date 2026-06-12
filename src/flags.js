@@ -24,6 +24,7 @@ const defaults = {
   homeReorderV1: true,
   aiInsightsUnderScorecard: true,
   homePolishV2: true,
+  personaLogin: true,
 };
 
 function readOverrides() {
