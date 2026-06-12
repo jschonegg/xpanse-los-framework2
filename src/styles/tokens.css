@@ -32,8 +32,8 @@
   --status-blue-bg: #DCE9FB;
   --status-green: #1F7A45;
   --status-green-bg: #DFF1E5;
-  --status-amber: #9C6A1A;
-  --status-amber-bg: #FBEFD2;
+  --status-amber: #CF971A;
+  --status-amber-bg: #FCF4D2;
   --status-red: #C2362A;
   --status-red-bg: #FBE3DF;
 
@@ -42,8 +42,8 @@
   --card-red-border: #F2D4CE;
   --card-green-bg: #F1F8F2;
   --card-green-border: #D7E8DA;
-  --card-amber-bg: #FBF6E9;
-  --card-amber-border: #EFE2BC;
+  --card-amber-bg: #FDF8E1;
+  --card-amber-border: #F2E3A9;
 
   /* Shadows */
   --shadow-sm: 0 1px 2px rgba(15, 17, 21, 0.04);

@@ -6,7 +6,7 @@ import { Avatar, StatusPill, PageHeader } from '../components/Shell';
 import { LoanSummaryCards } from '../components/LoanSummaryCards';
 import { ConditionsTab, AUSTab, PricingLockTab, ClosingTab, AuditTab } from './LoanWorkspaces';
 import { FileReviewTab } from './FileReviewTab';
-import { LOApprovalView } from './LOApprovalView';
+import { ApprovalTasks } from './ApprovalTasks';
 
 function ServicesTab() {
   return (
@@ -23,7 +23,6 @@ import { NowTabApplication } from './NowTabApplication';
 import { NowTabProcessing } from './NowTabProcessing';
 import { NowTabUnderwriting } from './NowTabUnderwriting';
 import { NowTabClosing } from './NowTabClosing';
-import { NowTabApproval } from './NowTabApproval';
 import { URLAView } from './URLAView';
 import { LOANS } from '../data/loans';
 import { DocumentsTool } from '../components/DocumentsTool';
@@ -2891,7 +2890,7 @@ function LoanDetailView({ loanId, tab, onTab, persona = 'LO', previewWorkflow = 
                : meta.status === 'Processing' ? <NowTabProcessing borrowerName={meta.borrower} loanId={loanId} loan={loan}/>
                : meta.status === 'Underwriting' ? <NowTabUnderwriting borrowerName={meta.borrower} loanId={loanId} loan={loan} fema={loan.fema || null}/>
                : meta.status === 'Closing' ? <NowTabClosing borrowerName={meta.borrower} loanId={loanId} loan={loan}/>
-               : meta.status === 'Approval' ? (persona === 'LO' ? <LOApprovalView loanId={loanId}/> : <NowTabApproval borrowerName={meta.borrower} loanId={loanId} loan={loan}/>)
+               : meta.status === 'Approval' ? <ApprovalTasks loanId={loanId}/>
                : <NowTab/>
              )
            /* Any configured page without built-out content renders a blank placeholder. */
@@ -3080,6 +3079,7 @@ function NowTab() {
           <div style={{ display: 'flex', flexDirection: 'column', gap: 14, maxWidth: 760 }}>
             {/* URGENT */}
             <ActionCard
+              defaultOpen
               tone="red"
               icon={<Icon name="alertOctagon" size={18} strokeWidth={1.7}/>}
               iconBg="#F8DCD4" iconColor="#B33222"

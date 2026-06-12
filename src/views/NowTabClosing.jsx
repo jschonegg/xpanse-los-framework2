@@ -1,50 +1,7 @@
 import React from 'react';
 import { Icon } from '../components/Icon';
 import { StatusPill } from '../components/Shell';
-
-// Gradient-header + white-body card, matching the LOApprovalView style.
-function ActionCard({ tone = 'neutral', icon, iconBg, header, children, footer }) {
-  const tones = {
-    red:     { bg: 'linear-gradient(90deg, #FEE2E2, #FEF2F2)', border: '#FECACA' },
-    green:   { bg: 'linear-gradient(90deg, #E7F8F1, #F0FDF4)', border: '#A7F3D0' },
-    amber:   { bg: 'linear-gradient(90deg, #FEF6E7, #FFF8F0)', border: '#FDE9C2' },
-    blue:    { bg: 'linear-gradient(90deg, #EEF3FE, #F5F8FF)', border: '#C7D2FE' },
-    ai:      { bg: 'linear-gradient(90deg, #F4F1FE, #FAF8FF)', border: '#E4DEFA' },
-    neutral: { bg: 'var(--bg-muted)',                          border: 'var(--border-subtle)' },
-  };
-  const t = tones[tone] || tones.neutral;
-  return (
-    <div style={{
-      background: 'var(--bg-surface)',
-      border: `1px solid ${t.border}`,
-      borderRadius: 14, overflow: 'hidden',
-    }}>
-      <div style={{
-        background: t.bg, borderBottom: `1px solid ${t.border}`,
-        padding: '12px 16px', display: 'flex', alignItems: 'center', gap: 12,
-      }}>
-        {icon && (
-          <div style={{ width: 30, height: 30, borderRadius: 8, background: iconBg || 'rgba(255,255,255,0.65)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-            {icon}
-          </div>
-        )}
-        <div style={{ flex: 1, minWidth: 0 }}>{header}</div>
-      </div>
-      {(children || footer) && (
-        <div style={{ padding: '14px 16px' }}>
-          {children}
-          {footer && (
-            <div style={{
-              marginTop: children ? 14 : 0, paddingTop: children ? 12 : 0,
-              borderTop: children ? '1px solid var(--border-subtle)' : 'none',
-              display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap',
-            }}>{footer}</div>
-          )}
-        </div>
-      )}
-    </div>
-  );
-}
+import { ActionCard } from '../components/TaskCard';
 
 function AIInsight({ children }) {
   return (
@@ -178,6 +135,7 @@ export function NowTabClosing({ borrowerName = 'Jennifer Wang', loanId = 'LN-202
 
         {/* 1. CLOSING DISCLOSURE */}
         <ActionCard
+          defaultOpen
           tone={done('cd') ? 'green' : 'red'}
           icon={<Icon name="doc" size={18} color={done('cd') ? '#1F7A45' : '#B33222'} strokeWidth={1.7}/>}
           iconBg={done('cd') ? 'rgba(223,241,229,0.9)' : '#F8DCD4'}

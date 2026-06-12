@@ -1,75 +1,7 @@
 import React from 'react';
 import { Icon } from '../components/Icon';
 import { StatusPill } from '../components/Shell';
-
-// Gradient-header + white-body card, matching the LOApprovalView
-// "Conditional Approval" card. Tone drives the header bg only; body is white.
-function ActionCard({ tone = 'neutral', icon, iconBg, header, children, footer, isActive, isWaiting }) {
-  const tones = {
-    red:     { bg: 'linear-gradient(90deg, #FEE2E2, #FEF2F2)', border: '#FECACA' },
-    green:   { bg: 'linear-gradient(90deg, #E7F8F1, #F0FDF4)', border: '#A7F3D0' },
-    amber:   { bg: 'linear-gradient(90deg, #FEF6E7, #FFF8F0)', border: '#FDE9C2' },
-    blue:    { bg: 'linear-gradient(90deg, #EEF3FE, #F5F8FF)', border: '#C7D2FE' },
-    ai:      { bg: 'linear-gradient(90deg, #F4F1FE, #FAF8FF)', border: '#E4DEFA' },
-    neutral: { bg: 'var(--bg-muted)',                          border: 'var(--border-subtle)' },
-  };
-  const t = tones[tone] || tones.neutral;
-
-  return (
-    <div style={{
-      background: 'var(--bg-surface)',
-      border: `1px solid ${t.border}`,
-      borderRadius: 14,
-      overflow: 'hidden',
-      // Active task cards get a slightly elevated shadow instead of an
-      // accent border — keeps the card chrome consistent across states.
-      boxShadow: isActive
-        ? '0 6px 20px rgba(15,16,20,0.10), 0 2px 4px rgba(15,16,20,0.04)'
-        : 'none',
-      opacity: isWaiting ? 0.5 : 1,
-      transition: 'opacity 0.2s, box-shadow 0.2s',
-    }}>
-      {/* Gradient header band */}
-      <div style={{
-        background: t.bg,
-        borderBottom: `1px solid ${t.border}`,
-        padding: '12px 16px',
-        display: 'flex', alignItems: 'center', gap: 12,
-      }}>
-        {icon && (
-          <div style={{
-            width: 30, height: 30, borderRadius: 8,
-            background: iconBg || 'rgba(255,255,255,0.65)',
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-            flexShrink: 0,
-          }}>
-            {icon}
-          </div>
-        )}
-        <div style={{ flex: 1, minWidth: 0 }}>
-          {header}
-        </div>
-      </div>
-
-      {/* White body */}
-      {(children || footer) && (
-        <div style={{ padding: '14px 16px' }}>
-          {children}
-          {footer && (
-            <div style={{
-              marginTop: children ? 14 : 0,
-              paddingTop: children ? 12 : 0,
-              borderTop: children ? '1px solid var(--border-subtle)' : 'none',
-              display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap',
-            }}>
-              {footer}
-            </div>
-          )}
-        </div>
-      )}
-    </div>
-  );
-}
+import { ActionCard } from '../components/TaskCard';
 
 function AIInsight({ children }) {
   return (
@@ -128,7 +60,7 @@ function FEMADisasterCard({ fema, borrowerName }) {
 
   if (resolved) {
     return (
-      <ActionCard tone="green"
+      <ActionCard tone="green" defaultOpen
         icon={<Icon name="checkCircle" size={18} color="#1F7A45" strokeWidth={1.85}/>}
         iconBg="rgba(223,241,229,0.9)"
         header={<CardHeader title="FEMA Disaster Review Complete ✓" pill="Resolved" pillTone="green"/>}
@@ -141,7 +73,7 @@ function FEMADisasterCard({ fema, borrowerName }) {
   }
 
   return (
-    <ActionCard tone="red" isActive
+    <ActionCard tone="red" isActive defaultOpen
       icon={<Icon name="alertOctagon" size={18} color="#B91C1C" strokeWidth={1.85}/>}
       iconBg="#FEE2E2"
       header={
@@ -255,6 +187,7 @@ export function NowTabUnderwriting({ borrowerName = 'Sarah Anderson', loanId = '
 
         {/* 1. AUS REVIEW */}
         <ActionCard
+          defaultOpen={!fema}
           tone={done('aus') ? 'green' : 'neutral'}
           isActive={!done('aus') && activeStepId === 'aus'}
           isWaiting={false}

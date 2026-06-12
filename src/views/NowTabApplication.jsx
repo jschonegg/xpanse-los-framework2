@@ -2,6 +2,7 @@ import React from 'react';
 import ReactDOM from 'react-dom';
 import { Icon } from '../components/Icon';
 import { StatusPill } from '../components/Shell';
+import { ActionCard } from '../components/TaskCard';
 import { W2Viewer } from '../components/W2Viewer';
 import { URLAView } from './URLAView';
 
@@ -58,50 +59,6 @@ function URLAWindow({ onClose, onSubmit, borrowerName, loanId }) {
 }
 
 /* Shared primitives (duplicated from LoanDetail to keep this file self-contained) */
-
-// Gradient-header + white-body card, matching the LOApprovalView style.
-function ActionCard({ tone = 'neutral', icon, iconBg, iconColor, header, children, footer }) {
-  const toneStyles = {
-    red:     { bg: 'linear-gradient(90deg, #FEE2E2, #FEF2F2)', border: '#FECACA' },
-    green:   { bg: 'linear-gradient(90deg, #E7F8F1, #F0FDF4)', border: '#A7F3D0' },
-    amber:   { bg: 'linear-gradient(90deg, #FEF6E7, #FFF8F0)', border: '#FDE9C2' },
-    blue:    { bg: 'linear-gradient(90deg, #EEF3FE, #F5F8FF)', border: '#C7D2FE' },
-    ai:      { bg: 'linear-gradient(90deg, #F4F1FE, #FAF8FF)', border: '#E4DEFA' },
-    neutral: { bg: 'var(--bg-muted)',                          border: 'var(--border-subtle)' },
-  };
-  const t = toneStyles[tone] || toneStyles.neutral;
-  return (
-    <div style={{
-      background: 'var(--bg-surface)',
-      border: `1px solid ${t.border}`,
-      borderRadius: 14, overflow: 'hidden',
-    }}>
-      <div style={{
-        background: t.bg, borderBottom: `1px solid ${t.border}`,
-        padding: '12px 16px', display: 'flex', alignItems: 'center', gap: 12,
-      }}>
-        {icon && (
-          <div style={{ width: 30, height: 30, borderRadius: 8, background: iconBg || 'rgba(255,255,255,0.65)', color: iconColor || 'var(--text-primary)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-            {icon}
-          </div>
-        )}
-        <div style={{ flex: 1, minWidth: 0 }}>{header}</div>
-      </div>
-      {(children || footer) && (
-        <div style={{ padding: '14px 16px' }}>
-          {children}
-          {footer && (
-            <div style={{
-              marginTop: children ? 14 : 0, paddingTop: children ? 12 : 0,
-              borderTop: children ? '1px solid var(--border-subtle)' : 'none',
-              display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap',
-            }}>{footer}</div>
-          )}
-        </div>
-      )}
-    </div>
-  );
-}
 
 function AIInsight({ children }) {
   return (
@@ -277,6 +234,7 @@ export function NowTabApplication({ borrowerName = 'Marcus Johnson', loanId, loa
 
         {/* 0. COMPLETE URLA */}
         <ActionCard
+          defaultOpen
           tone={done('urla') ? 'green' : 'ai'}
           icon={<Icon name="doc" size={18} color={done('urla') ? '#1F7A45' : 'var(--ai-primary)'} strokeWidth={1.7}/>}
           iconBg={done('urla') ? 'rgba(223,241,229,0.9)' : 'var(--ai-bg-strong)'}
