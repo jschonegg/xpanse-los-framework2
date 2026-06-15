@@ -328,24 +328,67 @@ function PropertyCard({ loanId, property }) {
   );
 }
 
-/* Party avatars strip in header */
+/* Quick-contact icon link used per person in the parties popover. */
+function ContactAction({ href, icon, label }) {
+  return (
+    <a
+      href={href}
+      title={label}
+      aria-label={label}
+      onClick={(e) => e.stopPropagation()}
+      style={{
+        display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+        width: 24, height: 24, borderRadius: 6, flexShrink: 0,
+        color: 'var(--text-tertiary)', textDecoration: 'none',
+        transition: 'background 0.12s, color 0.12s',
+      }}
+      onMouseEnter={(e) => { e.currentTarget.style.background = 'var(--bg-muted)'; e.currentTarget.style.color = 'var(--ai-primary)'; }}
+      onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = 'var(--text-tertiary)'; }}
+    >
+      <Icon name={icon} size={13}/>
+    </a>
+  );
+}
+
+/* Party avatars strip in header — hovering any badge opens a single popover
+   showing the whole loan team at a glance, with the hovered party highlighted.
+   The popover opens below the cluster so it isn't clipped at the top of the
+   header, and stays open while the cursor is on it for quick contact actions. */
 function HeaderParties({ loanId }) {
   const data = LOAN_CONTACTS[loanId];
   if (!data) return null;
+  const [open, setOpen] = React.useState(false);
   const [hoveredId, setHoveredId] = React.useState(null);
+  const closeTimer = React.useRef(null);
+  const openNow = () => { clearTimeout(closeTimer.current); setOpen(true); };
+  // Grace period so moving the cursor from the badges across the gap onto the
+  // popover doesn't close it — lets the user interact with the contact actions.
+  const closeSoon = () => { clearTimeout(closeTimer.current); closeTimer.current = setTimeout(() => { setOpen(false); setHoveredId(null); }, 140); };
+
   const parties = [
     ...data.external.slice(0, 3),
     ...data.team.slice(0, 2),
   ];
   if (parties.length === 0) return null;
+
+  const hiddenCount = (data.external.length + data.team.length) - parties.length;
+  // Full roster for the popover — grouped, and including anyone behind the "+N".
+  const groups = [
+    { label: 'External', people: data.external },
+    { label: 'Your team', people: data.team },
+  ].filter(g => g.people.length);
+
   return (
     <div style={{ paddingLeft: 16, borderLeft: '1px solid var(--border-subtle)', display: 'flex', flexDirection: 'column', gap: 2 }}>
       <div style={{ fontSize: 11, fontWeight: 600, color: 'var(--text-tertiary)', letterSpacing: '0.04em', textTransform: 'uppercase', marginBottom: 4 }}>Parties</div>
-      <div style={{ display: 'flex', alignItems: 'center' }}>
+      <div
+        style={{ position: 'relative', display: 'flex', alignItems: 'center', width: 'fit-content' }}
+        onMouseEnter={openNow}
+        onMouseLeave={closeSoon}
+      >
         {parties.map((p, i) => (
-          <div key={p.id} style={{ position: 'relative', marginLeft: i > 0 ? -8 : 0 }}
-            onMouseEnter={() => setHoveredId(p.id)}
-            onMouseLeave={() => setHoveredId(null)}
+          <div key={p.id} style={{ marginLeft: i > 0 ? -8 : 0 }}
+            onMouseEnter={() => { openNow(); setHoveredId(p.id); }}
           >
             <div style={{
               width: 28, height: 28, borderRadius: '50%',
@@ -356,24 +399,63 @@ function HeaderParties({ loanId }) {
             }}>
               <span style={{ fontSize: 10, fontWeight: 700, color: p.color }}>{p.initials}</span>
             </div>
-            {hoveredId === p.id && (
-              <div style={{
-                position: 'absolute', bottom: 'calc(100% + 6px)', left: '50%', transform: 'translateX(-50%)',
-                background: 'var(--bg-surface)', border: '1px solid var(--border-subtle)',
-                borderRadius: 8, padding: '6px 10px', whiteSpace: 'nowrap', zIndex: 500,
-                boxShadow: '0 4px 16px rgba(0,0,0,0.12)',
-                pointerEvents: 'none',
-              }}>
-                <div style={{ fontSize: 12, fontWeight: 700 }}>{p.name}</div>
-                <div style={{ fontSize: 11, color: 'var(--text-tertiary)' }}>{p.role}</div>
-                {p.company && <div style={{ fontSize: 11, color: 'var(--text-tertiary)' }}>{p.company}</div>}
-              </div>
-            )}
           </div>
         ))}
-        {(data.external.length + data.team.length) > parties.length && (
-          <div style={{ width: 28, height: 28, borderRadius: '50%', background: 'var(--bg-muted)', border: '2px solid var(--bg-surface)', marginLeft: -8, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-            <span style={{ fontSize: 10, fontWeight: 700, color: 'var(--text-tertiary)' }}>+{(data.external.length + data.team.length) - parties.length}</span>
+        {hiddenCount > 0 && (
+          <div
+            style={{ width: 28, height: 28, borderRadius: '50%', background: 'var(--bg-muted)', border: '2px solid var(--bg-surface)', marginLeft: -8, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'default' }}
+            onMouseEnter={() => { openNow(); setHoveredId(null); }}
+          >
+            <span style={{ fontSize: 10, fontWeight: 700, color: 'var(--text-tertiary)' }}>+{hiddenCount}</span>
+          </div>
+        )}
+
+        {open && (
+          <div
+            onMouseEnter={openNow}
+            onMouseLeave={closeSoon}
+            style={{
+              position: 'absolute', top: 'calc(100% + 8px)', right: 0, zIndex: 600,
+              minWidth: 268, maxWidth: 340, whiteSpace: 'normal',
+              background: 'var(--bg-surface)', border: '1px solid var(--border-subtle)',
+              borderRadius: 10, boxShadow: '0 10px 32px rgba(0,0,0,0.16)', padding: '8px',
+            }}>
+            {/* Arrow pointing up at the cluster */}
+            <div style={{
+              position: 'absolute', top: -5, right: 18, width: 9, height: 9,
+              background: 'var(--bg-surface)', borderLeft: '1px solid var(--border-subtle)',
+              borderTop: '1px solid var(--border-subtle)', transform: 'rotate(45deg)',
+            }}/>
+            {groups.map((g, gi) => (
+              <div key={g.label} style={{ marginTop: gi > 0 ? 6 : 0 }}>
+                <div style={{ fontSize: 9.5, fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase', color: 'var(--text-tertiary)', padding: '2px 6px 4px' }}>{g.label}</div>
+                {g.people.map(p => (
+                  <div key={p.id}
+                    onMouseEnter={() => { openNow(); setHoveredId(p.id); }}
+                    style={{
+                      display: 'flex', alignItems: 'center', gap: 9, padding: '5px 6px', borderRadius: 7,
+                      background: hoveredId === p.id ? p.color + '18' : 'transparent',
+                      transition: 'background 0.1s',
+                    }}>
+                    <div style={{
+                      width: 24, height: 24, borderRadius: '50%', flexShrink: 0,
+                      background: p.color + '22', display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    }}>
+                      <span style={{ fontSize: 9.5, fontWeight: 700, color: p.color }}>{p.initials}</span>
+                    </div>
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div style={{ fontSize: 12.5, fontWeight: 600, color: 'var(--text-primary)', lineHeight: 1.25 }}>{p.name}</div>
+                      <div style={{ fontSize: 11, color: 'var(--text-tertiary)', lineHeight: 1.3 }}>{p.role}{p.company ? ' · ' + p.company : ''}</div>
+                    </div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 1, flexShrink: 0 }}>
+                      {p.phone && <ContactAction href={'tel:' + p.phone.replace(/[^\d+]/g, '')} icon="phone" label={'Call ' + p.name}/>}
+                      {p.phone && <ContactAction href={'sms:' + p.phone.replace(/[^\d+]/g, '')} icon="message" label={'Text ' + p.name}/>}
+                      {p.email && <ContactAction href={'mailto:' + p.email} icon="mail" label={'Email ' + p.name}/>}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ))}
           </div>
         )}
       </div>

@@ -161,6 +161,7 @@ const ICONS = {
     </>
   ),
   phone: <path d="M5 4H9L11 9L8.5 10.5C9.6 12.7 11.3 14.4 13.5 15.5L15 13L20 15V19A2 2 0 0 1 18 21A16 16 0 0 1 3 6A2 2 0 0 1 5 4Z" />,
+  message: <path d="M21 15A2 2 0 0 1 19 17H7L3 21V5A2 2 0 0 1 5 3H19A2 2 0 0 1 21 5Z" />,
   mail: (
     <>
       <rect x="3" y="5" width="18" height="14" rx="2" />
