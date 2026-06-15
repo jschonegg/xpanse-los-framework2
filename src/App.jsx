@@ -19,6 +19,7 @@ import { flags } from './flags';
 import { PersonaStubHome } from './views/PersonaStubHome';
 import { AdminHomeView } from './views/AdminHome';
 import { AdminFormsView } from './views/AdminFormsView';
+import { ConsumerHomeView } from './views/ConsumerHomeView';
 import { findPersonaById } from './personas';
 
 // ── Standalone URLA window (opened via window.open) ──────────────────────────
@@ -190,7 +191,8 @@ export default function App() {
             {route === 'home' && persona === 'LO' && <HomeView onNavigate={navigate} onOpenLoan={openLoan} onOpenAi={openAiWith}/>}
             {route === 'home' && persona === 'Admin' && <AdminHomeView onNavigate={navigate}/>}
             {route === 'admin-forms' && persona === 'Admin' && <AdminFormsView onBack={() => navigate('home')}/>}
-            {route === 'home' && (persona === 'Underwriter' || persona === 'Consumer') && (
+            {route === 'home' && persona === 'Consumer' && <ConsumerHomeView/>}
+            {route === 'home' && persona === 'Underwriter' && (
               <PersonaStubHome persona={findPersonaById(persona)}/>
             )}
             {route === 'pipeline' && <PipelineView onOpenLoan={openLoan} persona={persona} intent={pipelineIntent}/>}
