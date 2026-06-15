@@ -1,6 +1,7 @@
 import React from 'react';
 import ReactDOM from 'react-dom';
 import { Icon } from '../components/Icon';
+import { AdminFormsView } from './AdminFormsView';
 import { Avatar } from '../components/Shell';
 import { LoanDetailView } from './LoanDetail';
 import { LOANS } from '../data/loans';
@@ -25,6 +26,11 @@ function fmtDate(iso) {
 // one opens its (always-maximized) white sub-nav listing its pages. Only
 // Loan Configuration → Workflows is built today; the rest are placeholders.
 const ADMIN_CATEGORIES = [
+  {
+    id: 'forms', label: 'Forms', icon: 'doc', ready: true,
+    desc: 'Build, customize, and publish loan forms. Library of 10 compliance-mapped templates, AI-assisted generation, no-code logic.',
+    pages: [{ id: 'admin-forms', label: 'Form builder', icon: 'doc' }],
+  },
   {
     id: 'loan-config', label: 'Loan Configuration', icon: 'settings', ready: true,
     desc: 'Configure loan-level navigation and workflows — how pages appear by role, status, milestone, purpose, and more.',
@@ -1304,113 +1310,52 @@ function ServiceRow({ name, status, uptime, latency, last }) {
 }
 
 // ─── Admin home (dashboard) ─────────────────────────────────────────────────
-function AdminLanding({ onOpen }) {
-  // Demo platform metrics — there is no live telemetry behind this page yet,
-  // so the time-series and role counts are static sample data.
-  const usersSeries  = [108, 112, 116, 119, 123, 128, 131, 136, 139, 142];
-  const totalSeries  = [150, 153, 156, 158, 160, 162, 164, 166, 167, 168];
-  const uptimeSeries = [99.9, 99.95, 99.99, 99.97, 100, 99.98, 99.96, 99.99, 99.98, 99.98];
-  const apiSeries    = [38, 41, 39, 44, 46, 43, 48, 47, 49, 48];
-
-  // Users per role (demo) — drives the donut + legend below.
-  const rolePalette = ['var(--status-blue)', 'var(--ai-primary)', 'var(--status-amber)', 'var(--status-green)', '#3A8294', 'var(--text-tertiary)'];
-  const roleData = [
-    { key: 'Loan Officer', value: 58 },
-    { key: 'Processor',    value: 34 },
-    { key: 'Manager',      value: 27 },
-    { key: 'Underwriter',  value: 22 },
-    { key: 'Closer',       value: 18 },
-    { key: 'Admin',        value: 9 },
-  ].map((r, i) => ({ ...r, color: rolePalette[i % rolePalette.length] }));
-  const totalUsers  = roleData.reduce((s, r) => s + r.value, 0);
-  const activeUsers = 142;
-
-  const services = [
-    { name: 'API Gateway',            status: 'operational', uptime: '99.99%', latency: '82ms' },
-    { name: 'Database Cluster',       status: 'operational', uptime: '99.98%', latency: '14ms' },
-    { name: 'Document Service',       status: 'operational', uptime: '99.95%', latency: '120ms' },
-    { name: 'AI / OCR Engine',        status: 'degraded',    uptime: '99.21%', latency: '410ms' },
-    { name: 'Integrations · AUS, Credit', status: 'operational', uptime: '99.90%', latency: '210ms' },
-  ];
-  const degraded = services.filter(s => s.status !== 'operational');
-  const allOk = degraded.length === 0;
-
+function AdminLanding({ onOpen, onStartForm }) {
   return (
     <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', minHeight: 0, overflowY: 'auto' }}>
       <div style={{ padding: '20px 28px 16px', borderBottom: '1px solid var(--border-subtle)', background: 'var(--bg-surface)' }}>
         <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--text-tertiary)', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 4 }}>Admin Console</div>
         <h1 style={{ margin: 0, fontSize: 20, fontWeight: 700, letterSpacing: '-0.015em' }}>Dashboard</h1>
         <p style={{ margin: '4px 0 0', fontSize: 13, color: 'var(--text-tertiary)', maxWidth: 760, lineHeight: 1.5 }}>
-          System health, platform usage, and user metrics at a glance. Figures shown are placeholder demo data.
+          Get your loan team up and running.
         </p>
       </div>
 
-      <div style={{ padding: 24, display: 'flex', flexDirection: 'column', gap: 18, maxWidth: 1160 }}>
-
-        {/* KPI row */}
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(212px, 1fr))', gap: 14 }}>
-          <MetricCard icon="command" label="Active users" value={activeUsers} sub="18 online now" delta="+12" spark={usersSeries} sparkColor="var(--ai-primary)"/>
-          <MetricCard icon="building" label="Total users" value={totalUsers} sub={`${activeUsers} active · ${totalUsers - activeUsers} pending invite`} delta="+6" deltaTone="neutral" spark={totalSeries} sparkColor="var(--status-blue)"/>
-          <MetricCard icon="zap" label="System uptime" value="99.98%" sub="Last 30 days · 0 incidents" spark={uptimeSeries} sparkColor="var(--status-green)"/>
-          <MetricCard icon="trendingUp" label="API requests · 24h" value="48.2k" sub="Across all services" delta="+6.1%" spark={apiSeries} sparkColor="var(--status-green)"/>
-        </div>
-
-        {/* Charts row */}
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(340px, 1fr))', gap: 16 }}>
-          <ChartCard title="Users by role" helper="Provisioned accounts">
-            <div style={{ display: 'flex', alignItems: 'center', gap: 20 }}>
-              <Donut data={roleData} centerTop={totalUsers} centerBottom="Users"/>
-              <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', gap: 9 }}>
-                {roleData.map(d => (
-                  <div key={d.key} style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                    <span style={{ width: 9, height: 9, borderRadius: 3, background: d.color, flexShrink: 0 }}/>
-                    <span style={{ flex: 1, fontSize: 12.5, color: 'var(--text-secondary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{d.key}</span>
-                    <span style={{ fontSize: 12.5, fontWeight: 700, color: 'var(--text-primary)', fontVariantNumeric: 'tabular-nums' }}>{d.value}</span>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </ChartCard>
-
-          <ChartCard title="Service status"
-            right={<span style={{ display: 'inline-flex', alignItems: 'center', gap: 5, fontSize: 11, fontWeight: 700, color: allOk ? 'var(--status-green)' : 'var(--status-amber)', background: allOk ? 'var(--status-green-bg)' : 'var(--status-amber-bg)', borderRadius: 999, padding: '2px 9px' }}>{allOk ? 'All healthy' : `${degraded.length} degraded`}</span>}>
-            <div>
-              {services.map((s, i) => <ServiceRow key={s.name} {...s} last={i === services.length - 1}/>)}
-            </div>
-          </ChartCard>
-        </div>
-
-        {/* Configuration quick-access */}
-        <div>
-          <div style={{ display: 'flex', alignItems: 'baseline', gap: 8, margin: '6px 0 12px' }}>
-            <h3 style={{ margin: 0, fontSize: 13.5, fontWeight: 700, letterSpacing: '-0.01em' }}>Configuration</h3>
-            <span style={{ fontSize: 11.5, color: 'var(--text-tertiary)' }}>Jump into a console module</span>
+      <div style={{ padding: 28, maxWidth: 1160 }}>
+        {/* Single onboarding scenario widget → routes to Form builder */}
+        <button onClick={onStartForm} style={{
+          width: '100%', textAlign: 'left', cursor: 'pointer', fontFamily: 'inherit',
+          background: 'linear-gradient(135deg, #5166FE 0%, #7E68FA 60%, #5B21B6 100%)',
+          color: '#fff', border: 'none', borderRadius: 18,
+          padding: '28px 32px', display: 'flex', alignItems: 'center', gap: 28,
+          boxShadow: '0 4px 18px rgba(91,33,182,0.20)',
+        }}>
+          <div style={{
+            width: 64, height: 64, borderRadius: 14, flexShrink: 0,
+            background: 'rgba(255,255,255,0.16)',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+          }}>
+            <Icon name="doc" size={32} strokeWidth={1.7}/>
           </div>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: 16 }}>
-            {ADMIN_CATEGORIES.map(cat => (
-              <button key={cat.id} onClick={() => onOpen(cat)}
-                style={{
-                  textAlign: 'left', border: '1px solid var(--border-subtle)', borderRadius: 12,
-                  background: 'var(--bg-surface)', padding: 18, fontFamily: 'inherit', cursor: 'pointer',
-                  display: 'flex', flexDirection: 'column', gap: 10, minHeight: 132,
-                  transition: 'border-color 0.12s, box-shadow 0.12s',
-                }}
-                onMouseEnter={e => { e.currentTarget.style.borderColor = 'var(--text-primary)'; e.currentTarget.style.boxShadow = '0 1px 3px rgba(0,0,0,0.06)'; }}
-                onMouseLeave={e => { e.currentTarget.style.borderColor = 'var(--border-subtle)'; e.currentTarget.style.boxShadow = 'none'; }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                  <div style={{ width: 38, height: 38, borderRadius: 10, background: 'var(--bg-muted)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                    <Icon name={cat.icon} size={18} color="var(--text-secondary)" strokeWidth={1.6}/>
-                  </div>
-                  <div style={{ fontSize: 14.5, fontWeight: 700 }}>{cat.label}</div>
-                  {!cat.ready && <span style={{ marginLeft: 'auto', fontSize: 9.5, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.04em', color: 'var(--text-tertiary)', background: 'var(--bg-muted)', padding: '2px 7px', borderRadius: 999 }}>Placeholder</span>}
-                </div>
-                <div style={{ fontSize: 12.5, color: 'var(--text-tertiary)', lineHeight: 1.5 }}>{cat.desc}</div>
-                <div style={{ marginTop: 'auto', display: 'flex', alignItems: 'center', gap: 5, fontSize: 12.5, fontWeight: 600, color: 'var(--text-primary)' }}>Open <Icon name="arrowRight" size={13}/></div>
-              </button>
-            ))}
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <div style={{ fontSize: 11, fontWeight: 800, letterSpacing: '0.14em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.65)', marginBottom: 6 }}>
+              Onboarding · Step 1
+            </div>
+            <div style={{ fontSize: 22, fontWeight: 800, letterSpacing: '-0.02em', marginBottom: 6 }}>
+              Build your first form
+            </div>
+            <p style={{ margin: 0, fontSize: 14, color: 'rgba(255,255,255,0.78)', lineHeight: 1.55, maxWidth: 580 }}>
+              Pick a template, drop in fields, add no-code logic, and publish. Most admins ship their first form in under 15 minutes — no developer required.
+            </p>
           </div>
-        </div>
-
+          <div style={{
+            background: '#fff', color: '#1B1F66', borderRadius: 10,
+            padding: '12px 18px', fontSize: 14, fontWeight: 700,
+            display: 'inline-flex', alignItems: 'center', gap: 8, flexShrink: 0,
+          }}>
+            Start <Icon name="arrowRight" size={14} strokeWidth={2.4}/>
+          </div>
+        </button>
       </div>
     </div>
   );
@@ -1426,8 +1371,9 @@ export function AdminWorkflowsView({ onExit }) {
   const activeCat = isHome ? null : categoryForPage(adminPage);
 
   let main;
-  if (isHome) main = <AdminLanding onOpen={(cat) => setAdminPage(defaultPageOf(cat))}/>;
+  if (isHome) main = <AdminLanding onOpen={(cat) => setAdminPage(defaultPageOf(cat))} onStartForm={() => setAdminPage('admin-forms')}/>;
   else if (adminPage === 'workflows') main = <WorkflowNavPage/>;
+  else if (adminPage === 'admin-forms') main = <AdminFormsView onBack={() => setAdminPage('home')}/>;
   else if (activeCat) main = <AdminPlaceholderPage category={activeCat} pageId={adminPage}/>;
 
   return (

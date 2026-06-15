@@ -126,7 +126,12 @@ export default function App() {
       if (flags.personaLogin && personaId) { changePersona(personaId); }
       // When loginGoesHome is ON, also reset the in-memory route so the user
       // lands on home regardless of what their last route was before logout.
-      if (flags.loginGoesHome) setRoute('home');
+      // Admin lands directly in the Admin Console.
+      if (flags.loginGoesHome) {
+        const landing = personaId === 'Admin' ? 'admin' : 'home';
+        setRoute(landing);
+        localStorage.setItem('los-route', landing);
+      }
       if (forceLogin) window.history.replaceState({}, '', window.location.pathname);
       setAuthed(true);
     }}/>;
