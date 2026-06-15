@@ -17,6 +17,9 @@ import { AdminWorkflowsView } from './views/AdminWorkflows';
 import { WorkflowProvider } from './workflows/WorkflowContext';
 import { flags } from './flags';
 import { PersonaStubHome } from './views/PersonaStubHome';
+import { UnderwriterHomeWireframe } from './views/wireframes/UnderwriterHome';
+import { ConsumerHomeWireframe } from './views/wireframes/ConsumerHome';
+import { ProcessorHomeWireframe } from './views/wireframes/ProcessorHome';
 import { findPersonaById } from './personas';
 
 // ── Standalone URLA window (opened via window.open) ──────────────────────────
@@ -184,10 +187,21 @@ export default function App() {
         {route === 'deposit-review' && <LargeDepositReviewView onBack={() => navigate('home')}/>}
         {route !== 'deposit-review' && (
           <>
-            {route === 'home' && persona === 'Processor' && <ProcessorHomeView onNavigate={navigate} onOpenLoan={openLoan} onOpenAi={openAiWith} onOpenDepositReview={() => navigate('deposit-review')}/>}
+            {route === 'home' && persona === 'Processor' && (
+              flags.personaWireframes
+                ? <ProcessorHomeWireframe persona={findPersonaById('Processor')} onOpenLoan={openLoan}/>
+                : <ProcessorHomeView onNavigate={navigate} onOpenLoan={openLoan} onOpenAi={openAiWith} onOpenDepositReview={() => navigate('deposit-review')}/>
+            )}
             {route === 'home' && persona === 'LO' && <HomeView onNavigate={navigate} onOpenLoan={openLoan} onOpenAi={openAiWith}/>}
-            {route === 'home' && (persona === 'Underwriter' || persona === 'Consumer') && (
-              <PersonaStubHome persona={findPersonaById(persona)}/>
+            {route === 'home' && persona === 'Underwriter' && (
+              flags.personaWireframes
+                ? <UnderwriterHomeWireframe persona={findPersonaById('Underwriter')} onOpenLoan={openLoan}/>
+                : <PersonaStubHome persona={findPersonaById('Underwriter')}/>
+            )}
+            {route === 'home' && persona === 'Consumer' && (
+              flags.personaWireframes
+                ? <ConsumerHomeWireframe persona={findPersonaById('Consumer')}/>
+                : <PersonaStubHome persona={findPersonaById('Consumer')}/>
             )}
             {route === 'pipeline' && <PipelineView onOpenLoan={openLoan} persona={persona} intent={pipelineIntent}/>}
             {route === 'feed' && <AIFeedView onOpenLoan={openLoan}/>}
