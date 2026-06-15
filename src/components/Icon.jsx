@@ -290,6 +290,52 @@ const ICONS = {
       <circle cx="12" cy="12" r="3" />
     </>
   ),
+  user: (
+    <>
+      <circle cx="12" cy="8" r="4" />
+      <path d="M4 21V19A4 4 0 0 1 8 15H16A4 4 0 0 1 20 19V21" />
+    </>
+  ),
+  briefcase: (
+    <>
+      <rect x="3" y="7" width="18" height="13" rx="2" />
+      <path d="M8 7V5A2 2 0 0 1 10 3H14A2 2 0 0 1 16 5V7" />
+      <path d="M3 12H21" />
+    </>
+  ),
+  wallet: (
+    <>
+      <rect x="3" y="5" width="18" height="14" rx="2" />
+      <path d="M3 10H21" />
+      <circle cx="17" cy="14" r="1.2" fill="currentColor" stroke="none" />
+    </>
+  ),
+  calendar: (
+    <>
+      <rect x="3" y="5" width="18" height="16" rx="2" />
+      <path d="M8 3V7" />
+      <path d="M16 3V7" />
+      <path d="M3 10H21" />
+    </>
+  ),
+  info: (
+    <>
+      <circle cx="12" cy="12" r="9" />
+      <path d="M12 16V12" />
+      <path d="M12 8H12.01" />
+    </>
+  ),
+  edit: (
+    <>
+      <path d="M17 3L21 7L8 20H4V16L17 3Z" />
+    </>
+  ),
+  chevronLeft: <path d="M15 6L9 12L15 18" />,
+  chat: (
+    <>
+      <path d="M21 11.5A8.38 8.38 0 0 1 19.8 15.5C18.5 18.2 15.5 20 12 20A9.77 9.77 0 0 1 7.5 18.8L3 20L4.2 15.5A8.38 8.38 0 0 1 3.5 12C3.5 7.3 7.3 3.5 12 3.5C16.7 3.5 20.5 7.3 20.5 12" />
+    </>
+  ),
 };
 
 export function Icon({ name, size = 16, color, strokeWidth = 1.75, style, ...rest }) {
