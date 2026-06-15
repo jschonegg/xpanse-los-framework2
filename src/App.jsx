@@ -16,6 +16,8 @@ import { PreferencesModal } from './components/PreferencesModal';
 import { AdminWorkflowsView } from './views/AdminWorkflows';
 import { WorkflowProvider } from './workflows/WorkflowContext';
 import { flags } from './flags';
+import { PersonaStubHome } from './views/PersonaStubHome';
+import { findPersonaById } from './personas';
 
 // ── Standalone URLA window (opened via window.open) ──────────────────────────
 function StandaloneURLA() {
@@ -114,9 +116,11 @@ export default function App() {
 
   // If unauthenticated, render the Xpanse split-panel login screen.
   if (!authed) {
-    return <LoginScreen onLogin={() => {
+    return <LoginScreen onLogin={(personaId) => {
       localStorage.setItem('los-authed', '1');
       localStorage.setItem('los-route', 'home');
+      // personaLogin: route to the persona returned by credential match.
+      if (flags.personaLogin && personaId) { changePersona(personaId); }
       // When loginGoesHome is ON, also reset the in-memory route so the user
       // lands on home regardless of what their last route was before logout.
       if (flags.loginGoesHome) setRoute('home');
@@ -182,6 +186,9 @@ export default function App() {
           <>
             {route === 'home' && persona === 'Processor' && <ProcessorHomeView onNavigate={navigate} onOpenLoan={openLoan} onOpenAi={openAiWith} onOpenDepositReview={() => navigate('deposit-review')}/>}
             {route === 'home' && persona === 'LO' && <HomeView onNavigate={navigate} onOpenLoan={openLoan} onOpenAi={openAiWith}/>}
+            {route === 'home' && (persona === 'Underwriter' || persona === 'Consumer') && (
+              <PersonaStubHome persona={findPersonaById(persona)}/>
+            )}
             {route === 'pipeline' && <PipelineView onOpenLoan={openLoan} persona={persona} intent={pipelineIntent}/>}
             {route === 'feed' && <AIFeedView onOpenLoan={openLoan}/>}
             {route === 'loan' && <LoanDetailView loanId={currentLoan} tab={loanTab} onTab={changeLoanTab} persona={persona}/>}
