@@ -603,8 +603,8 @@ body {
         <i class="ti ti-forms" aria-hidden="true"></i>
         FormOS
       </div>
-      <button class="fb-tab" onclick="switchMain('library')" id="mtab-library">Library</button>
-      <button class="fb-tab active" onclick="switchMain('builder')" id="mtab-builder">Builder</button>
+      <button class="fb-tab active" onclick="switchMain('library')" id="mtab-library">Library</button>
+      <button class="fb-tab" onclick="switchMain('builder')" id="mtab-builder">Builder</button>
       <button class="fb-tab" onclick="switchMain('logic')" id="mtab-logic">Logic rules</button>
       <button class="fb-tab" onclick="switchMain('analytics')" id="mtab-analytics">Analytics</button>
       <button class="fb-tab" onclick="switchMain('publish')" id="mtab-publish">Publish</button>
@@ -619,7 +619,7 @@ body {
     </nav>
 
     <!-- ===== BUILDER VIEW ===== -->
-    <div id="main-builder" class="fb-view active" role="main">
+    <div id="main-builder" class="fb-view" role="main">
       <div class="fb-body">
 
         <!-- Left sidebar: field library -->
@@ -961,7 +961,7 @@ body {
     </div>
 
     <!-- ============ LIBRARY VIEW (Form template library) ============ -->
-    <div id="main-library" class="fb-view" role="main" style="padding:24px 32px 48px; overflow-y:auto; background:#FAFAFB;">
+    <div id="main-library" class="fb-view active" role="main" style="padding:24px 32px 48px; overflow-y:auto; background:#FAFAFB;">
       <div style="max-width:1280px; margin:0 auto;">
         <div style="display:flex; align-items:baseline; justify-content:space-between; margin-bottom:6px;">
           <h1 style="font-size:24px; font-weight:800; letter-spacing:-0.02em; color:#111827; margin:0;">Form template library</h1>
@@ -1219,6 +1219,10 @@ function publishForm() {
     btn.classList.remove('success');
   }, 3000);
 }
+
+// Library is now the default landing — render cards on initial load.
+if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', renderLibrary);
+else renderLibrary();
 </script>
 
 </body>
