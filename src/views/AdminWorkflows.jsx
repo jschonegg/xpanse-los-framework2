@@ -1,6 +1,7 @@
 import React from 'react';
 import ReactDOM from 'react-dom';
 import { Icon } from '../components/Icon';
+import { AdminFormsView } from './AdminFormsView';
 import { Avatar } from '../components/Shell';
 import { LoanDetailView } from './LoanDetail';
 import { LOANS } from '../data/loans';
@@ -25,6 +26,11 @@ function fmtDate(iso) {
 // one opens its (always-maximized) white sub-nav listing its pages. Only
 // Loan Configuration → Workflows is built today; the rest are placeholders.
 const ADMIN_CATEGORIES = [
+  {
+    id: 'forms', label: 'Forms', icon: 'doc', ready: true,
+    desc: 'Build, customize, and publish loan forms. Library of 10 compliance-mapped templates, AI-assisted generation, no-code logic.',
+    pages: [{ id: 'admin-forms', label: 'Form builder', icon: 'doc' }],
+  },
   {
     id: 'loan-config', label: 'Loan Configuration', icon: 'settings', ready: true,
     desc: 'Configure loan-level navigation and workflows — how pages appear by role, status, milestone, purpose, and more.',
@@ -1304,15 +1310,13 @@ function ServiceRow({ name, status, uptime, latency, last }) {
 }
 
 // ─── Admin home (dashboard) ─────────────────────────────────────────────────
-function AdminLanding({ onOpen }) {
-  // Demo platform metrics — there is no live telemetry behind this page yet,
-  // so the time-series and role counts are static sample data.
+function AdminLanding({ onOpen, onStartForm }) {
+  // Demo platform metrics — static sample data, no live telemetry behind this page.
   const usersSeries  = [108, 112, 116, 119, 123, 128, 131, 136, 139, 142];
   const totalSeries  = [150, 153, 156, 158, 160, 162, 164, 166, 167, 168];
   const uptimeSeries = [99.9, 99.95, 99.99, 99.97, 100, 99.98, 99.96, 99.99, 99.98, 99.98];
   const apiSeries    = [38, 41, 39, 44, 46, 43, 48, 47, 49, 48];
 
-  // Users per role (demo) — drives the donut + legend below.
   const rolePalette = ['var(--status-blue)', 'var(--ai-primary)', 'var(--status-amber)', 'var(--status-green)', '#3A8294', 'var(--text-tertiary)'];
   const roleData = [
     { key: 'Loan Officer', value: 58 },
@@ -1341,11 +1345,46 @@ function AdminLanding({ onOpen }) {
         <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--text-tertiary)', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 4 }}>Admin Console</div>
         <h1 style={{ margin: 0, fontSize: 20, fontWeight: 700, letterSpacing: '-0.015em' }}>Dashboard</h1>
         <p style={{ margin: '4px 0 0', fontSize: 13, color: 'var(--text-tertiary)', maxWidth: 760, lineHeight: 1.5 }}>
-          System health, platform usage, and user metrics at a glance. Figures shown are placeholder demo data.
+          Get your loan team up and running. System health and usage metrics below.
         </p>
       </div>
 
       <div style={{ padding: 24, display: 'flex', flexDirection: 'column', gap: 18, maxWidth: 1160 }}>
+
+        {/* Onboarding scenario widget → routes to Form builder */}
+        <button onClick={onStartForm} style={{
+          width: '100%', textAlign: 'left', cursor: 'pointer', fontFamily: 'inherit',
+          background: 'linear-gradient(135deg, #5166FE 0%, #7E68FA 60%, #5B21B6 100%)',
+          color: '#fff', border: 'none', borderRadius: 16,
+          padding: '24px 28px', display: 'flex', alignItems: 'center', gap: 24,
+          boxShadow: '0 4px 18px rgba(91,33,182,0.20)',
+        }}>
+          <div style={{
+            width: 56, height: 56, borderRadius: 12, flexShrink: 0,
+            background: 'rgba(255,255,255,0.16)',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+          }}>
+            <Icon name="doc" size={28} strokeWidth={1.7}/>
+          </div>
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <div style={{ fontSize: 10.5, fontWeight: 800, letterSpacing: '0.14em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.65)', marginBottom: 5 }}>
+              Onboarding · Step 1
+            </div>
+            <div style={{ fontSize: 20, fontWeight: 800, letterSpacing: '-0.02em', marginBottom: 4 }}>
+              Build your first form
+            </div>
+            <p style={{ margin: 0, fontSize: 13.5, color: 'rgba(255,255,255,0.78)', lineHeight: 1.5, maxWidth: 580 }}>
+              Pick a template, drop in fields, add no-code logic, and publish. Most admins ship their first form in under 15 minutes — no developer required.
+            </p>
+          </div>
+          <div style={{
+            background: '#fff', color: '#1B1F66', borderRadius: 10,
+            padding: '10px 16px', fontSize: 13.5, fontWeight: 700,
+            display: 'inline-flex', alignItems: 'center', gap: 8, flexShrink: 0,
+          }}>
+            Start <Icon name="arrowRight" size={14} strokeWidth={2.4}/>
+          </div>
+        </button>
 
         {/* KPI row */}
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(212px, 1fr))', gap: 14 }}>
@@ -1426,8 +1465,9 @@ export function AdminWorkflowsView({ onExit }) {
   const activeCat = isHome ? null : categoryForPage(adminPage);
 
   let main;
-  if (isHome) main = <AdminLanding onOpen={(cat) => setAdminPage(defaultPageOf(cat))}/>;
+  if (isHome) main = <AdminLanding onOpen={(cat) => setAdminPage(defaultPageOf(cat))} onStartForm={() => setAdminPage('admin-forms')}/>;
   else if (adminPage === 'workflows') main = <WorkflowNavPage/>;
+  else if (adminPage === 'admin-forms') main = <AdminFormsView onBack={() => setAdminPage('home')}/>;
   else if (activeCat) main = <AdminPlaceholderPage category={activeCat} pageId={adminPage}/>;
 
   return (
