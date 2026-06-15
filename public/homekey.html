@@ -9,32 +9,37 @@
 <link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&family=Instrument+Serif:ital@0;1&display=swap" rel="stylesheet">
 <style>
 :root{
-  --brand:#1c4d2e;
-  --brand-light:#2d6a4f;
-  --brand-bg:#edf7f1;
-  --gold:#9a6e1a;
-  --amber:#fbbf24;
-  --amber-bg:#fef3c7;
-  --amber-text:#7c2d12;     /* a11y: darkened from #92400e for WCAG AA on amber-bg */
-  --navy:#1e3a8a;
-  --navy-bg:#eff6ff;
-  --red:#b91c1c;            /* a11y: darkened from #dc2626 for 4.5:1 on white */
-  --red-bg:#fee2e2;
-  --green:#15803d;          /* a11y: darkened from #16a34a for 4.5:1 on white */
-  --green-bg:#dcfce7;
-  --ink:#1a1a18;
-  --ink2:#444240;
-  --ink3:#6b6967;           /* a11y: darkened from #9a9894 (was 2.8:1) → now 5.4:1 on white */
-  --ink4:#8d8b87;           /* a11y: darkened from #b0ada7 */
-  --surf:#ffffff;
-  --surf2:#f8f7f4;
-  --surf3:#f2f0eb;
-  --bdr:#e6e3dd;
-  --bdr2:#d4d1ca;
-  --focus-ring:rgba(28,77,46,.35);
-  --font:'Geist',system-ui,-apple-system,sans-serif;
-  --font-display:'Instrument Serif',serif;
+  /* ── Xpanse design system overlay ─────────────────────────────────────
+     Original HomeKey tokens repointed to Xpanse so the embedded prototype
+     inherits the parent app's look without restructuring HTML. */
+  --brand:#5B21B6;          /* Xpanse Primary/700 — replaces forest green */
+  --brand-light:#7E68FA;
+  --brand-bg:#F2EFFD;       /* --ai-bg */
+  --gold:#92400E;
+  --amber:#D97706;
+  --amber-bg:#FFF6E6;
+  --amber-text:#92400E;
+  --navy:#2D3AB2;
+  --navy-bg:#E1E6FF;
+  --red:#C2362A;
+  --red-bg:#FBE3DF;
+  --green:#009B6C;
+  --green-bg:#E6F5EF;
+  --ink:#2E2E2E;            /* Text/high-contrast */
+  --ink2:#4E4E4E;           /* Text/base */
+  --ink3:#7B8186;           /* Neutrals/600 */
+  --ink4:#9DA5AC;           /* Neutrals/500 */
+  --surf:#FFFFFF;
+  --surf2:#F7F8F8;          /* Neutrals/50 — cool, not warm cream */
+  --surf3:#E6E8EB;
+  --bdr:#E6E8EB;
+  --bdr2:#D9DDE1;
+  --focus-ring:rgba(91,33,182,.30);
+  --font:'DM Sans', 'Public Sans', system-ui, -apple-system, sans-serif;
+  --font-display:'DM Sans', system-ui, sans-serif;
 }
+/* Pull DM Sans + Instrument Serif (kept as fallback) from Google Fonts */
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600;9..40,700;9..40,800&display=swap');
 /* a11y: visible keyboard focus on every interactive element */
 *:focus{outline:none}
 *:focus-visible{outline:3px solid var(--focus-ring);outline-offset:2px;border-radius:6px}
