@@ -1,0 +1,7 @@
+{
+  "rewrites": [
+    { "source": "/formos.html", "destination": "/formos.html" },
+    { "source": "/homekey.html", "destination": "/homekey.html" },
+    { "source": "/(.*)", "destination": "/index.html" }
+  ]
+}
