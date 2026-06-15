@@ -57,10 +57,10 @@ export function ConsumerHomeWireframe({ persona }) {
 
       {/* Hero — warm, plain-language */}
       <div style={{ padding: '32px 32px 8px', maxWidth: 980, margin: '0 auto', width: '100%' }}>
-        <div style={{ fontSize: 12, fontWeight: 700, letterSpacing: '0.10em', textTransform: 'uppercase', color: '#10B981', marginBottom: 6 }}>
+        <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.14em', textTransform: 'uppercase', color: '#10B981', marginBottom: 6 }}>
           On track · estimated close <span style={{ color: '#111827' }}>July 14</span>
         </div>
-        <h1 style={{ fontSize: 36, fontWeight: 800, letterSpacing: '-0.025em', margin: '0 0 10px', color: '#111827', lineHeight: 1.1 }}>
+        <h1 style={{ fontSize: 32, fontWeight: 800, letterSpacing: '-0.025em', margin: '0 0 10px', color: '#111827', lineHeight: 1.1 }}>
           Welcome back, {firstName}.
         </h1>
         <p style={{ margin: 0, fontSize: 16, color: '#4B5563', lineHeight: 1.55, maxWidth: 620 }}>
@@ -138,12 +138,12 @@ export function ConsumerHomeWireframe({ persona }) {
               </div>
               <div>
                 <div style={{ fontSize: 11.5, color: '#9CA3AF', marginBottom: 2 }}>Rate</div>
-                <div style={{ fontSize: 17, fontWeight: 800, color: '#111827', fontFamily: 'DM Mono' }}>6.875%</div>
+                <div style={{ fontSize: 22, fontWeight: 800, color: '#111827', letterSpacing: '-0.02em', fontFamily: 'DM Mono' }}>6.875%</div>
                 <div style={{ fontSize: 11, color: '#6B7280', marginTop: 2 }}>30-year fixed</div>
               </div>
               <div>
                 <div style={{ fontSize: 11.5, color: '#9CA3AF', marginBottom: 2 }}>Close by</div>
-                <div style={{ fontSize: 17, fontWeight: 800, color: '#111827' }}>July 14</div>
+                <div style={{ fontSize: 22, fontWeight: 800, color: '#111827', letterSpacing: '-0.02em' }}>July 14</div>
                 <div style={{ fontSize: 11, color: '#6B7280', marginTop: 2 }}>33 days away</div>
               </div>
             </div>

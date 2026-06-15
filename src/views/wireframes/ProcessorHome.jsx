@@ -19,7 +19,7 @@ export function ProcessorHomeWireframe({ persona, onOpenLoan }) {
             <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.14em', color: 'rgba(255,255,255,0.5)' }}>
               PROCESSOR DESK · CAMP HILL
             </div>
-            <h1 style={{ fontSize: 28, fontWeight: 800, letterSpacing: '-0.025em', margin: '6px 0 0' }}>
+            <h1 style={{ fontSize: 30, fontWeight: 800, letterSpacing: '-0.025em', margin: '6px 0 0', lineHeight: 1.1 }}>
               Good morning, {persona?.name?.split(' ')[0] || 'Priya'}.
             </h1>
             <p style={{ margin: '4px 0 0', fontSize: 13, color: 'rgba(255,255,255,0.6)' }}>
