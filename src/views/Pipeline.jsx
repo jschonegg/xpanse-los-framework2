@@ -3,6 +3,7 @@ import { Icon } from '../components/Icon';
 import { Avatar, StatusPill } from '../components/Shell';
 import { LOANS as SHARED_LOANS } from '../data/loans';
 import { TasksView, TasksSidebar } from './Tasks';
+import { getOverallProgress } from './LoanDetail';
 
 const TODAY = new Date('2026-05-27');
 function daysUntil(dateStr) {
@@ -26,10 +27,12 @@ function ClosingBadge({ dateStr }) {
 }
 
 const STAGE_ORDER = ['Application', 'Processing', 'Underwriting', 'Approval', 'Closing', 'Funded'];
-function StageProgress({ status }) {
+function StageProgress({ loan }) {
+  const status = loan?.status;
   const idx = STAGE_ORDER.indexOf(status);
-  const total = STAGE_ORDER.length;
-  const pct = ((idx + 1) / total) * 100;
+  // Overall % from the loan's sub-milestone progress — same source as the
+  // loan detail's status bar, so the two always match.
+  const pct = getOverallProgress(loan);
   const color = idx >= 4 ? '#3DB371' : idx >= 2 ? 'var(--ai-primary)' : 'var(--status-amber)';
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
@@ -38,7 +41,7 @@ function StageProgress({ status }) {
         <div style={{ flex: 1, height: 3, borderRadius: 999, background: 'var(--bg-muted)', overflow: 'hidden' }}>
           <div style={{ width: `${pct}%`, height: '100%', background: color, borderRadius: 999, transition: 'width 0.3s' }}/>
         </div>
-        <span style={{ fontSize: 10, color: 'var(--text-tertiary)', fontFamily: 'DM Sans', minWidth: 24 }}>{idx + 1}/{total}</span>
+        <span style={{ fontSize: 10, color: 'var(--text-tertiary)', fontFamily: 'DM Sans', minWidth: 28 }}>{pct}%</span>
       </div>
     </div>
   );
@@ -520,10 +523,10 @@ const COLUMN_DEFS = [
       : <span style={{ fontSize: 13, color: 'var(--text-tertiary)' }}>—</span> },
   { id: 'rate', label: 'Rate', width: 80, align: 'right', editType: 'number', step: 0.125, suffix: '%',
     render: (l) => <span style={{ fontFamily: 'DM Sans', fontSize: 12.5 }}>{l.rate.toFixed(3)}%</span> },
-  { id: 'status', label: 'Status', width: 150, editType: 'select',
+  { id: 'status', label: 'Milestone', width: 150, editType: 'select',
     options: ['Application','Processing','Underwriting','Approval','Closing','Funded'],
-    render: (l) => <StageProgress status={l.status}/> },
-  { id: 'milestone', label: 'Milestone', width: 170, editType: 'text',
+    render: (l) => <StageProgress loan={l}/> },
+  { id: 'milestone', label: 'Loan Status', width: 170, editType: 'text',
     render: (l) => <span style={{ color: 'var(--text-secondary)', fontSize: 13 }}>{l.milestone}</span> },
   { id: 'days', label: 'Days', width: 70, align: 'center', editType: 'number',
     render: (l) => {
@@ -765,7 +768,7 @@ function initialsFor(name) {
 }
 
 // LO default: borrower-first, closing urgency, risk signals — no noise columns
-const DEFAULT_COLUMN_ORDER = ['borrower','property','amount','product','loanPurpose','status','milestone','days','assignee','aiStatus'];
+const DEFAULT_COLUMN_ORDER = ['borrower','property','amount','product','loanPurpose','status','milestone','days','assignee'];
 const PROCESSOR_COLUMN_ORDER = ['borrower','status','conditions','lock','closingDate','milestone','nextAction','disclosures','aus','days','health'];
 const ALL_COLUMN_IDS = COLUMN_DEFS.map(c => c.id);
 
@@ -813,7 +816,7 @@ function applyViewFilter(rows, viewId) {
 }
 
 const FILTER_FIELDS = [
-  { id: 'status', label: 'Status', type: 'select', options: ['Application','Processing','Underwriting','Approval','Closing','Funded'] },
+  { id: 'status', label: 'Milestone', type: 'select', options: ['Application','Processing','Underwriting','Approval','Closing','Funded'] },
   { id: 'assignee', label: 'Assignee', type: 'select', options: ['Alex Martinez','Jamie Lee','Priya Shah'] },
   { id: 'product', label: 'Product', type: 'select', options: ['Conv 30yr','FHA 30yr','Jumbo 30yr','VA 30yr'] },
   { id: 'amount', label: 'Amount', type: 'number-range' },
@@ -1041,7 +1044,7 @@ export function PipelineView({ onOpenLoan, persona = 'LO', intent }) {
         onBlur={e => e.currentTarget.style.background = 'transparent'}
       >
         <option value="">No grouping</option>
-        <option value="status">Status</option>
+        <option value="status">Milestone</option>
         <option value="assignee">Assignee</option>
         <option value="product">Product</option>
       </select>

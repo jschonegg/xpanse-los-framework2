@@ -1,56 +1,7 @@
 import React from 'react';
 import { Icon } from '../components/Icon';
 import { StatusPill } from '../components/Shell';
-
-// Gradient-header + white-body card, matching the LOApprovalView style.
-function ActionCard({ tone = 'neutral', icon, iconBg, iconColor, header, children, footer }) {
-  const toneStyles = {
-    red:     { bg: 'linear-gradient(90deg, #FEE2E2, #FEF2F2)', border: '#FECACA' },
-    green:   { bg: 'linear-gradient(90deg, #E7F8F1, #F0FDF4)', border: '#A7F3D0' },
-    amber:   { bg: 'linear-gradient(90deg, #FEF6E7, #FFF8F0)', border: '#FDE9C2' },
-    blue:    { bg: 'linear-gradient(90deg, #EEF3FE, #F5F8FF)', border: '#C7D2FE' },
-    ai:      { bg: 'linear-gradient(90deg, #F4F1FE, #FAF8FF)', border: '#E4DEFA' },
-    neutral: { bg: 'var(--bg-muted)',                          border: 'var(--border-subtle)' },
-  };
-  const t = toneStyles[tone] || toneStyles.neutral;
-  return (
-    <div style={{
-      background: 'var(--bg-surface)',
-      border: `1px solid ${t.border}`,
-      borderRadius: 14, overflow: 'hidden',
-    }}>
-      {/* Gradient header band */}
-      <div style={{
-        background: t.bg,
-        borderBottom: `1px solid ${t.border}`,
-        padding: '12px 16px',
-        display: 'flex', alignItems: 'center', gap: 12,
-      }}>
-        {icon && (
-          <div style={{ width: 30, height: 30, borderRadius: 8, background: iconBg || 'rgba(255,255,255,0.65)', color: iconColor || 'var(--text-primary)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-            {icon}
-          </div>
-        )}
-        <div style={{ flex: 1, minWidth: 0 }}>{header}</div>
-      </div>
-
-      {/* White body */}
-      {(children || footer) && (
-        <div style={{ padding: '14px 16px' }}>
-          {children}
-          {footer && (
-            <div style={{
-              marginTop: children ? 14 : 0,
-              paddingTop: children ? 12 : 0,
-              borderTop: children ? '1px solid var(--border-subtle)' : 'none',
-              display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap',
-            }}>{footer}</div>
-          )}
-        </div>
-      )}
-    </div>
-  );
-}
+import { ActionCard, StepCounter } from '../components/TaskCard';
 
 function AIInsight({ children }) {
   return (
@@ -110,12 +61,10 @@ export function NowTabProcessing({ borrowerName = 'David Chen', loanId = 'LN-202
 
   return (
     <>
-      <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 12 }}>
-        <div>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
           <h2 style={{ margin: 0, fontSize: 18, fontWeight: 600, letterSpacing: '-0.01em' }}>Processing Checklist</h2>
-          <div style={{ fontSize: 13, color: 'var(--text-tertiary)', marginTop: 4 }}>
-            AI-guided path to underwriting — {remaining} of {STEPS.length} steps remaining
-          </div>
+          <StepCounter done={STEPS.length - remaining} total={STEPS.length}/>
         </div>
       </div>
 
@@ -123,6 +72,7 @@ export function NowTabProcessing({ borrowerName = 'David Chen', loanId = 'LN-202
 
         {/* 1. APPRAISAL */}
         <ActionCard
+          defaultOpen
           tone={done('appraisal') ? 'green' : 'amber'}
           icon={<Icon name="home" size={18} color={done('appraisal') ? '#1F7A45' : '#9C6A1A'} strokeWidth={1.7}/>}
           iconBg={done('appraisal') ? 'rgba(223,241,229,0.9)' : '#F6E6BD'}
