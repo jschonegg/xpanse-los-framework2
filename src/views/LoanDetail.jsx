@@ -1926,7 +1926,8 @@ function getStageSubMilestones(loan, stageId) {
 
 // Cumulative bar fill % from sub-milestone progress across all stages.
 // Each stage gets an equal slice of the bar so the dots stay evenly spaced.
-function getOverallProgress(loan) {
+// Exported so the Pipeline's milestone column shows the same % as the loan.
+export function getOverallProgress(loan) {
   if (!loan) return 0;
   const segment = 100 / PIPELINE_STAGES.length;
   let total = 0;
@@ -1991,7 +1992,7 @@ function getTridStatus(loan) {
 
 // ── Slim row under the loan summary bar: stage progress + TRID tracker ────
 function LoanStatusBar({ meta, loan }) {
-  const statusTone = { Underwriting: 'blue', Approval: 'green', Closing: 'green', Processing: 'amber', Application: 'neutral', Funded: 'green' }[meta?.status] || 'neutral';
+  const currentStatus = loan?.status ?? meta?.status;
   const progress = React.useMemo(() => loan && loan.status ? getOverallProgress(loan) : (meta?.progress ?? 0), [loan, meta]);
   const trid = getTridStatus(loan);
   const isComplete = trid.received === trid.total;
@@ -2018,19 +2019,18 @@ function LoanStatusBar({ meta, loan }) {
       position: 'relative',
       zIndex: 50,
     }}>
-      {/* Status + long progress bar with clickable stage dots */}
+      {/* Per-milestone progress bar with clickable stage dots */}
       <div style={{ flex: 1, display: 'flex', alignItems: 'center', gap: 12, minWidth: 0, position: 'relative', cursor: 'default' }}>
-        <StatusPill tone={statusTone}>{meta?.status || 'Underwriting'}</StatusPill>
-
-        {/* Per-milestone progress — each milestone has its own bar that fills
-            independently (milestones aren't strictly sequential, so there's no
-            single 'current' stage). */}
+        {/* Each milestone has its own bar that fills independently. The stage
+            matching the loan's current status is highlighted in marigold so the
+            active step is scannable on its own — no separate status badge. */}
         <div style={{ flex: 1, display: 'flex', alignItems: 'center', gap: 10, minWidth: 80 }}>
           {PIPELINE_STAGES.map(stage => (
             <StageSegment
               key={stage.id}
               stage={stage}
               loan={loan}
+              isCurrent={stage.id === currentStatus}
               isOpen={openStage === stage.id}
               onToggle={() => setOpenStage(prev => prev === stage.id ? null : stage.id)}
             />
@@ -2070,23 +2070,36 @@ function LoanStatusBar({ meta, loan }) {
 
 // ── Per-milestone segment: a dot + its own progress bar that fills based on
 // that stage's sub-milestone completion, independent of the other stages.
-// Click to open the sub-milestone popover. No 'current' stage concept.
-function StageSegment({ stage, loan, isOpen, onToggle }) {
+// Click to open the sub-milestone popover. The segment matching the loan's
+// current status is shaded (in the same tone as the status badge) so the
+// active milestone is scannable at a glance even if the badge is missed.
+function StageSegment({ stage, loan, isCurrent, isOpen, onToggle }) {
   const { completed, total } = getStageSubMilestones(loan, stage.id);
   const pct = total ? Math.round((completed / total) * 100) : 0;
   const done = pct >= 100;
   const started = pct > 0;
-  // Complete → green; in-progress → amber warning; not started → muted.
-  const fillColor = done ? 'var(--status-green)' : 'var(--status-amber)';
-  const dotColor = done ? 'var(--status-green)' : started ? 'var(--status-amber)' : 'var(--border-default)';
+  // The active milestone is always highlighted in marigold — a light shade
+  // behind the title + bar, with a marigold bar fill and dot — so the current
+  // step reads as one and is scannable on its own (replaces the status badge).
+  const fillColor = isCurrent ? 'var(--status-amber)' : done ? 'var(--status-green)' : 'var(--status-amber)';
+  const dotColor = isCurrent ? 'var(--status-amber)' : done ? 'var(--status-green)' : started ? 'var(--status-amber)' : 'var(--border-default)';
 
   return (
     <div
       className="stage-dot-trigger"
       onClick={(e) => { e.stopPropagation(); onToggle(); }}
-      title={`${stage.label} — ${completed}/${total} complete`}
-      aria-label={`${stage.label}: ${pct}% complete`}
-      style={{ flex: 1, minWidth: 0, position: 'relative', cursor: 'pointer', display: 'flex', flexDirection: 'column', gap: 4 }}
+      title={`${stage.label} — ${completed}/${total} complete${isCurrent ? ' · current stage' : ''}`}
+      aria-label={`${stage.label}: ${pct}% complete${isCurrent ? ' (current stage)' : ''}`}
+      aria-current={isCurrent ? 'step' : undefined}
+      // Equal padding on every segment so the shaded current one stays aligned;
+      // negative vertical margin cancels the height it would otherwise add.
+      style={{
+        flex: 1, minWidth: 0, position: 'relative', cursor: 'pointer',
+        display: 'flex', flexDirection: 'column', gap: 4,
+        padding: '4px 7px', margin: '-4px 0', borderRadius: 7,
+        background: isCurrent ? 'var(--status-amber-bg)' : 'transparent',
+        transition: 'background 0.15s',
+      }}
     >
       <div style={{ display: 'flex', alignItems: 'center', gap: 5, minWidth: 0 }}>
         <span style={{
@@ -2094,14 +2107,14 @@ function StageSegment({ stage, loan, isOpen, onToggle }) {
           boxShadow: isOpen ? '0 0 0 3px rgba(110,89,232,0.18)' : 'none', transition: 'box-shadow 0.15s',
         }}/>
         <span style={{
-          fontSize: 10, fontWeight: 600, letterSpacing: '0.01em',
-          color: started ? 'var(--text-secondary)' : 'var(--text-tertiary)',
+          fontSize: 10, fontWeight: isCurrent ? 700 : 600, letterSpacing: '0.01em',
+          color: isCurrent ? 'var(--text-primary)' : started ? 'var(--text-secondary)' : 'var(--text-tertiary)',
           overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
         }}>
           {stage.label}
         </span>
       </div>
-      <div style={{ height: 5, borderRadius: 999, background: 'var(--bg-muted)', overflow: 'hidden' }}>
+      <div style={{ height: 5, borderRadius: 999, background: isCurrent ? 'var(--bg-surface)' : 'var(--bg-muted)', overflow: 'hidden' }}>
         <div style={{ width: `${pct}%`, height: '100%', background: fillColor, borderRadius: 999, transition: 'width 0.4s ease' }}/>
       </div>
       {isOpen && <StageMilestonesPopover stage={stage} loan={loan}/>}

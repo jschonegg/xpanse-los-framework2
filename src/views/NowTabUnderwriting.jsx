@@ -1,7 +1,7 @@
 import React from 'react';
 import { Icon } from '../components/Icon';
 import { StatusPill } from '../components/Shell';
-import { ActionCard } from '../components/TaskCard';
+import { ActionCard, StepCounter } from '../components/TaskCard';
 
 function AIInsight({ children }) {
   return (
@@ -162,21 +162,12 @@ export function NowTabUnderwriting({ borrowerName = 'Sarah Anderson', loanId = '
   // Active step id
   const activeStepId = STEPS.find(s => !completed.has(s.id))?.id;
 
-  // Subtitle — urgent when nothing done, encouraging as steps complete
-  const subtitle = remaining === STEPS.length
-    ? `${remaining} steps to close — start with AUS review`
-    : remaining === 1
-      ? 'Almost there — 1 step remaining'
-      : `${STEPS.length - remaining} of ${STEPS.length} steps complete`;
-
   return (
     <>
-      <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 12 }}>
-        <div>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
           <h2 style={{ margin: 0, fontSize: 18, fontWeight: 600, letterSpacing: '-0.01em' }}>Underwriting Review</h2>
-          <div style={{ fontSize: 13, marginTop: 4, color: remaining === STEPS.length ? 'var(--status-amber)' : 'var(--text-tertiary)', fontWeight: remaining === STEPS.length ? 500 : 400 }}>
-            {subtitle}
-          </div>
+          <StepCounter done={STEPS.length - remaining} total={STEPS.length}/>
         </div>
       </div>
 

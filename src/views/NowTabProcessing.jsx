@@ -1,7 +1,7 @@
 import React from 'react';
 import { Icon } from '../components/Icon';
 import { StatusPill } from '../components/Shell';
-import { ActionCard } from '../components/TaskCard';
+import { ActionCard, StepCounter } from '../components/TaskCard';
 
 function AIInsight({ children }) {
   return (
@@ -61,12 +61,10 @@ export function NowTabProcessing({ borrowerName = 'David Chen', loanId = 'LN-202
 
   return (
     <>
-      <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 12 }}>
-        <div>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
           <h2 style={{ margin: 0, fontSize: 18, fontWeight: 600, letterSpacing: '-0.01em' }}>Processing Checklist</h2>
-          <div style={{ fontSize: 13, color: 'var(--text-tertiary)', marginTop: 4 }}>
-            AI-guided path to underwriting — {remaining} of {STEPS.length} steps remaining
-          </div>
+          <StepCounter done={STEPS.length - remaining} total={STEPS.length}/>
         </div>
       </div>
 

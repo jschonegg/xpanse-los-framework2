@@ -131,6 +131,22 @@ export function AIInsight({ children }) {
   );
 }
 
+// Compact "X of Y complete" counter shown next to a Tasks-tab section title.
+// Reads neutral while work remains and flips green once everything is done.
+export function StepCounter({ done = 0, total = 0 }) {
+  const allDone = total > 0 && done >= total;
+  return (
+    <span style={{
+      fontSize: 12, fontWeight: 600, whiteSpace: 'nowrap', lineHeight: 1.5,
+      color: allDone ? 'var(--status-green)' : 'var(--text-secondary)',
+      background: allDone ? 'var(--status-green-bg)' : 'var(--bg-muted)',
+      borderRadius: 999, padding: '2px 10px',
+    }}>
+      {done} of {total} complete
+    </span>
+  );
+}
+
 // Circular progress indicator with a centered percentage.
 export function ProgressRing({ pct = 0, size = 40, stroke = 4, color = 'var(--status-green)' }) {
   const r = (size - stroke) / 2;
