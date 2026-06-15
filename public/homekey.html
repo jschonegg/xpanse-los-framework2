@@ -1,0 +1,1630 @@
+<!DOCTYPE html>
+<html lang="en" id="html-root">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>HomeKey · 1003 Mortgage Application</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&family=Instrument+Serif:ital@0;1&display=swap" rel="stylesheet">
+<style>
+:root{
+  --brand:#1c4d2e;
+  --brand-light:#2d6a4f;
+  --brand-bg:#edf7f1;
+  --gold:#9a6e1a;
+  --amber:#fbbf24;
+  --amber-bg:#fef3c7;
+  --amber-text:#7c2d12;     /* a11y: darkened from #92400e for WCAG AA on amber-bg */
+  --navy:#1e3a8a;
+  --navy-bg:#eff6ff;
+  --red:#b91c1c;            /* a11y: darkened from #dc2626 for 4.5:1 on white */
+  --red-bg:#fee2e2;
+  --green:#15803d;          /* a11y: darkened from #16a34a for 4.5:1 on white */
+  --green-bg:#dcfce7;
+  --ink:#1a1a18;
+  --ink2:#444240;
+  --ink3:#6b6967;           /* a11y: darkened from #9a9894 (was 2.8:1) → now 5.4:1 on white */
+  --ink4:#8d8b87;           /* a11y: darkened from #b0ada7 */
+  --surf:#ffffff;
+  --surf2:#f8f7f4;
+  --surf3:#f2f0eb;
+  --bdr:#e6e3dd;
+  --bdr2:#d4d1ca;
+  --focus-ring:rgba(28,77,46,.35);
+  --font:'Geist',system-ui,-apple-system,sans-serif;
+  --font-display:'Instrument Serif',serif;
+}
+/* a11y: visible keyboard focus on every interactive element */
+*:focus{outline:none}
+*:focus-visible{outline:3px solid var(--focus-ring);outline-offset:2px;border-radius:6px}
+button:focus-visible,.pill-opt:focus-visible,.yn-btn:focus-visible,.rail-section:focus-visible,.ai-action:focus-visible{outline:3px solid var(--focus-ring);outline-offset:2px}
+.field-input:focus-visible,.field-select:focus-visible,.ai-input:focus-visible{outline:none;border-color:var(--brand);box-shadow:0 0 0 3px var(--focus-ring)}
+/* a11y: visually-hidden for screen-reader-only text */
+.sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
+*{margin:0;padding:0;box-sizing:border-box}
+html,body{height:100%;font-family:var(--font);color:var(--ink);background:var(--surf2);overflow:hidden}
+button{font-family:inherit;cursor:pointer;border:none;background:none}
+
+/* ─────────── APP SHELL ─────────── */
+.app{display:flex;flex-direction:column;height:100vh;background:var(--surf2)}
+
+/* Top brand bar */
+.app-hd{background:var(--brand);padding:11px 24px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0;z-index:30;border-bottom:1px solid rgba(0,0,0,.1)}
+.app-hd-logo{display:flex;align-items:center;gap:9px}
+.app-hd-logobox{width:28px;height:28px;background:rgba(255,255,255,.15);border-radius:7px;display:flex;align-items:center;justify-content:center;font-size:15px}
+.app-hd-logoname{font-size:15px;font-weight:600;color:#fff;letter-spacing:-.3px}
+.app-hd-divider{width:1px;height:18px;background:rgba(255,255,255,.2);margin:0 4px}
+.app-hd-app-label{font-size:12px;font-weight:500;color:rgba(255,255,255,.75);letter-spacing:.02em}
+.app-hd-right{display:flex;align-items:center;gap:14px}
+.app-hd-secure{display:flex;align-items:center;gap:5px;font-size:11px;color:rgba(255,255,255,.55)}
+.app-hd-pip{width:5px;height:5px;border-radius:50%;background:#4ade80;flex-shrink:0}
+.app-hd-save{display:flex;align-items:center;gap:5px;font-size:11px;color:rgba(255,255,255,.65);padding:5px 11px;border-radius:100px;background:rgba(255,255,255,.08)}
+.save-dot{width:6px;height:6px;border-radius:50%;background:#4ade80}
+/* Language dropdown */
+.lang-select{display:flex;align-items:center;gap:6px;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.22);border-radius:100px;padding:5px 8px 5px 12px;font-size:11px;font-weight:600;color:#fff;font-family:var(--font);cursor:pointer;outline:none;appearance:none;-webkit-appearance:none;letter-spacing:.04em;line-height:1;background-image:url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23ffffff' stroke-width='2.5'%3e%3cpolyline points='6 9 12 15 18 9'/%3e%3c/svg%3e");background-repeat:no-repeat;background-position:right 8px center;background-size:11px;padding-right:26px;transition:background-color .15s,border-color .15s}
+.lang-select:hover{background-color:rgba(255,255,255,.18);border-color:rgba(255,255,255,.36)}
+.lang-select option{color:var(--ink);background:#fff}
+/* Read-aloud button in AI helper */
+.ai-aloud-btn{display:flex;align-items:center;justify-content:center;gap:7px;width:100%;padding:9px 12px;background:var(--brand);color:#fff;border:none;border-radius:9px;font-family:var(--font);font-size:12px;font-weight:600;cursor:pointer;transition:background .15s;margin-bottom:14px}
+.ai-aloud-btn:hover{background:var(--brand-light)}
+.ai-aloud-btn.speaking{background:var(--red)}
+.ai-aloud-btn.speaking:hover{background:#991b1b}
+
+/* Progress bar */
+.app-prog{background:var(--surf);border-bottom:1px solid var(--bdr);padding:14px 24px;flex-shrink:0}
+.app-prog-row{display:flex;align-items:center;gap:12px;margin-bottom:8px}
+.app-prog-label{font-size:11px;font-weight:700;color:var(--ink3);text-transform:uppercase;letter-spacing:.1em}
+.app-prog-pct{font-size:11px;font-weight:600;color:var(--ink2);margin-left:auto}
+.app-prog-track{height:4px;background:var(--surf3);border-radius:2px;overflow:hidden}
+.app-prog-fill{height:100%;background:linear-gradient(90deg,var(--brand),var(--brand-light));border-radius:2px;transition:width .4s ease}
+
+/* Body row: 3 columns */
+.app-body{display:flex;flex:1;overflow:hidden}
+
+/* ─────────── LEFT RAIL: SECTION NAV ─────────── */
+.rail{width:260px;background:var(--surf);border-right:1px solid var(--bdr);overflow-y:auto;flex-shrink:0;padding:18px 0}
+.rail-hd{padding:0 18px 14px;font-size:10px;font-weight:700;color:var(--ink3);text-transform:uppercase;letter-spacing:.12em}
+.rail-section{display:flex;align-items:flex-start;gap:11px;padding:12px 18px;cursor:pointer;border-left:3px solid transparent;transition:background .15s,border-color .15s;position:relative;text-align:left;width:100%;background:none;font-family:inherit;color:inherit;font-size:inherit;justify-content:space-between}
+.rail-section .rail-num{order:2;width:22px;height:22px;font-size:10px}
+.rail-section:hover{background:var(--surf2)}
+.rail-section.active{background:var(--brand-bg);border-left-color:var(--brand)}
+.rail-section.active .rail-num{background:var(--brand);color:#fff}
+.rail-section.complete .rail-num{background:var(--green);color:#fff}
+.rail-num{width:26px;height:26px;border-radius:50%;background:var(--surf3);color:var(--ink3);font-size:11px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:background .15s,color .15s}
+.rail-num svg{width:11px;height:11px}
+.rail-text{flex:1;min-width:0}
+.rail-title{font-size:13px;font-weight:600;color:var(--ink);line-height:1.3;margin-bottom:2px}
+.rail-section.active .rail-title{color:var(--brand)}
+.rail-meta{font-size:10px;color:var(--ink3);font-weight:500;letter-spacing:.02em}
+.rail-meta.done{color:var(--green)}
+.rail-divider{border-top:1px solid var(--bdr);margin:14px 18px}
+
+/* ─────────── MAIN FORM AREA ─────────── */
+.main{flex:1;overflow-y:auto;padding:32px 40px 110px;background:var(--surf2)}
+.main-hd{margin-bottom:24px}
+.main-eyebrow{font-size:11px;font-weight:700;color:var(--brand);text-transform:uppercase;letter-spacing:.12em;margin-bottom:6px}
+.main-title{font-family:var(--font-display);font-size:32px;line-height:1.15;color:var(--ink);letter-spacing:-.5px;margin-bottom:8px}
+.main-sub{font-size:14px;color:var(--ink2);line-height:1.55;max-width:640px}
+
+/* Subsection card */
+.sub-card{background:var(--surf);border:1px solid var(--bdr);border-radius:14px;padding:24px;margin-bottom:18px;max-width:760px}
+.sub-card-hd{display:flex;align-items:center;justify-content:space-between;margin-bottom:18px;padding-bottom:14px;border-bottom:1px solid var(--bdr)}
+.sub-card-title{font-size:16px;font-weight:700;color:var(--ink);letter-spacing:-.2px}
+.sub-card-meta{font-size:11px;color:var(--ink3);font-weight:600;letter-spacing:.05em}
+
+.prefill-badge{display:inline-flex;align-items:center;gap:5px;font-size:10px;font-weight:700;color:#5b21b6;background:#f3e8ff;border-radius:100px;padding:3px 9px;letter-spacing:.04em}
+
+/* Form fields */
+.field-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px 16px}
+.field-grid-full{grid-column:span 2}
+.field-grid-third{display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px 16px;grid-column:span 2}
+.field{display:flex;flex-direction:column;gap:6px;position:relative}
+.field-label{font-size:12px;font-weight:600;color:var(--ink);letter-spacing:.02em;display:flex;align-items:center;gap:6px}
+.field-label.req::after{content:'*';color:var(--red);font-weight:700}
+.field-help{font-size:11px;color:var(--ink3);font-weight:400;line-height:1.4}
+.field-input{padding:10px 12px;border:1.5px solid var(--bdr);border-radius:9px;font-family:inherit;font-size:13.5px;color:var(--ink);background:var(--surf);transition:border-color .15s,box-shadow .15s;outline:none}
+.field-input:focus{border-color:var(--brand);box-shadow:0 0 0 3px var(--brand-bg)}
+.field-input.prefilled{background:#faf5ff;border-color:#d8b4fe}
+.field-input.with-icon{padding-left:30px}
+.field-icon{position:absolute;left:10px;bottom:11px;color:var(--ink3);font-size:13px;pointer-events:none}
+.field-select{padding:10px 12px;border:1.5px solid var(--bdr);border-radius:9px;font-family:inherit;font-size:13.5px;color:var(--ink);background:var(--surf);cursor:pointer;outline:none;appearance:none;background-image:url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%236b6b6b' stroke-width='2'%3e%3cpolyline points='6 9 12 15 18 9'/%3e%3c/svg%3e");background-repeat:no-repeat;background-position:right 10px center;background-size:14px;padding-right:32px}
+.field-select:focus{border-color:var(--brand);box-shadow:0 0 0 3px var(--brand-bg)}
+
+/* Radio pill row */
+.pill-row{display:flex;gap:8px;flex-wrap:wrap;margin-top:2px}
+.pill-opt{padding:8px 14px;border:1.5px solid var(--bdr);border-radius:100px;font-size:12px;font-weight:600;color:var(--ink2);background:var(--surf);cursor:pointer;transition:all .15s}
+.pill-opt:hover{border-color:var(--bdr2);background:var(--surf2)}
+.pill-opt.selected{background:var(--brand);border-color:var(--brand);color:#fff}
+
+/* Yes/No row (declarations) */
+.yn-row{display:flex;align-items:flex-start;gap:14px;padding:14px 0;border-bottom:1px solid var(--bdr)}
+.yn-row:last-child{border-bottom:none}
+.yn-q{flex:1;font-size:13.5px;color:var(--ink);line-height:1.55}
+.yn-q strong{font-weight:600}
+.yn-btns{display:flex;gap:6px;flex-shrink:0}
+.yn-btn{padding:6px 16px;border:1.5px solid var(--bdr);border-radius:8px;font-size:12px;font-weight:600;color:var(--ink2);background:var(--surf);cursor:pointer;transition:all .15s;min-width:54px}
+.yn-btn:hover{border-color:var(--bdr2)}
+.yn-btn.yes-selected{background:var(--red-bg);border-color:var(--red);color:var(--red)}
+.yn-btn.no-selected{background:var(--green-bg);border-color:var(--green);color:var(--green)}
+
+/* Liability row */
+.liab-row{display:grid;grid-template-columns:2fr 1fr 1fr auto;gap:10px;align-items:center;padding:10px 0;border-bottom:1px solid var(--bdr)}
+.liab-row:last-child{border-bottom:none}
+.liab-add{display:flex;align-items:center;gap:6px;font-size:12px;font-weight:600;color:var(--brand);padding:10px 0;cursor:pointer}
+
+/* ─────────── RIGHT RAIL: AI HELPER ─────────── */
+.ai-rail{width:340px;background:var(--surf);border-left:1px solid var(--bdr);flex-shrink:0;display:flex;flex-direction:column;overflow:hidden}
+.ai-hd{padding:18px 18px 14px;border-bottom:1px solid var(--bdr);display:flex;align-items:center;gap:11px;background:linear-gradient(180deg,#122B1F,#1c4d2e);color:#fff}
+.ai-av{width:42px;height:42px;border-radius:50%;background:rgba(255,255,255,.15);display:flex;align-items:center;justify-content:center;flex-shrink:0;position:relative}
+.ai-av svg{width:28px;height:28px}
+.ai-av-pip{position:absolute;bottom:1px;right:1px;width:10px;height:10px;border-radius:50%;background:#4ade80;border:2px solid #1c4d2e}
+.ai-hd-text{flex:1}
+.ai-hd-name{font-size:14px;font-weight:600;color:#fff;line-height:1.2}
+.ai-hd-status{font-size:11px;color:rgba(255,255,255,.6);margin-top:2px}
+
+.ai-body{flex:1;overflow-y:auto;padding:18px}
+
+.ai-bubble{background:var(--brand-bg);border:1px solid #c4e3d1;border-radius:12px 12px 12px 4px;padding:12px 14px;margin-bottom:14px;font-size:13px;line-height:1.55;color:var(--ink)}
+.ai-bubble strong{font-weight:600;color:var(--brand)}
+
+.ai-section-label{font-size:10px;font-weight:700;color:var(--ink3);text-transform:uppercase;letter-spacing:.12em;margin:8px 0 10px}
+
+.ai-quick-actions{display:flex;flex-direction:column;gap:8px;margin-bottom:18px}
+.ai-action{display:flex;align-items:center;gap:10px;padding:11px 13px;background:var(--surf2);border:1px solid var(--bdr);border-radius:10px;text-align:left;cursor:pointer;transition:all .15s;width:100%}
+.ai-action:hover{background:var(--surf3);border-color:var(--bdr2)}
+.ai-action-icon{font-size:18px;flex-shrink:0;width:30px;height:30px;display:flex;align-items:center;justify-content:center;background:var(--surf);border-radius:7px}
+.ai-action-text{flex:1;min-width:0}
+.ai-action-title{font-size:12px;font-weight:600;color:var(--ink);line-height:1.3}
+.ai-action-sub{font-size:10.5px;color:var(--ink3);margin-top:1px}
+
+.ai-tip-card{background:var(--amber-bg);border:1px solid #fcd34d;border-radius:10px;padding:11px 13px;margin-bottom:14px;display:flex;gap:9px}
+.ai-tip-icon{font-size:14px;flex-shrink:0}
+.ai-tip-text{font-size:12px;line-height:1.5;color:var(--amber-text)}
+.ai-tip-text strong{font-weight:600}
+
+.ai-input-bar{padding:12px 14px;border-top:1px solid var(--bdr);display:flex;gap:8px;align-items:center;background:var(--surf2)}
+.ai-input{flex:1;padding:9px 12px;border:1.5px solid var(--bdr);border-radius:100px;font-family:inherit;font-size:12.5px;color:var(--ink);background:var(--surf);outline:none}
+.ai-input:focus{border-color:var(--brand)}
+.ai-send{width:34px;height:34px;border-radius:50%;background:var(--brand);color:#fff;display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0;cursor:pointer;transition:background .15s}
+.ai-send:hover{background:var(--brand-light)}
+
+/* Floating field-help on hover */
+.field-helper{position:absolute;top:0;right:0;cursor:help;color:var(--ink3);font-size:14px;width:18px;height:18px;display:inline-flex;align-items:center;justify-content:center;border-radius:50%;transition:background .15s;border:1px solid var(--bdr)}
+.field-helper:hover{background:var(--brand-bg);color:var(--brand);border-color:var(--brand)}
+
+/* ─────────── FOOTER ─────────── */
+.footer{position:fixed;left:260px;right:340px;bottom:0;background:var(--surf);border-top:1px solid var(--bdr);padding:14px 40px;display:flex;align-items:center;justify-content:space-between;gap:14px;z-index:25;box-shadow:0 -4px 14px rgba(0,0,0,.04)}
+.footer-left{display:flex;align-items:center;gap:10px}
+.btn{padding:11px 22px;border-radius:9px;font-size:13px;font-weight:600;cursor:pointer;transition:all .15s;font-family:inherit;border:1.5px solid transparent;display:inline-flex;align-items:center;gap:7px}
+.btn-primary{background:var(--brand);color:#fff;border-color:var(--brand)}
+.btn-primary:hover{background:var(--brand-light);border-color:var(--brand-light)}
+.btn-secondary{background:var(--surf);color:var(--ink2);border-color:var(--bdr)}
+.btn-secondary:hover{background:var(--surf2);border-color:var(--bdr2)}
+.btn-link{color:var(--ink3);font-size:12px;font-weight:600;padding:6px 12px;border-radius:7px}
+.btn-link:hover{background:var(--surf2);color:var(--ink2)}
+
+/* Save indicator (autosaving…) */
+.save-state{font-size:11px;color:var(--ink3);display:flex;align-items:center;gap:5px}
+.save-state-dot{width:6px;height:6px;border-radius:50%;background:var(--green)}
+
+/* HMDA disclosure */
+.hmda-disclosure{background:var(--brand-bg);border-left:3px solid var(--brand);padding:14px 16px;border-radius:0 10px 10px 0;font-size:12px;color:var(--ink);line-height:1.6;margin-bottom:18px}
+.hmda-disclosure strong{color:var(--brand)}
+
+/* Mobile responsive */
+@media(max-width:1100px){
+  .ai-rail{width:300px}
+  .footer{right:300px}
+}
+@media(max-width:920px){
+  .rail{width:60px}
+  .rail-text{display:none}
+  .rail-hd{display:none}
+  .footer{left:60px}
+}
+@media(max-width:720px){
+  .ai-rail{display:none}
+  .footer{right:0}
+  .main{padding:20px 18px 100px}
+  .field-grid,.field-grid-third{grid-template-columns:1fr}
+  .field-grid-full{grid-column:span 1}
+}
+
+/* Hide all sections except active */
+.section-pane{display:none}
+.section-pane.active{display:block}
+</style>
+</head>
+<body>
+<div class="app">
+
+  <!-- Top brand bar -->
+  <div class="app-hd">
+    <div class="app-hd-logo">
+      <div class="app-hd-logobox" aria-hidden="true">🏠</div>
+      <span class="app-hd-logoname">HomeKey</span>
+      <div class="app-hd-divider" aria-hidden="true"></div>
+      <span class="app-hd-app-label" data-i18n="header.appLabel">Loan Application</span>
+    </div>
+    <div class="app-hd-right">
+      <label class="sr-only" for="lang-select">Language</label>
+      <select class="lang-select" id="lang-select" onchange="setLang(this.value)" aria-label="Select language">
+        <option value="en">🇺🇸 English</option>
+        <option value="es">🇲🇽 Español</option>
+      </select>
+      <div class="app-hd-save" role="status" aria-live="polite">
+        <span class="save-dot" aria-hidden="true"></span>
+        <span id="last-saved" data-i18n="save.allSaved">All changes saved</span>
+      </div>
+      <div class="app-hd-secure">
+        <span class="app-hd-pip" aria-hidden="true"></span>
+        <span data-i18n="header.secure">Secure · Lender NMLS #1847201</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Progress -->
+  <div class="app-prog">
+    <div class="app-prog-row">
+      <span class="app-prog-label" id="prog-label">Section 1 of 4 · Borrower Information</span>
+      <span class="app-prog-pct" id="prog-pct">12% complete · est. 28 min remaining</span>
+    </div>
+    <div class="app-prog-track" role="progressbar" aria-valuenow="12" aria-valuemin="0" aria-valuemax="100" aria-labelledby="prog-label"><div class="app-prog-fill" id="prog-fill" style="width:12%"></div></div>
+  </div>
+
+  <!-- Body: 3 columns -->
+  <div class="app-body">
+
+    <!-- LEFT RAIL: section nav -->
+    <nav class="rail" aria-label="Application sections">
+      <div class="rail-hd" data-i18n="rail.header">Application</div>
+      <button type="button" class="rail-section active" data-section="0" onclick="goSection(0)" aria-current="step">
+        <div class="rail-num" aria-hidden="true">1</div>
+        <div class="rail-text">
+          <div class="rail-title" data-i18n="sec1.title.short">Borrower Information</div>
+          <div class="rail-meta" data-i18n="sec1.meta">Personal · Residence · Employment</div>
+        </div>
+      </button>
+      <button type="button" class="rail-section" data-section="1" onclick="goSection(1)">
+        <div class="rail-num" aria-hidden="true">2</div>
+        <div class="rail-text">
+          <div class="rail-title" data-i18n="sec2.title.short">Loan &amp; Property</div>
+          <div class="rail-meta" data-i18n="sec2.meta">Purchase · Property · Loan terms</div>
+        </div>
+      </button>
+      <button type="button" class="rail-section" data-section="2" onclick="goSection(2)">
+        <div class="rail-num" aria-hidden="true">3</div>
+        <div class="rail-text">
+          <div class="rail-title" data-i18n="sec3.title.short">Assets &amp; Liabilities</div>
+          <div class="rail-meta" data-i18n="sec3.meta">Accounts · Debts · Monthly payments</div>
+        </div>
+      </button>
+      <button type="button" class="rail-section" data-section="3" onclick="goSection(3)">
+        <div class="rail-num" aria-hidden="true">4</div>
+        <div class="rail-text">
+          <div class="rail-title" data-i18n="sec4.title.short">Declarations + HMDA</div>
+          <div class="rail-meta" data-i18n="sec4.meta">Legal · Demographics</div>
+        </div>
+      </button>
+
+      <div class="rail-divider" aria-hidden="true"></div>
+      <div class="rail-section" style="opacity:.55;cursor:default" aria-disabled="true">
+        <div class="rail-num" aria-hidden="true">✓</div>
+        <div class="rail-text">
+          <div class="rail-title" data-i18n="rail.review">Review &amp; Submit</div>
+          <div class="rail-meta" data-i18n="rail.comingSoon">Coming soon</div>
+        </div>
+      </div>
+    </nav>
+
+    <!-- MAIN FORM -->
+    <main class="main" id="main">
+
+      <!-- ═════════════ SECTION 1: BORROWER INFO ═════════════ -->
+      <div class="section-pane active" id="pane-0" role="region" aria-labelledby="pane-0-title">
+        <div class="main-hd">
+          <div class="main-eyebrow" data-i18n="sec1.eyebrow">Section 1 of 4</div>
+          <h1 class="main-title" id="pane-0-title" data-i18n="sec1.title">Tell us about yourself</h1>
+          <p class="main-sub" data-i18n-html="sec1.sub">We've pre-filled what we already know from your pre-qualification. Review and complete the rest — anything in <span style="color:#5b21b6;font-weight:600">purple</span> came over from your pre-qual.</p>
+        </div>
+
+        <!-- Personal -->
+        <div class="sub-card">
+          <div class="sub-card-hd">
+            <div class="sub-card-title" data-i18n="sec1.personal">Personal information</div>
+            <span class="prefill-badge"><span aria-hidden="true">✨</span> <span data-i18n="prefill.badge3">3 fields auto-filled</span></span>
+          </div>
+          <div class="field-grid">
+            <div class="field">
+              <label class="field-label req" data-i18n="field.firstName">First name</label>
+              <input class="field-input prefilled" type="text" value="Jordan" data-field="firstName" aria-required="true">
+            </div>
+            <div class="field">
+              <label class="field-label req" data-i18n="field.lastName">Last name</label>
+              <input class="field-input prefilled" type="text" value="Schonegg" data-field="lastName" aria-required="true">
+            </div>
+            <div class="field">
+              <label class="field-label req" data-i18n="field.dob">Date of birth</label>
+              <input class="field-input" type="text" placeholder="MM / DD / YYYY" data-field="dob" data-i18n-placeholder="placeholder.dob" aria-required="true">
+            </div>
+            <div class="field">
+              <label class="field-label req" data-i18n="field.ssn">Social Security number</label>
+              <input class="field-input" type="password" placeholder="•••-••-••••" maxlength="11" data-field="ssn" aria-required="true">
+            </div>
+            <div class="field">
+              <label class="field-label req" data-i18n="field.email">Email</label>
+              <input class="field-input prefilled" type="email" value="jordan.schonegg@xpanse.com" data-field="email" aria-required="true">
+            </div>
+            <div class="field">
+              <label class="field-label req" data-i18n="field.phone">Mobile phone</label>
+              <input class="field-input" type="tel" placeholder="(xxx) xxx-xxxx" data-field="phone" data-i18n-placeholder="placeholder.phone" aria-required="true">
+            </div>
+            <div class="field">
+              <label class="field-label req" data-i18n="field.marital">Marital status</label>
+              <div class="pill-row" role="radiogroup" aria-label="Marital status">
+                <button type="button" class="pill-opt" onclick="pickPill(this,'marital','single')" data-i18n="pill.marital.single" role="radio" aria-checked="false">Single</button>
+                <button type="button" class="pill-opt" onclick="pickPill(this,'marital','married')" data-i18n="pill.marital.married" role="radio" aria-checked="false">Married</button>
+                <button type="button" class="pill-opt" onclick="pickPill(this,'marital','separated')" data-i18n="pill.marital.separated" role="radio" aria-checked="false">Separated</button>
+                <button type="button" class="pill-opt" onclick="pickPill(this,'marital','unmarried')" data-i18n="pill.marital.unmarried" role="radio" aria-checked="false">Unmarried</button>
+              </div>
+            </div>
+            <div class="field">
+              <label class="field-label req" data-i18n="field.dependents">Number of dependents</label>
+              <input class="field-input" type="number" min="0" max="20" placeholder="0" data-field="dependents" aria-required="true">
+            </div>
+            <div class="field field-grid-full">
+              <label class="field-label req" data-i18n="field.citizenship">Citizenship</label>
+              <div class="pill-row" role="radiogroup" aria-label="Citizenship">
+                <button type="button" class="pill-opt" onclick="pickPill(this,'citizenship','us')" data-i18n="pill.cit.us" role="radio" aria-checked="false">U.S. Citizen</button>
+                <button type="button" class="pill-opt" onclick="pickPill(this,'citizenship','permanent')" data-i18n="pill.cit.permanent" role="radio" aria-checked="false">Permanent Resident Alien</button>
+                <button type="button" class="pill-opt" onclick="pickPill(this,'citizenship','non-permanent')" data-i18n="pill.cit.nonPermanent" role="radio" aria-checked="false">Non-Permanent Resident Alien</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Current Residence -->
+        <div class="sub-card">
+          <div class="sub-card-hd">
+            <div class="sub-card-title" data-i18n="sec1.residence">Current residence</div>
+            <div class="sub-card-meta" data-i18n="sec1.residence.meta">Past 2 years required</div>
+          </div>
+          <div class="field-grid">
+            <div class="field field-grid-full">
+              <label class="field-label req" data-i18n="field.address">Street address</label>
+              <input class="field-input" type="text" placeholder="123 Main Street, Apt 4B" data-field="resAddress" data-i18n-placeholder="placeholder.address" aria-required="true">
+            </div>
+            <div class="field">
+              <label class="field-label req" data-i18n="field.city">City</label>
+              <input class="field-input" type="text" data-field="resCity" aria-required="true">
+            </div>
+            <div class="field-grid-third">
+              <div class="field">
+                <label class="field-label req" data-i18n="field.state">State</label>
+                <select class="field-select" data-field="resState" aria-required="true">
+                  <option value="" data-i18n="select.placeholder">Select</option>
+                  <option>CA</option><option>NY</option><option>TX</option><option>FL</option><option>IL</option><option>PA</option><option>OH</option><option>WA</option>
+                </select>
+              </div>
+              <div class="field">
+                <label class="field-label req" data-i18n="field.zip">ZIP</label>
+                <input class="field-input" type="text" maxlength="5" data-field="resZip" aria-required="true">
+              </div>
+              <div class="field">
+                <label class="field-label" data-i18n="field.country">Country</label>
+                <input class="field-input" type="text" value="USA" data-field="resCountry">
+              </div>
+            </div>
+            <div class="field">
+              <label class="field-label req" data-i18n="field.housing">Housing</label>
+              <div class="pill-row" role="radiogroup" aria-label="Housing status">
+                <button type="button" class="pill-opt" onclick="pickPill(this,'housing','own')" data-i18n="pill.housing.own" role="radio" aria-checked="false">Own</button>
+                <button type="button" class="pill-opt" onclick="pickPill(this,'housing','rent')" data-i18n="pill.housing.rent" role="radio" aria-checked="false">Rent</button>
+                <button type="button" class="pill-opt" onclick="pickPill(this,'housing','rent-free')" data-i18n="pill.housing.free" role="radio" aria-checked="false">Rent-free</button>
+              </div>
+            </div>
+            <div class="field">
+              <label class="field-label req" data-i18n="field.yearsAtAddress">Years at this address</label>
+              <input class="field-input" type="number" min="0" step="0.5" placeholder="0" data-field="resYears" aria-required="true">
+            </div>
+            <div class="field">
+              <label class="field-label" data-i18n="field.monthlyPayment">Monthly housing payment</label>
+              <input class="field-input with-icon" type="text" placeholder="2,400" data-field="resPayment">
+              <span class="field-icon" aria-hidden="true">$</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Employment -->
+        <div class="sub-card">
+          <div class="sub-card-hd">
+            <div class="sub-card-title" data-i18n="sec1.employment">Current employment</div>
+            <div class="sub-card-meta" data-i18n="sec1.employment.meta">Past 2 years required</div>
+          </div>
+          <div class="field-grid">
+            <div class="field">
+              <label class="field-label req" data-i18n="field.employer">Employer name</label>
+              <input class="field-input" type="text" placeholder="ACME Corp" data-field="employer" aria-required="true">
+            </div>
+            <div class="field">
+              <label class="field-label req" data-i18n="field.position">Position / Title</label>
+              <input class="field-input" type="text" placeholder="Software Engineer" data-field="position" data-i18n-placeholder="placeholder.position" aria-required="true">
+            </div>
+            <div class="field">
+              <label class="field-label req" data-i18n="field.startDate">Start date</label>
+              <input class="field-input" type="text" placeholder="MM / YYYY" data-field="empStart" data-i18n-placeholder="placeholder.monthYear" aria-required="true">
+            </div>
+            <div class="field">
+              <label class="field-label" data-i18n="field.monthlyIncome">Monthly gross income</label>
+              <input class="field-input with-icon prefilled" type="text" value="10,000" data-field="empIncome">
+              <span class="field-icon" aria-hidden="true">$</span>
+            </div>
+            <div class="field field-grid-full">
+              <label class="field-label req" data-i18n="field.empType">Employment type</label>
+              <div class="pill-row" role="radiogroup" aria-label="Employment type">
+                <button type="button" class="pill-opt" onclick="pickPill(this,'empType','w2')" data-i18n="pill.emp.w2" role="radio" aria-checked="false">W-2 Employee</button>
+                <button type="button" class="pill-opt" onclick="pickPill(this,'empType','self')" data-i18n="pill.emp.self" role="radio" aria-checked="false">Self-Employed</button>
+                <button type="button" class="pill-opt" onclick="pickPill(this,'empType','1099')" data-i18n="pill.emp.1099" role="radio" aria-checked="false">1099 Contractor</button>
+                <button type="button" class="pill-opt" onclick="pickPill(this,'empType','retired')" data-i18n="pill.emp.retired" role="radio" aria-checked="false">Retired</button>
+                <button type="button" class="pill-opt" onclick="pickPill(this,'empType','military')" data-i18n="pill.emp.military" role="radio" aria-checked="false">Military</button>
+                <button type="button" class="pill-opt" onclick="pickPill(this,'empType','other')" data-i18n="pill.emp.other" role="radio" aria-checked="false">Other</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ═════════════ SECTION 2: LOAN & PROPERTY ═════════════ -->
+      <div class="section-pane" id="pane-1" role="region" aria-labelledby="pane-1-title">
+        <div class="main-hd">
+          <div class="main-eyebrow" data-i18n="sec2.eyebrow">Section 2 of 4</div>
+          <h1 class="main-title" id="pane-1-title" data-i18n="sec2.title">Loan &amp; property details</h1>
+          <p class="main-sub" data-i18n="sec2.sub">Most of this comes straight from your pre-qualification. Just verify and add the property address.</p>
+        </div>
+
+        <div class="sub-card">
+          <div class="sub-card-hd">
+            <div class="sub-card-title" data-i18n="sec2.loan">Loan details</div>
+            <span class="prefill-badge"><span aria-hidden="true">✨</span> <span data-i18n="prefill.badge5">5 fields auto-filled</span></span>
+          </div>
+          <div class="field-grid">
+            <div class="field">
+              <label class="field-label req" data-i18n="field.purpose">Loan purpose</label>
+              <div class="pill-row" role="radiogroup" aria-label="Loan purpose">
+                <button type="button" class="pill-opt selected" onclick="pickPill(this,'purpose','purchase')" data-i18n="pill.purpose.purchase" role="radio" aria-checked="true">Purchase</button>
+                <button type="button" class="pill-opt" onclick="pickPill(this,'purpose','refi')" data-i18n="pill.purpose.refi" role="radio" aria-checked="false">Refinance</button>
+                <button type="button" class="pill-opt" onclick="pickPill(this,'purpose','cash-out')" data-i18n="pill.purpose.cashOut" role="radio" aria-checked="false">Cash-out refi</button>
+                <button type="button" class="pill-opt" onclick="pickPill(this,'purpose','construction')" data-i18n="pill.purpose.construction" role="radio" aria-checked="false">Construction</button>
+              </div>
+            </div>
+            <div class="field">
+              <label class="field-label req" data-i18n="field.price">Purchase price</label>
+              <input class="field-input with-icon prefilled" type="text" value="500,000" data-field="price" aria-required="true">
+              <span class="field-icon" aria-hidden="true">$</span>
+            </div>
+            <div class="field">
+              <label class="field-label req" data-i18n="field.loanAmt">Loan amount</label>
+              <input class="field-input with-icon prefilled" type="text" value="425,000" data-field="loanAmt" aria-required="true">
+              <span class="field-icon" aria-hidden="true">$</span>
+            </div>
+            <div class="field">
+              <label class="field-label req" data-i18n="field.down">Down payment</label>
+              <input class="field-input with-icon prefilled" type="text" value="75,000" data-field="down" aria-required="true">
+              <span class="field-icon" aria-hidden="true">$</span>
+            </div>
+            <div class="field">
+              <label class="field-label req" data-i18n="field.loanType">Loan type</label>
+              <select class="field-select prefilled" data-field="loanType" aria-required="true">
+                <option data-i18n="opt.conv">Conventional</option>
+                <option>FHA</option>
+                <option>VA</option>
+                <option>USDA</option>
+                <option data-i18n="opt.jumbo">Jumbo</option>
+              </select>
+            </div>
+            <div class="field">
+              <label class="field-label req" data-i18n="field.term">Loan term</label>
+              <div class="pill-row" role="radiogroup" aria-label="Loan term">
+                <button type="button" class="pill-opt" onclick="pickPill(this,'term','15')" data-i18n="pill.term.15" role="radio" aria-checked="false">15 years</button>
+                <button type="button" class="pill-opt" onclick="pickPill(this,'term','20')" data-i18n="pill.term.20" role="radio" aria-checked="false">20 years</button>
+                <button type="button" class="pill-opt selected" onclick="pickPill(this,'term','30')" data-i18n="pill.term.30" role="radio" aria-checked="true">30 years</button>
+              </div>
+            </div>
+            <div class="field field-grid-full">
+              <label class="field-label req" data-i18n="field.downSrc">Down payment source</label>
+              <div class="pill-row" role="radiogroup" aria-label="Down payment source">
+                <button type="button" class="pill-opt" onclick="pickPill(this,'downSrc','savings')" data-i18n="pill.dp.savings" role="radio" aria-checked="false">Personal savings</button>
+                <button type="button" class="pill-opt" onclick="pickPill(this,'downSrc','retirement')" data-i18n="pill.dp.retirement" role="radio" aria-checked="false">Retirement account</button>
+                <button type="button" class="pill-opt" onclick="pickPill(this,'downSrc','sale')" data-i18n="pill.dp.sale" role="radio" aria-checked="false">Sale of current home</button>
+                <button type="button" class="pill-opt" onclick="pickPill(this,'downSrc','gift')" data-i18n="pill.dp.gift" role="radio" aria-checked="false">Gift from family</button>
+                <button type="button" class="pill-opt" onclick="pickPill(this,'downSrc','combo')" data-i18n="pill.dp.combo" role="radio" aria-checked="false">Combination</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="sub-card">
+          <div class="sub-card-hd">
+            <div class="sub-card-title" data-i18n="sec2.property">Subject property</div>
+            <div class="sub-card-meta" data-i18n="sec2.property.meta">The property you're buying</div>
+          </div>
+          <div class="field-grid">
+            <div class="field field-grid-full">
+              <label class="field-label req" data-i18n="field.propAddress">Property address</label>
+              <input class="field-input" type="text" placeholder="789 Maple Avenue" data-field="propAddress" aria-required="true">
+            </div>
+            <div class="field">
+              <label class="field-label req" data-i18n="field.city">City</label>
+              <input class="field-input" type="text" data-field="propCity" aria-required="true">
+            </div>
+            <div class="field-grid-third">
+              <div class="field">
+                <label class="field-label req" data-i18n="field.state">State</label>
+                <select class="field-select prefilled" data-field="propState" aria-required="true">
+                  <option>CA</option><option>NY</option><option>TX</option><option>FL</option><option>IL</option>
+                </select>
+              </div>
+              <div class="field">
+                <label class="field-label req" data-i18n="field.zip">ZIP</label>
+                <input class="field-input" type="text" maxlength="5" data-field="propZip" aria-required="true">
+              </div>
+              <div class="field">
+                <label class="field-label" data-i18n="field.yearBuilt">Year built</label>
+                <input class="field-input" type="number" placeholder="2008" data-field="propYear">
+              </div>
+            </div>
+            <div class="field">
+              <label class="field-label req" data-i18n="field.propType">Property type</label>
+              <select class="field-select" data-field="propType" aria-required="true">
+                <option value="" data-i18n="select.placeholder">Select</option>
+                <option data-i18n="opt.sfr">Single Family Residence</option>
+                <option data-i18n="opt.condo">Condominium</option>
+                <option data-i18n="opt.townhome">Townhome</option>
+                <option data-i18n="opt.multi">Multi-Unit (2–4 units)</option>
+                <option data-i18n="opt.coop">Cooperative</option>
+                <option data-i18n="opt.manufactured">Manufactured</option>
+              </select>
+            </div>
+            <div class="field">
+              <label class="field-label req" data-i18n="field.occupancy">Occupancy</label>
+              <select class="field-select" data-field="occupancy" aria-required="true">
+                <option value="" data-i18n="select.placeholder">Select</option>
+                <option data-i18n="opt.primary">Primary residence</option>
+                <option data-i18n="opt.second">Second home</option>
+                <option data-i18n="opt.investment">Investment property</option>
+              </select>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ═════════════ SECTION 3: ASSETS & LIABILITIES ═════════════ -->
+      <div class="section-pane" id="pane-2" role="region" aria-labelledby="pane-2-title">
+        <div class="main-hd">
+          <div class="main-eyebrow" data-i18n="sec3.eyebrow">Section 3 of 4</div>
+          <h1 class="main-title" id="pane-2-title" data-i18n="sec3.title">Assets &amp; liabilities</h1>
+          <p class="main-sub" data-i18n="sec3.sub">List your bank accounts, investments, and current monthly debts. You can connect your bank instead to auto-pull this — ask Kai.</p>
+        </div>
+
+        <!-- Assets -->
+        <div class="sub-card">
+          <div class="sub-card-hd">
+            <div class="sub-card-title" data-i18n="sec3.assets">Assets</div>
+            <button type="button" class="btn btn-link" style="font-size:11px;padding:4px 8px;color:var(--brand)" data-i18n="sec3.connectBank">+ Connect bank</button>
+          </div>
+          <div class="field-grid">
+            <div class="field">
+              <label class="field-label" data-i18n="field.checking">Checking accounts (total balance)</label>
+              <input class="field-input with-icon" type="text" placeholder="12,500" data-field="checking">
+              <span class="field-icon" aria-hidden="true">$</span>
+            </div>
+            <div class="field">
+              <label class="field-label" data-i18n="field.savings">Savings accounts</label>
+              <input class="field-input with-icon" type="text" placeholder="35,000" data-field="savings">
+              <span class="field-icon" aria-hidden="true">$</span>
+            </div>
+            <div class="field">
+              <label class="field-label" data-i18n="field.retirement">Retirement (401k, IRA, Roth)</label>
+              <input class="field-input with-icon" type="text" placeholder="85,000" data-field="retirement">
+              <span class="field-icon" aria-hidden="true">$</span>
+            </div>
+            <div class="field">
+              <label class="field-label" data-i18n="field.investments">Other investments (stocks, bonds)</label>
+              <input class="field-input with-icon" type="text" placeholder="20,000" data-field="investments">
+              <span class="field-icon" aria-hidden="true">$</span>
+            </div>
+            <div class="field">
+              <label class="field-label" data-i18n="field.vehicles">Vehicles (market value)</label>
+              <input class="field-input with-icon" type="text" placeholder="22,000" data-field="vehicles">
+              <span class="field-icon" aria-hidden="true">$</span>
+            </div>
+            <div class="field">
+              <label class="field-label" data-i18n="field.otherRE">Other real estate (market value)</label>
+              <input class="field-input with-icon" type="text" placeholder="0" data-field="otherRE">
+              <span class="field-icon" aria-hidden="true">$</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Liabilities -->
+        <div class="sub-card">
+          <div class="sub-card-hd">
+            <div class="sub-card-title" data-i18n="sec3.liabilities">Liabilities</div>
+            <div class="sub-card-meta" data-i18n="sec3.liabilities.meta">Monthly payments and balances</div>
+          </div>
+          <div style="font-size:11px;color:var(--ink3);text-transform:uppercase;font-weight:700;letter-spacing:.05em;display:grid;grid-template-columns:2fr 1fr 1fr auto;gap:10px;padding-bottom:10px;border-bottom:1px solid var(--bdr)" role="row">
+            <div data-i18n="liab.col.creditor">Creditor / type</div>
+            <div data-i18n="liab.col.payment">Monthly payment</div>
+            <div data-i18n="liab.col.balance">Balance</div>
+            <div style="width:24px" aria-hidden="true"></div>
+          </div>
+          <div class="liab-row">
+            <input class="field-input" type="text" placeholder="Chase credit card" value="Chase Sapphire" aria-label="Creditor name">
+            <input class="field-input with-icon" type="text" placeholder="200" value="200" style="padding-left:24px" aria-label="Monthly payment">
+            <input class="field-input with-icon" type="text" placeholder="4,500" value="4,500" style="padding-left:24px" aria-label="Balance">
+            <button type="button" style="color:var(--ink3);font-size:16px;width:24px" aria-label="Remove liability row">×</button>
+          </div>
+          <div class="liab-row">
+            <input class="field-input" type="text" placeholder="Auto loan" value="Honda auto loan" aria-label="Creditor name">
+            <input class="field-input with-icon" type="text" placeholder="450" value="450" style="padding-left:24px" aria-label="Monthly payment">
+            <input class="field-input with-icon" type="text" placeholder="18,000" value="18,000" style="padding-left:24px" aria-label="Balance">
+            <button type="button" style="color:var(--ink3);font-size:16px;width:24px" aria-label="Remove liability row">×</button>
+          </div>
+          <button type="button" class="liab-add" onclick="alert('In production: adds a new liability row.')" data-i18n="sec3.addLiability">＋ Add liability</button>
+        </div>
+
+        <div class="sub-card">
+          <div class="sub-card-hd">
+            <div class="sub-card-title" data-i18n="sec3.otherObligations">Other monthly obligations</div>
+          </div>
+          <div class="field-grid">
+            <div class="field">
+              <label class="field-label" data-i18n="field.childSupport">Child support / alimony paid</label>
+              <input class="field-input with-icon" type="text" placeholder="0" data-field="childSupport" aria-describedby="cs-help">
+              <span class="field-icon" aria-hidden="true">$</span>
+              <span class="field-help" id="cs-help" data-i18n="field.childSupport.help">You are not required to disclose this unless you want it considered for qualification.</span>
+            </div>
+            <div class="field">
+              <label class="field-label" data-i18n="field.otherObl">Other monthly obligations</label>
+              <input class="field-input with-icon" type="text" placeholder="0" data-field="otherObl">
+              <span class="field-icon" aria-hidden="true">$</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ═════════════ SECTION 4: DECLARATIONS + HMDA ═════════════ -->
+      <div class="section-pane" id="pane-3" role="region" aria-labelledby="pane-3-title">
+        <div class="main-hd">
+          <div class="main-eyebrow" data-i18n="sec4.eyebrow">Section 4 of 4</div>
+          <h1 class="main-title" id="pane-3-title" data-i18n="sec4.title">Declarations &amp; demographics</h1>
+          <p class="main-sub" data-i18n="sec4.sub">A few legal questions plus optional demographic information collected under the Home Mortgage Disclosure Act.</p>
+        </div>
+
+        <div class="sub-card">
+          <div class="sub-card-hd">
+            <div class="sub-card-title" data-i18n="sec4.legal">Legal declarations</div>
+            <div class="sub-card-meta" data-i18n="sec4.legal.meta">Answer "Yes" if any apply</div>
+          </div>
+          <div class="yn-row">
+            <div class="yn-q" data-i18n-html="decl.occupy">Will you occupy the property as your <strong>primary residence</strong>?</div>
+            <div class="yn-btns" role="radiogroup" aria-label="Will you occupy as primary residence">
+              <button type="button" class="yn-btn" onclick="pickYN(this,'occupyPrimary','yes')" data-i18n="yn.yes" role="radio" aria-checked="false">Yes</button>
+              <button type="button" class="yn-btn" onclick="pickYN(this,'occupyPrimary','no')" data-i18n="yn.no" role="radio" aria-checked="false">No</button>
+            </div>
+          </div>
+          <div class="yn-row">
+            <div class="yn-q" data-i18n-html="decl.prevOwnership">Have you had ownership interest in another property in the <strong>past 3 years</strong>?</div>
+            <div class="yn-btns" role="radiogroup" aria-label="Previous ownership">
+              <button type="button" class="yn-btn" onclick="pickYN(this,'prevOwnership','yes')" data-i18n="yn.yes" role="radio" aria-checked="false">Yes</button>
+              <button type="button" class="yn-btn" onclick="pickYN(this,'prevOwnership','no')" data-i18n="yn.no" role="radio" aria-checked="false">No</button>
+            </div>
+          </div>
+          <div class="yn-row">
+            <div class="yn-q" data-i18n-html="decl.newCredit">Are you borrowing or have you applied for any <strong>other loans or credit</strong> that aren't yet reflected on your credit report?</div>
+            <div class="yn-btns" role="radiogroup" aria-label="New credit">
+              <button type="button" class="yn-btn" onclick="pickYN(this,'newCredit','yes')" data-i18n="yn.yes" role="radio" aria-checked="false">Yes</button>
+              <button type="button" class="yn-btn" onclick="pickYN(this,'newCredit','no')" data-i18n="yn.no" role="radio" aria-checked="false">No</button>
+            </div>
+          </div>
+          <div class="yn-row">
+            <div class="yn-q" data-i18n-html="decl.borrowedDP">Are any of your down payment funds <strong>borrowed</strong>?</div>
+            <div class="yn-btns" role="radiogroup" aria-label="Borrowed down payment">
+              <button type="button" class="yn-btn" onclick="pickYN(this,'borrowedDP','yes')" data-i18n="yn.yes" role="radio" aria-checked="false">Yes</button>
+              <button type="button" class="yn-btn" onclick="pickYN(this,'borrowedDP','no')" data-i18n="yn.no" role="radio" aria-checked="false">No</button>
+            </div>
+          </div>
+          <div class="yn-row">
+            <div class="yn-q" data-i18n-html="decl.cosigner">Are you a <strong>co-signer or guarantor</strong> on any debt not disclosed above?</div>
+            <div class="yn-btns" role="radiogroup" aria-label="Co-signer status">
+              <button type="button" class="yn-btn" onclick="pickYN(this,'cosigner','yes')" data-i18n="yn.yes" role="radio" aria-checked="false">Yes</button>
+              <button type="button" class="yn-btn" onclick="pickYN(this,'cosigner','no')" data-i18n="yn.no" role="radio" aria-checked="false">No</button>
+            </div>
+          </div>
+          <div class="yn-row">
+            <div class="yn-q" data-i18n-html="decl.judgments">Are there any <strong>outstanding judgments, lawsuits, or unresolved tax liens</strong> against you?</div>
+            <div class="yn-btns" role="radiogroup" aria-label="Outstanding judgments">
+              <button type="button" class="yn-btn" onclick="pickYN(this,'judgments','yes')" data-i18n="yn.yes" role="radio" aria-checked="false">Yes</button>
+              <button type="button" class="yn-btn" onclick="pickYN(this,'judgments','no')" data-i18n="yn.no" role="radio" aria-checked="false">No</button>
+            </div>
+          </div>
+          <div class="yn-row">
+            <div class="yn-q" data-i18n-html="decl.bk7">In the <strong>last 7 years</strong>, have you had a bankruptcy, foreclosure, short sale, or deed-in-lieu?</div>
+            <div class="yn-btns" role="radiogroup" aria-label="Bankruptcy history">
+              <button type="button" class="yn-btn" onclick="pickYN(this,'bk7','yes')" data-i18n="yn.yes" role="radio" aria-checked="false">Yes</button>
+              <button type="button" class="yn-btn" onclick="pickYN(this,'bk7','no')" data-i18n="yn.no" role="radio" aria-checked="false">No</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="sub-card">
+          <div class="sub-card-hd">
+            <div class="sub-card-title" data-i18n="sec4.hmda">Demographic information (HMDA)</div>
+            <div class="sub-card-meta" data-i18n="sec4.hmda.meta">Optional · not used for qualification</div>
+          </div>
+          <div class="hmda-disclosure" data-i18n-html="hmda.disclosure">
+            <strong>Why we ask:</strong> Federal law requires lenders to collect this to ensure fair lending. <strong>You are not required to provide it.</strong> If you choose to, it won't be used to qualify or price your loan — it's reported anonymously to regulators.
+          </div>
+          <div class="field-grid">
+            <div class="field field-grid-full">
+              <label class="field-label" data-i18n="field.ethnicity">Ethnicity</label>
+              <div class="pill-row" role="radiogroup" aria-label="Ethnicity">
+                <button type="button" class="pill-opt" onclick="pickPill(this,'ethnicity','hispanic')" data-i18n="pill.eth.hispanic" role="radio" aria-checked="false">Hispanic or Latino</button>
+                <button type="button" class="pill-opt" onclick="pickPill(this,'ethnicity','non-hispanic')" data-i18n="pill.eth.nonHispanic" role="radio" aria-checked="false">Not Hispanic or Latino</button>
+                <button type="button" class="pill-opt" onclick="pickPill(this,'ethnicity','decline')" data-i18n="pill.decline" role="radio" aria-checked="false">Prefer not to say</button>
+              </div>
+            </div>
+            <div class="field field-grid-full">
+              <label class="field-label" data-i18n="field.race">Race</label>
+              <div class="pill-row" role="radiogroup" aria-label="Race">
+                <button type="button" class="pill-opt" onclick="pickPill(this,'race','aian')" data-i18n="pill.race.aian" role="radio" aria-checked="false">American Indian / Alaska Native</button>
+                <button type="button" class="pill-opt" onclick="pickPill(this,'race','asian')" data-i18n="pill.race.asian" role="radio" aria-checked="false">Asian</button>
+                <button type="button" class="pill-opt" onclick="pickPill(this,'race','black')" data-i18n="pill.race.black" role="radio" aria-checked="false">Black or African American</button>
+                <button type="button" class="pill-opt" onclick="pickPill(this,'race','nhpi')" data-i18n="pill.race.nhpi" role="radio" aria-checked="false">Native Hawaiian / Pacific Islander</button>
+                <button type="button" class="pill-opt" onclick="pickPill(this,'race','white')" data-i18n="pill.race.white" role="radio" aria-checked="false">White</button>
+                <button type="button" class="pill-opt" onclick="pickPill(this,'race','decline')" data-i18n="pill.decline" role="radio" aria-checked="false">Prefer not to say</button>
+              </div>
+            </div>
+            <div class="field field-grid-full">
+              <label class="field-label" data-i18n="field.sex">Sex</label>
+              <div class="pill-row" role="radiogroup" aria-label="Sex">
+                <button type="button" class="pill-opt" onclick="pickPill(this,'sex','female')" data-i18n="pill.sex.female" role="radio" aria-checked="false">Female</button>
+                <button type="button" class="pill-opt" onclick="pickPill(this,'sex','male')" data-i18n="pill.sex.male" role="radio" aria-checked="false">Male</button>
+                <button type="button" class="pill-opt" onclick="pickPill(this,'sex','decline')" data-i18n="pill.decline" role="radio" aria-checked="false">Prefer not to say</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </main>
+
+    <!-- RIGHT RAIL: AI HELPER -->
+    <aside class="ai-rail" aria-label="Kai AI assistant">
+      <div class="ai-hd">
+        <div class="ai-av" aria-hidden="true">
+          <svg viewBox="0 0 40 40" fill="none">
+            <rect x="10" y="13" width="20" height="16" rx="4" fill="rgba(255,255,255,.9)"/>
+            <rect x="14" y="17" width="4" height="4" rx="1.5" fill="#1c4d2e"/>
+            <rect x="22" y="17" width="4" height="4" rx="1.5" fill="#1c4d2e"/>
+            <path d="M15 25 Q20 28 25 25" stroke="#1c4d2e" stroke-width="1.5" stroke-linecap="round" fill="none"/>
+            <rect x="18" y="8" width="4" height="6" rx="2" fill="rgba(255,255,255,.7)"/>
+            <circle cx="20" cy="7" r="2" fill="rgba(255,255,255,.6)"/>
+          </svg>
+          <div class="ai-av-pip"></div>
+        </div>
+        <div class="ai-hd-text">
+          <div class="ai-hd-name">Kai</div>
+          <div class="ai-hd-status" data-i18n="liberty.status">AI Application Assistant</div>
+        </div>
+      </div>
+
+      <div class="ai-body" id="ai-body" role="log" aria-live="polite" aria-label="Kai conversation">
+        <div class="ai-bubble" id="ai-greeting" data-i18n-html="liberty.greeting">
+          Hi <strong>Jordan</strong>! I've pre-filled what I can from your pre-qualification. I'm here for anything you don't recognize or want explained.
+        </div>
+
+        <!-- Read aloud button -->
+        <button type="button" class="ai-aloud-btn" id="ai-aloud-btn" onclick="toggleReadAloud()" aria-label="Read this section aloud">
+          <span aria-hidden="true">🔊</span> <span id="ai-aloud-label" data-i18n="liberty.readAloud">Read this section aloud</span>
+        </button>
+
+        <div class="ai-section-label" data-i18n="liberty.quickActions">Quick Actions</div>
+        <div class="ai-quick-actions">
+          <button type="button" class="ai-action" onclick="aiAction('explain')">
+            <div class="ai-action-icon" aria-hidden="true">💡</div>
+            <div class="ai-action-text">
+              <div class="ai-action-title" data-i18n="liberty.action.explain">Explain this section</div>
+              <div class="ai-action-sub" data-i18n="liberty.action.explainSub">What HomeKey needs and why</div>
+            </div>
+          </button>
+          <button type="button" class="ai-action" onclick="aiAction('connect')">
+            <div class="ai-action-icon" aria-hidden="true">🔗</div>
+            <div class="ai-action-text">
+              <div class="ai-action-title" data-i18n="liberty.action.connect">Connect my bank</div>
+              <div class="ai-action-sub" data-i18n="liberty.action.connectSub">Auto-fill assets via Plaid</div>
+            </div>
+          </button>
+          <button type="button" class="ai-action" onclick="aiAction('skip')">
+            <div class="ai-action-icon" aria-hidden="true">⏭️</div>
+            <div class="ai-action-text">
+              <div class="ai-action-title" data-i18n="liberty.action.skip">Skip and come back</div>
+              <div class="ai-action-sub" data-i18n="liberty.action.skipSub">Continue, finish later</div>
+            </div>
+          </button>
+          <button type="button" class="ai-action" onclick="aiAction('lo')">
+            <div class="ai-action-icon" aria-hidden="true">📞</div>
+            <div class="ai-action-text">
+              <div class="ai-action-title" data-i18n="liberty.action.lo">Talk to a loan officer</div>
+              <div class="ai-action-sub" data-i18n="liberty.action.loSub">Mon–Fri 9am–6pm ET</div>
+            </div>
+          </button>
+        </div>
+
+        <div class="ai-section-label" data-i18n="liberty.tip">Tip for this section</div>
+        <div class="ai-tip-card" id="ai-tip">
+          <div class="ai-tip-icon" aria-hidden="true">💼</div>
+          <div class="ai-tip-text">
+            <strong>Employment income:</strong> Use your gross pay before taxes. If your pay varies, use a 2-year average. Self-employed? Use your net business income from your last tax return.
+          </div>
+        </div>
+      </div>
+
+      <div class="ai-input-bar">
+        <input class="ai-input" placeholder="Ask Kai anything…" id="ai-q" data-i18n-placeholder="liberty.askPlaceholder" onkeydown="if(event.key==='Enter')aiAsk()" aria-label="Ask Kai">
+        <button type="button" class="ai-send" onclick="aiAsk()" aria-label="Send question to Kai">→</button>
+      </div>
+    </aside>
+
+  </div>
+
+  <!-- FOOTER -->
+  <div class="footer" role="contentinfo">
+    <div class="footer-left">
+      <button type="button" class="btn btn-link" onclick="goPrev()" id="btn-prev" style="visibility:hidden" data-i18n="footer.previous">← Previous</button>
+      <span class="save-state" role="status" aria-live="polite"><span class="save-state-dot" aria-hidden="true"></span> <span data-i18n="footer.savedAgo">Saved 2 seconds ago</span></span>
+    </div>
+    <div>
+      <button type="button" class="btn btn-secondary" onclick="alert('In production: saves and emails magic link.')" data-i18n="footer.saveLater">Save &amp; finish later</button>
+      <button type="button" class="btn btn-primary" onclick="goNext()" id="btn-next" data-i18n="sec1.next">Continue to Loan &amp; Property →</button>
+    </div>
+  </div>
+
+</div>
+
+<script>
+// ═══════════════════════════════════════════
+// i18n DICTIONARY — Fannie Mae URLA Spanish (LEP-friendly per CFPB guidance)
+// ═══════════════════════════════════════════
+const T = {
+  en: {
+    'header.appLabel': 'Loan Application',
+    'header.secure': 'Secure · Lender NMLS #1847201',
+    'save.allSaved': 'All changes saved',
+    'rail.header': 'Application',
+    'rail.review': 'Review & Submit',
+    'rail.comingSoon': 'Coming soon',
+    'footer.previous': '← Previous',
+    'footer.saveLater': 'Save & finish later',
+    'footer.savedAgo': 'Saved 2 seconds ago',
+    'footer.savedJust': 'Saved just now',
+    'footer.saving': 'Saving…',
+    'select.placeholder': 'Select',
+
+    // Section 1 — Borrower Info
+    'sec1.eyebrow': 'Section 1 of 4',
+    'sec1.title': 'Tell us about yourself',
+    'sec1.title.short': 'Borrower Information',
+    'sec1.meta': 'Personal · Residence · Employment',
+    'sec1.sub': 'We\'ve pre-filled what we already know from your pre-qualification. Review and complete the rest — anything in <span style="color:#5b21b6;font-weight:600">purple</span> came over from your pre-qual.',
+    'sec1.personal': 'Personal information',
+    'sec1.residence': 'Current residence',
+    'sec1.residence.meta': 'Past 2 years required',
+    'sec1.employment': 'Current employment',
+    'sec1.employment.meta': 'Past 2 years required',
+    'sec1.next': 'Continue to Loan & Property →',
+
+    // Section 2
+    'sec2.eyebrow': 'Section 2 of 4',
+    'sec2.title': 'Loan & property details',
+    'sec2.title.short': 'Loan & Property',
+    'sec2.meta': 'Purchase · Property · Loan terms',
+    'sec2.sub': 'Most of this comes straight from your pre-qualification. Just verify and add the property address.',
+    'sec2.loan': 'Loan details',
+    'sec2.property': 'Subject property',
+    'sec2.property.meta': 'The property you\'re buying',
+    'sec2.next': 'Continue to Assets & Liabilities →',
+
+    // Section 3
+    'sec3.eyebrow': 'Section 3 of 4',
+    'sec3.title': 'Assets & liabilities',
+    'sec3.title.short': 'Assets & Liabilities',
+    'sec3.meta': 'Accounts · Debts · Monthly payments',
+    'sec3.sub': 'List your bank accounts, investments, and current monthly debts. You can connect your bank instead to auto-pull this — ask Kai.',
+    'sec3.assets': 'Assets',
+    'sec3.connectBank': '+ Connect bank',
+    'sec3.liabilities': 'Liabilities',
+    'sec3.liabilities.meta': 'Monthly payments and balances',
+    'sec3.addLiability': '＋ Add liability',
+    'sec3.otherObligations': 'Other monthly obligations',
+    'sec3.next': 'Continue to Declarations →',
+
+    // Section 4
+    'sec4.eyebrow': 'Section 4 of 4',
+    'sec4.title': 'Declarations & demographics',
+    'sec4.title.short': 'Declarations + HMDA',
+    'sec4.meta': 'Legal · Demographics',
+    'sec4.sub': 'A few legal questions plus optional demographic information collected under the Home Mortgage Disclosure Act.',
+    'sec4.legal': 'Legal declarations',
+    'sec4.legal.meta': 'Answer "Yes" if any apply',
+    'sec4.hmda': 'Demographic information (HMDA)',
+    'sec4.hmda.meta': 'Optional · not used for qualification',
+    'sec4.next': 'Review & Submit →',
+
+    // Prefill badges
+    'prefill.badge3': '3 fields auto-filled',
+    'prefill.badge5': '5 fields auto-filled',
+
+    // Fields
+    'field.firstName': 'First name',
+    'field.lastName': 'Last name',
+    'field.dob': 'Date of birth',
+    'field.ssn': 'Social Security number',
+    'field.email': 'Email',
+    'field.phone': 'Mobile phone',
+    'field.marital': 'Marital status',
+    'field.dependents': 'Number of dependents',
+    'field.citizenship': 'Citizenship',
+    'field.address': 'Street address',
+    'field.city': 'City',
+    'field.state': 'State',
+    'field.zip': 'ZIP',
+    'field.country': 'Country',
+    'field.housing': 'Housing',
+    'field.yearsAtAddress': 'Years at this address',
+    'field.monthlyPayment': 'Monthly housing payment',
+    'field.employer': 'Employer name',
+    'field.position': 'Position / Title',
+    'field.startDate': 'Start date',
+    'field.monthlyIncome': 'Monthly gross income',
+    'field.empType': 'Employment type',
+    'field.purpose': 'Loan purpose',
+    'field.price': 'Purchase price',
+    'field.loanAmt': 'Loan amount',
+    'field.down': 'Down payment',
+    'field.loanType': 'Loan type',
+    'field.term': 'Loan term',
+    'field.downSrc': 'Down payment source',
+    'field.propAddress': 'Property address',
+    'field.yearBuilt': 'Year built',
+    'field.propType': 'Property type',
+    'field.occupancy': 'Occupancy',
+    'field.checking': 'Checking accounts (total balance)',
+    'field.savings': 'Savings accounts',
+    'field.retirement': 'Retirement (401k, IRA, Roth)',
+    'field.investments': 'Other investments (stocks, bonds)',
+    'field.vehicles': 'Vehicles (market value)',
+    'field.otherRE': 'Other real estate (market value)',
+    'field.childSupport': 'Child support / alimony paid',
+    'field.childSupport.help': 'You are not required to disclose this unless you want it considered for qualification.',
+    'field.otherObl': 'Other monthly obligations',
+    'field.ethnicity': 'Ethnicity',
+    'field.race': 'Race',
+    'field.sex': 'Sex',
+
+    // Liability column headers
+    'liab.col.creditor': 'Creditor / type',
+    'liab.col.payment': 'Monthly payment',
+    'liab.col.balance': 'Balance',
+
+    // Placeholders
+    'placeholder.dob': 'MM / DD / YYYY',
+    'placeholder.phone': '(xxx) xxx-xxxx',
+    'placeholder.address': '123 Main Street, Apt 4B',
+    'placeholder.position': 'Software Engineer',
+    'placeholder.monthYear': 'MM / YYYY',
+
+    // Pills — marital
+    'pill.marital.single': 'Single',
+    'pill.marital.married': 'Married',
+    'pill.marital.separated': 'Separated',
+    'pill.marital.unmarried': 'Unmarried',
+    // Pills — citizenship
+    'pill.cit.us': 'U.S. Citizen',
+    'pill.cit.permanent': 'Permanent Resident Alien',
+    'pill.cit.nonPermanent': 'Non-Permanent Resident Alien',
+    // Pills — housing
+    'pill.housing.own': 'Own',
+    'pill.housing.rent': 'Rent',
+    'pill.housing.free': 'Rent-free',
+    // Pills — employment
+    'pill.emp.w2': 'W-2 Employee',
+    'pill.emp.self': 'Self-Employed',
+    'pill.emp.1099': '1099 Contractor',
+    'pill.emp.retired': 'Retired',
+    'pill.emp.military': 'Military',
+    'pill.emp.other': 'Other',
+    // Pills — loan purpose
+    'pill.purpose.purchase': 'Purchase',
+    'pill.purpose.refi': 'Refinance',
+    'pill.purpose.cashOut': 'Cash-out refi',
+    'pill.purpose.construction': 'Construction',
+    // Pills — term
+    'pill.term.15': '15 years',
+    'pill.term.20': '20 years',
+    'pill.term.30': '30 years',
+    // Pills — down payment source
+    'pill.dp.savings': 'Personal savings',
+    'pill.dp.retirement': 'Retirement account',
+    'pill.dp.sale': 'Sale of current home',
+    'pill.dp.gift': 'Gift from family',
+    'pill.dp.combo': 'Combination',
+    // Pills — ethnicity
+    'pill.eth.hispanic': 'Hispanic or Latino',
+    'pill.eth.nonHispanic': 'Not Hispanic or Latino',
+    'pill.decline': 'Prefer not to say',
+    // Pills — race
+    'pill.race.aian': 'American Indian / Alaska Native',
+    'pill.race.asian': 'Asian',
+    'pill.race.black': 'Black or African American',
+    'pill.race.nhpi': 'Native Hawaiian / Pacific Islander',
+    'pill.race.white': 'White',
+    // Pills — sex
+    'pill.sex.female': 'Female',
+    'pill.sex.male': 'Male',
+
+    // Select options
+    'opt.conv': 'Conventional',
+    'opt.jumbo': 'Jumbo',
+    'opt.sfr': 'Single Family Residence',
+    'opt.condo': 'Condominium',
+    'opt.townhome': 'Townhome',
+    'opt.multi': 'Multi-Unit (2–4 units)',
+    'opt.coop': 'Cooperative',
+    'opt.manufactured': 'Manufactured',
+    'opt.primary': 'Primary residence',
+    'opt.second': 'Second home',
+    'opt.investment': 'Investment property',
+
+    // Yes/No
+    'yn.yes': 'Yes',
+    'yn.no': 'No',
+
+    // Declarations
+    'decl.occupy': 'Will you occupy the property as your <strong>primary residence</strong>?',
+    'decl.prevOwnership': 'Have you had ownership interest in another property in the <strong>past 3 years</strong>?',
+    'decl.newCredit': 'Are you borrowing or have you applied for any <strong>other loans or credit</strong> that aren\'t yet reflected on your credit report?',
+    'decl.borrowedDP': 'Are any of your down payment funds <strong>borrowed</strong>?',
+    'decl.cosigner': 'Are you a <strong>co-signer or guarantor</strong> on any debt not disclosed above?',
+    'decl.judgments': 'Are there any <strong>outstanding judgments, lawsuits, or unresolved tax liens</strong> against you?',
+    'decl.bk7': 'In the <strong>last 7 years</strong>, have you had a bankruptcy, foreclosure, short sale, or deed-in-lieu?',
+
+    // HMDA
+    'hmda.disclosure': '<strong>Why we ask:</strong> Federal law requires lenders to collect this to ensure fair lending. <strong>You are not required to provide it.</strong> If you choose to, it won\'t be used to qualify or price your loan — it\'s reported anonymously to regulators.',
+
+    // Kai AI
+    'liberty.status': 'AI Application Assistant',
+    'liberty.greeting': 'Hi <strong>Jordan</strong>! I\'ve pre-filled what I can from your pre-qualification. I\'m here for anything you don\'t recognize or want explained.',
+    'liberty.readAloud': 'Read this section aloud',
+    'liberty.stopReading': 'Stop reading',
+    'liberty.quickActions': 'Quick Actions',
+    'liberty.tip': 'Tip for this section',
+    'liberty.askPlaceholder': 'Ask Kai anything…',
+    'liberty.action.explain': 'Explain this section',
+    'liberty.action.explainSub': 'What HomeKey needs and why',
+    'liberty.action.connect': 'Connect my bank',
+    'liberty.action.connectSub': 'Auto-fill assets via Plaid',
+    'liberty.action.skip': 'Skip and come back',
+    'liberty.action.skipSub': 'Continue, finish later',
+    'liberty.action.lo': 'Talk to a loan officer',
+    'liberty.action.loSub': 'Mon–Fri 9am–6pm ET',
+    'liberty.askDemo': 'Great question. <em>(Demo: in production, this connects to an LLM that has context for this section and the borrower\'s pre-qual data.)</em>',
+
+    // Tips (per section)
+    'tip.sec1.icon': '💼',
+    'tip.sec1.html': '<strong>Employment income:</strong> Use your gross pay before taxes. If your pay varies, use a 2-year average. Self-employed? Use your net business income from your last tax return.',
+    'tip.sec2.icon': '🏡',
+    'tip.sec2.html': '<strong>Loan amount:</strong> This is the purchase price minus your down payment. We\'ve already calculated this for you based on your pre-qualification.',
+    'tip.sec3.icon': '🏦',
+    'tip.sec3.html': '<strong>Bank statements:</strong> Underwriters typically want to see 2 months of statements. Connecting your bank skips this step entirely.',
+    'tip.sec4.icon': '📋',
+    'tip.sec4.html': '<strong>Declarations are required by law:</strong> Answer honestly — discrepancies between this and your credit report flag a manual review and can slow closing.',
+
+    // AI action responses
+    'action.explain': '<strong>Section: {section}</strong> — We need this so the underwriter can verify the borrower\'s identity, income stability, and ability to repay the loan. The details you enter here will be checked against your bank statements, tax returns, and credit report.',
+    'action.connect': 'Connecting your bank lets us pull asset balances and 2 months of statements automatically — saves about 12 minutes. We use <strong>Plaid</strong> with read-only access. <em>(Demo: click would launch Plaid Link.)</em>',
+    'action.skip': 'No problem — your progress is saved. We\'ll email you a magic link to come back. You can finish in stages and the application stays valid for 90 days.',
+    'action.lo': 'I\'ll connect you with a HomeKey loan officer. Standard response time is <strong>under 5 minutes</strong> during business hours. Want me to schedule a call?',
+
+    // Progress
+    'prog.sectionOf': 'Section {n} of {total}',
+    'prog.complete': '{pct}% complete · est. {min} min remaining',
+  },
+
+  // ═══════════════════════════════════════════
+  // SPANISH (es) — Fannie Mae URLA terminology
+  // ═══════════════════════════════════════════
+  es: {
+    'header.appLabel': 'Solicitud de Préstamo',
+    'header.secure': 'Seguro · NMLS del Prestamista #1847201',
+    'save.allSaved': 'Todos los cambios guardados',
+    'rail.header': 'Solicitud',
+    'rail.review': 'Revisar y enviar',
+    'rail.comingSoon': 'Próximamente',
+    'footer.previous': '← Anterior',
+    'footer.saveLater': 'Guardar y terminar después',
+    'footer.savedAgo': 'Guardado hace 2 segundos',
+    'footer.savedJust': 'Guardado ahora mismo',
+    'footer.saving': 'Guardando…',
+    'select.placeholder': 'Seleccionar',
+
+    // Section 1
+    'sec1.eyebrow': 'Sección 1 de 4',
+    'sec1.title': 'Cuéntanos sobre ti',
+    'sec1.title.short': 'Información del Prestatario',
+    'sec1.meta': 'Personal · Residencia · Empleo',
+    'sec1.sub': 'Hemos completado lo que ya sabemos de tu precalificación. Revisa y completa el resto — todo lo que aparece en <span style="color:#5b21b6;font-weight:600">púrpura</span> vino de tu precalificación.',
+    'sec1.personal': 'Información personal',
+    'sec1.residence': 'Residencia actual',
+    'sec1.residence.meta': 'Se requieren los últimos 2 años',
+    'sec1.employment': 'Empleo actual',
+    'sec1.employment.meta': 'Se requieren los últimos 2 años',
+    'sec1.next': 'Continuar a Préstamo y Propiedad →',
+
+    // Section 2
+    'sec2.eyebrow': 'Sección 2 de 4',
+    'sec2.title': 'Préstamo y propiedad',
+    'sec2.title.short': 'Préstamo y Propiedad',
+    'sec2.meta': 'Compra · Propiedad · Términos del préstamo',
+    'sec2.sub': 'La mayoría viene directamente de tu precalificación. Solo verifica y agrega la dirección de la propiedad.',
+    'sec2.loan': 'Detalles del préstamo',
+    'sec2.property': 'Propiedad en cuestión',
+    'sec2.property.meta': 'La propiedad que vas a comprar',
+    'sec2.next': 'Continuar a Activos y Pasivos →',
+
+    // Section 3
+    'sec3.eyebrow': 'Sección 3 de 4',
+    'sec3.title': 'Activos y pasivos',
+    'sec3.title.short': 'Activos y Pasivos',
+    'sec3.meta': 'Cuentas · Deudas · Pagos mensuales',
+    'sec3.sub': 'Enumera tus cuentas bancarias, inversiones y deudas mensuales actuales. Puedes conectar tu banco para que se llenen automáticamente — pregúntale a Kai.',
+    'sec3.assets': 'Activos',
+    'sec3.connectBank': '+ Conectar banco',
+    'sec3.liabilities': 'Pasivos',
+    'sec3.liabilities.meta': 'Pagos mensuales y saldos',
+    'sec3.addLiability': '＋ Agregar pasivo',
+    'sec3.otherObligations': 'Otras obligaciones mensuales',
+    'sec3.next': 'Continuar a Declaraciones →',
+
+    // Section 4
+    'sec4.eyebrow': 'Sección 4 de 4',
+    'sec4.title': 'Declaraciones y datos demográficos',
+    'sec4.title.short': 'Declaraciones + HMDA',
+    'sec4.meta': 'Legal · Datos demográficos',
+    'sec4.sub': 'Algunas preguntas legales más información demográfica opcional recopilada bajo la Ley de Divulgación de Hipotecas (HMDA).',
+    'sec4.legal': 'Declaraciones legales',
+    'sec4.legal.meta': 'Responde "Sí" si alguna aplica',
+    'sec4.hmda': 'Información demográfica (HMDA)',
+    'sec4.hmda.meta': 'Opcional · no se usa para calificar',
+    'sec4.next': 'Revisar y enviar →',
+
+    // Prefill
+    'prefill.badge3': '3 campos completados automáticamente',
+    'prefill.badge5': '5 campos completados automáticamente',
+
+    // Fields
+    'field.firstName': 'Nombre',
+    'field.lastName': 'Apellido',
+    'field.dob': 'Fecha de nacimiento',
+    'field.ssn': 'Número de Seguro Social',
+    'field.email': 'Correo electrónico',
+    'field.phone': 'Teléfono móvil',
+    'field.marital': 'Estado civil',
+    'field.dependents': 'Número de dependientes',
+    'field.citizenship': 'Ciudadanía',
+    'field.address': 'Dirección',
+    'field.city': 'Ciudad',
+    'field.state': 'Estado',
+    'field.zip': 'Código postal',
+    'field.country': 'País',
+    'field.housing': 'Vivienda',
+    'field.yearsAtAddress': 'Años en esta dirección',
+    'field.monthlyPayment': 'Pago mensual de vivienda',
+    'field.employer': 'Nombre del empleador',
+    'field.position': 'Posición / Título',
+    'field.startDate': 'Fecha de inicio',
+    'field.monthlyIncome': 'Ingreso bruto mensual',
+    'field.empType': 'Tipo de empleo',
+    'field.purpose': 'Propósito del préstamo',
+    'field.price': 'Precio de compra',
+    'field.loanAmt': 'Monto del préstamo',
+    'field.down': 'Pago inicial',
+    'field.loanType': 'Tipo de préstamo',
+    'field.term': 'Plazo del préstamo',
+    'field.downSrc': 'Fuente del pago inicial',
+    'field.propAddress': 'Dirección de la propiedad',
+    'field.yearBuilt': 'Año de construcción',
+    'field.propType': 'Tipo de propiedad',
+    'field.occupancy': 'Ocupación',
+    'field.checking': 'Cuentas de cheques (saldo total)',
+    'field.savings': 'Cuentas de ahorro',
+    'field.retirement': 'Jubilación (401k, IRA, Roth)',
+    'field.investments': 'Otras inversiones (acciones, bonos)',
+    'field.vehicles': 'Vehículos (valor de mercado)',
+    'field.otherRE': 'Otros bienes raíces (valor de mercado)',
+    'field.childSupport': 'Manutención de menores / pensión alimenticia pagada',
+    'field.childSupport.help': 'No estás obligado(a) a revelar esto a menos que quieras que se considere para calificar.',
+    'field.otherObl': 'Otras obligaciones mensuales',
+    'field.ethnicity': 'Etnicidad',
+    'field.race': 'Raza',
+    'field.sex': 'Sexo',
+
+    'liab.col.creditor': 'Acreedor / tipo',
+    'liab.col.payment': 'Pago mensual',
+    'liab.col.balance': 'Saldo',
+
+    'placeholder.dob': 'MM / DD / AAAA',
+    'placeholder.phone': '(xxx) xxx-xxxx',
+    'placeholder.address': 'Calle Principal 123, Apt 4B',
+    'placeholder.position': 'Ingeniero de software',
+    'placeholder.monthYear': 'MM / AAAA',
+
+    'pill.marital.single': 'Soltero(a)',
+    'pill.marital.married': 'Casado(a)',
+    'pill.marital.separated': 'Separado(a)',
+    'pill.marital.unmarried': 'No casado(a)',
+    'pill.cit.us': 'Ciudadano(a) Estadounidense',
+    'pill.cit.permanent': 'Residente Permanente Extranjero(a)',
+    'pill.cit.nonPermanent': 'Residente No Permanente Extranjero(a)',
+    'pill.housing.own': 'Propio',
+    'pill.housing.rent': 'Alquilado',
+    'pill.housing.free': 'Sin pago',
+    'pill.emp.w2': 'Empleado W-2',
+    'pill.emp.self': 'Trabajador(a) por cuenta propia',
+    'pill.emp.1099': 'Contratista 1099',
+    'pill.emp.retired': 'Jubilado(a)',
+    'pill.emp.military': 'Militar',
+    'pill.emp.other': 'Otro',
+    'pill.purpose.purchase': 'Compra',
+    'pill.purpose.refi': 'Refinanciamiento',
+    'pill.purpose.cashOut': 'Refinanciamiento con retiro',
+    'pill.purpose.construction': 'Construcción',
+    'pill.term.15': '15 años',
+    'pill.term.20': '20 años',
+    'pill.term.30': '30 años',
+    'pill.dp.savings': 'Ahorros personales',
+    'pill.dp.retirement': 'Cuenta de jubilación',
+    'pill.dp.sale': 'Venta de vivienda actual',
+    'pill.dp.gift': 'Regalo de familia',
+    'pill.dp.combo': 'Combinación',
+    'pill.eth.hispanic': 'Hispano o Latino',
+    'pill.eth.nonHispanic': 'No Hispano ni Latino',
+    'pill.decline': 'Prefiero no decirlo',
+    'pill.race.aian': 'Indígena Americano(a) / Nativo(a) de Alaska',
+    'pill.race.asian': 'Asiático(a)',
+    'pill.race.black': 'Negro(a) o Afroamericano(a)',
+    'pill.race.nhpi': 'Nativo(a) Hawaiano(a) / Isleño(a) del Pacífico',
+    'pill.race.white': 'Blanco(a)',
+    'pill.sex.female': 'Femenino',
+    'pill.sex.male': 'Masculino',
+
+    'opt.conv': 'Convencional',
+    'opt.jumbo': 'Jumbo',
+    'opt.sfr': 'Residencia Unifamiliar',
+    'opt.condo': 'Condominio',
+    'opt.townhome': 'Casa Adosada',
+    'opt.multi': 'Multifamiliar (2–4 unidades)',
+    'opt.coop': 'Cooperativa',
+    'opt.manufactured': 'Manufacturada',
+    'opt.primary': 'Residencia principal',
+    'opt.second': 'Segunda vivienda',
+    'opt.investment': 'Propiedad de inversión',
+
+    'yn.yes': 'Sí',
+    'yn.no': 'No',
+
+    'decl.occupy': '¿Vas a ocupar la propiedad como tu <strong>residencia principal</strong>?',
+    'decl.prevOwnership': '¿Has tenido interés de propiedad en otro inmueble en los <strong>últimos 3 años</strong>?',
+    'decl.newCredit': '¿Estás solicitando o has solicitado <strong>otros préstamos o créditos</strong> que aún no aparecen en tu reporte de crédito?',
+    'decl.borrowedDP': '¿Alguno de los fondos de tu pago inicial son <strong>prestados</strong>?',
+    'decl.cosigner': '¿Eres <strong>cosignatario o garante</strong> de alguna deuda no declarada arriba?',
+    'decl.judgments': '¿Existen <strong>sentencias pendientes, demandas o gravámenes fiscales no resueltos</strong> en tu contra?',
+    'decl.bk7': 'En los <strong>últimos 7 años</strong>, ¿has tenido bancarrota, ejecución hipotecaria, venta corta o escritura en lugar de pago?',
+
+    'hmda.disclosure': '<strong>Por qué preguntamos:</strong> La ley federal requiere que los prestamistas recopilen esta información para garantizar el préstamo justo. <strong>No estás obligado(a) a proporcionarla.</strong> Si decides hacerlo, no se usará para calificar o fijar el precio de tu préstamo — se reporta de forma anónima a los reguladores.',
+
+    'liberty.status': 'Asistente de Solicitud con IA',
+    'liberty.greeting': '¡Hola <strong>Jordan</strong>! He completado lo que pude de tu precalificación. Estoy aquí para cualquier cosa que no reconozcas o quieras que te explique.',
+    'liberty.readAloud': 'Leer esta sección en voz alta',
+    'liberty.stopReading': 'Detener lectura',
+    'liberty.quickActions': 'Acciones rápidas',
+    'liberty.tip': 'Consejo para esta sección',
+    'liberty.askPlaceholder': 'Pregúntale a Kai…',
+    'liberty.action.explain': 'Explicar esta sección',
+    'liberty.action.explainSub': 'Qué necesita HomeKey y por qué',
+    'liberty.action.connect': 'Conectar mi banco',
+    'liberty.action.connectSub': 'Llenar activos automáticamente con Plaid',
+    'liberty.action.skip': 'Omitir y volver después',
+    'liberty.action.skipSub': 'Continuar, terminar después',
+    'liberty.action.lo': 'Hablar con un oficial de préstamos',
+    'liberty.action.loSub': 'Lun–Vie 9am–6pm ET',
+    'liberty.askDemo': 'Buena pregunta. <em>(Demo: en producción, esto se conecta a una IA con contexto de esta sección y tus datos de precalificación.)</em>',
+
+    'tip.sec1.icon': '💼',
+    'tip.sec1.html': '<strong>Ingreso del empleo:</strong> Usa tu pago bruto antes de impuestos. Si tu pago varía, usa un promedio de 2 años. ¿Trabajas por cuenta propia? Usa tu ingreso neto del negocio de tu última declaración de impuestos.',
+    'tip.sec2.icon': '🏡',
+    'tip.sec2.html': '<strong>Monto del préstamo:</strong> Es el precio de compra menos tu pago inicial. Ya lo hemos calculado por ti según tu precalificación.',
+    'tip.sec3.icon': '🏦',
+    'tip.sec3.html': '<strong>Estados de cuenta bancarios:</strong> Los suscriptores normalmente quieren ver 2 meses de estados de cuenta. Conectar tu banco evita este paso por completo.',
+    'tip.sec4.icon': '📋',
+    'tip.sec4.html': '<strong>Las declaraciones son requeridas por ley:</strong> Responde con honestidad — discrepancias entre esto y tu reporte de crédito activan una revisión manual y pueden retrasar el cierre.',
+
+    'action.explain': '<strong>Sección: {section}</strong> — Necesitamos esto para que el suscriptor pueda verificar la identidad, estabilidad de ingresos y capacidad de pago del prestatario. Los detalles que ingreses se verificarán contra tus estados de cuenta bancarios, declaraciones de impuestos y reporte de crédito.',
+    'action.connect': 'Conectar tu banco nos permite obtener saldos de activos y 2 meses de estados de cuenta automáticamente — ahorra unos 12 minutos. Usamos <strong>Plaid</strong> con acceso de solo lectura. <em>(Demo: el clic lanzaría Plaid Link.)</em>',
+    'action.skip': 'No hay problema — tu progreso está guardado. Te enviaremos un enlace por correo electrónico para regresar. Puedes terminar por partes y la solicitud sigue válida por 90 días.',
+    'action.lo': 'Te conectaré con un oficial de préstamos de HomeKey. El tiempo de respuesta estándar es de <strong>menos de 5 minutos</strong> en horario laboral. ¿Quieres que te agende una llamada?',
+
+    'prog.sectionOf': 'Sección {n} de {total}',
+    'prog.complete': '{pct}% completado · ~{min} min restantes',
+  }
+};
+
+// ═══════════════════════════════════════════
+// i18n STATE + HELPERS
+// ═══════════════════════════════════════════
+let currentLang = localStorage.getItem('lang_1003') || 'en';
+let currentSection = 0;
+
+function t(key) {
+  return T[currentLang][key] || T.en[key] || key;
+}
+
+function tFormat(key, vars) {
+  return t(key).replace(/\{(\w+)\}/g, (_, k) => vars[k] != null ? vars[k] : '');
+}
+
+function setLang(lang) {
+  if (lang !== 'en' && lang !== 'es') return;
+  currentLang = lang;
+  localStorage.setItem('lang_1003', lang);
+  document.getElementById('html-root').setAttribute('lang', lang);
+
+  // Sync dropdown
+  const sel = document.getElementById('lang-select');
+  if (sel && sel.value !== lang) sel.value = lang;
+
+  // Walk DOM and swap text per data-i18n attributes
+  document.querySelectorAll('[data-i18n]').forEach(el => {
+    const key = el.dataset.i18n;
+    el.textContent = t(key);
+  });
+  document.querySelectorAll('[data-i18n-html]').forEach(el => {
+    el.innerHTML = t(el.dataset.i18nHtml);
+  });
+  document.querySelectorAll('[data-i18n-placeholder]').forEach(el => {
+    el.setAttribute('placeholder', t(el.dataset.i18nPlaceholder));
+  });
+
+  // Re-render dynamic strings (progress, tip card, next button)
+  refreshDynamicStrings();
+
+  // Stop any active TTS — voice will need to re-init in new language
+  if (window._speaking) stopReadAloud();
+}
+
+function refreshDynamicStrings() {
+  // Progress label
+  const total = 4;
+  const n = currentSection + 1;
+  const pct = Math.round((n / total) * 100);
+  const remaining = Math.max(2, 30 - currentSection * 8);
+  document.getElementById('prog-label').textContent = `${tFormat('prog.sectionOf', {n, total})} · ${t(`sec${n}.title.short`)}`;
+  document.getElementById('prog-pct').textContent = tFormat('prog.complete', {pct, min: remaining});
+  document.querySelector('.app-prog-track').setAttribute('aria-valuenow', pct);
+
+  // Footer button
+  document.getElementById('btn-next').textContent = t(`sec${n}.next`);
+
+  // Tip card
+  const tipIcon = t(`tip.sec${n}.icon`);
+  const tipHtml = t(`tip.sec${n}.html`);
+  document.getElementById('ai-tip').innerHTML = `<div class="ai-tip-icon" aria-hidden="true">${tipIcon}</div><div class="ai-tip-text">${tipHtml}</div>`;
+}
+
+// ═══════════════════════════════════════════
+// SECTION NAV
+// ═══════════════════════════════════════════
+function goSection(n) {
+  if (n < 0 || n >= 4) return;
+  currentSection = n;
+  document.querySelectorAll('.section-pane').forEach((p,i) => p.classList.toggle('active', i === n));
+  document.querySelectorAll('.rail-section[data-section]').forEach(r => {
+    const isActive = parseInt(r.dataset.section,10) === n;
+    r.classList.toggle('active', isActive);
+    if (isActive) r.setAttribute('aria-current', 'step');
+    else r.removeAttribute('aria-current');
+  });
+
+  const pct = Math.round(((n + 1) / 4) * 100);
+  document.getElementById('prog-fill').style.width = pct + '%';
+  document.getElementById('btn-prev').style.visibility = n === 0 ? 'hidden' : 'visible';
+
+  refreshDynamicStrings();
+
+  // Stop any TTS when changing section
+  if (window._speaking) stopReadAloud();
+
+  document.getElementById('main').scrollTop = 0;
+  // Move focus to the section title for screen readers
+  const title = document.getElementById(`pane-${n}-title`);
+  if (title) { title.setAttribute('tabindex', '-1'); title.focus(); }
+}
+
+function goNext() {
+  if (currentSection >= 3) { alert(currentLang === 'es' ? 'En producción: esto envía la solicitud para revisión.' : 'In production: this submits the application for review.'); return; }
+  goSection(currentSection + 1);
+}
+function goPrev() { goSection(Math.max(0, currentSection - 1)); }
+
+// ═══════════════════════════════════════════
+// PILL / YN PICKERS (a11y: aria-checked + keyboard)
+// ═══════════════════════════════════════════
+function pickPill(btn) {
+  btn.parentElement.querySelectorAll('.pill-opt').forEach(b => {
+    b.classList.remove('selected');
+    b.setAttribute('aria-checked', 'false');
+  });
+  btn.classList.add('selected');
+  btn.setAttribute('aria-checked', 'true');
+  saveBlip();
+}
+function pickYN(btn, key, val) {
+  btn.parentElement.querySelectorAll('.yn-btn').forEach(b => {
+    b.classList.remove('yes-selected', 'no-selected');
+    b.setAttribute('aria-checked', 'false');
+  });
+  btn.classList.add(val === 'yes' ? 'yes-selected' : 'no-selected');
+  btn.setAttribute('aria-checked', 'true');
+  saveBlip();
+}
+
+// Keyboard nav within radiogroups: arrow keys move focus among siblings
+document.addEventListener('keydown', e => {
+  const group = e.target.closest('[role="radiogroup"]');
+  if (!group) return;
+  if (!['ArrowLeft','ArrowRight','ArrowUp','ArrowDown'].includes(e.key)) return;
+  e.preventDefault();
+  const items = Array.from(group.querySelectorAll('[role="radio"]'));
+  const idx = items.indexOf(e.target);
+  if (idx === -1) return;
+  const dir = (e.key === 'ArrowRight' || e.key === 'ArrowDown') ? 1 : -1;
+  const next = items[(idx + dir + items.length) % items.length];
+  next.focus();
+});
+
+// ═══════════════════════════════════════════
+// AUTOSAVE BLIP
+// ═══════════════════════════════════════════
+let saveTimer;
+function saveBlip() {
+  const el = document.querySelector('.save-state');
+  if (!el) return;
+  clearTimeout(saveTimer);
+  el.innerHTML = `<span class="save-state-dot" style="background:#f59e0b" aria-hidden="true"></span> ${t('footer.saving')}`;
+  saveTimer = setTimeout(() => {
+    el.innerHTML = `<span class="save-state-dot" aria-hidden="true"></span> ${t('footer.savedJust')}`;
+  }, 800);
+}
+document.addEventListener('input', e => { if (e.target.closest('.field-input, .field-select')) saveBlip(); });
+
+// ═══════════════════════════════════════════
+// AI HELPER ACTIONS
+// ═══════════════════════════════════════════
+function aiAction(action) {
+  const sectionTitle = t(`sec${currentSection + 1}.title.short`);
+  const msg = action === 'explain' ? tFormat('action.explain', { section: sectionTitle }) : t(`action.${action}`);
+  appendAIBubble(msg);
+}
+
+function aiAsk() {
+  const inp = document.getElementById('ai-q');
+  const q = inp.value.trim();
+  if (!q) return;
+  appendUserBubble(q);
+  inp.value = '';
+  setTimeout(() => appendAIBubble(t('liberty.askDemo')), 600);
+}
+
+function appendUserBubble(text) {
+  const body = document.getElementById('ai-body');
+  const div = document.createElement('div');
+  div.style.cssText = 'background:var(--surf2);border:1px solid var(--bdr);border-radius:12px 12px 4px 12px;padding:10px 13px;margin-bottom:10px;margin-left:30px;font-size:12.5px;line-height:1.5;color:var(--ink2)';
+  div.textContent = text;
+  body.appendChild(div);
+  body.scrollTop = body.scrollHeight;
+}
+
+function appendAIBubble(html) {
+  const body = document.getElementById('ai-body');
+  const div = document.createElement('div');
+  div.className = 'ai-bubble';
+  div.innerHTML = html;
+  body.appendChild(div);
+  body.scrollTop = body.scrollHeight;
+}
+
+// ═══════════════════════════════════════════
+// READ ALOUD — SpeechSynthesis API
+// ═══════════════════════════════════════════
+window._speaking = false;
+
+function getVoiceFor(lang) {
+  const voices = window.speechSynthesis.getVoices();
+  // Prefer high-quality voices; fall back to any matching language
+  const prefix = lang === 'es' ? 'es' : 'en';
+  return voices.find(v => v.lang.startsWith(prefix) && v.default)
+      || voices.find(v => v.lang.startsWith(prefix))
+      || voices[0];
+}
+
+function buildSectionScript() {
+  // Concatenate the active section's title, intro, sub-card titles + field labels into plain text for TTS
+  const pane = document.querySelector('.section-pane.active');
+  if (!pane) return '';
+  const parts = [];
+  pane.querySelectorAll('.main-eyebrow, .main-title, .main-sub, .sub-card-title, .sub-card-meta, .field-label, .yn-q').forEach(el => {
+    parts.push(el.textContent.replace(/\s+/g,' ').trim());
+  });
+  return parts.filter(Boolean).join('. ');
+}
+
+function toggleReadAloud() {
+  if (window._speaking) { stopReadAloud(); return; }
+  if (!('speechSynthesis' in window)) {
+    alert(currentLang === 'es' ? 'Tu navegador no soporta la lectura en voz alta.' : 'Your browser does not support read-aloud.');
+    return;
+  }
+  const text = buildSectionScript();
+  if (!text) return;
+  const utt = new SpeechSynthesisUtterance(text);
+  utt.lang = currentLang === 'es' ? 'es-US' : 'en-US';
+  const voice = getVoiceFor(currentLang);
+  if (voice) utt.voice = voice;
+  utt.rate = 0.95;
+  utt.onend = () => { window._speaking = false; updateReadAloudBtn(); };
+  utt.onerror = () => { window._speaking = false; updateReadAloudBtn(); };
+  window.speechSynthesis.cancel();
+  window.speechSynthesis.speak(utt);
+  window._speaking = true;
+  updateReadAloudBtn();
+}
+
+function stopReadAloud() {
+  window.speechSynthesis.cancel();
+  window._speaking = false;
+  updateReadAloudBtn();
+}
+
+function updateReadAloudBtn() {
+  const btn = document.getElementById('ai-aloud-btn');
+  const lbl = document.getElementById('ai-aloud-label');
+  if (!btn) return;
+  btn.classList.toggle('speaking', window._speaking);
+  lbl.textContent = window._speaking ? t('liberty.stopReading') : t('liberty.readAloud');
+  btn.setAttribute('aria-label', lbl.textContent);
+}
+
+// Some browsers don't have voices ready until 'voiceschanged' fires
+if ('speechSynthesis' in window) {
+  window.speechSynthesis.onvoiceschanged = () => {/* triggers voice list load */};
+}
+
+// ═══════════════════════════════════════════
+// INIT
+// ═══════════════════════════════════════════
+setLang(currentLang);  // Apply saved language preference + render dynamic strings
+goSection(0);
+</script>
+</body>
+</html>
