@@ -603,6 +603,7 @@ body {
         <i class="ti ti-forms" aria-hidden="true"></i>
         FormOS
       </div>
+      <button class="fb-tab" onclick="switchMain('library')" id="mtab-library">Library</button>
       <button class="fb-tab active" onclick="switchMain('builder')" id="mtab-builder">Builder</button>
       <button class="fb-tab" onclick="switchMain('logic')" id="mtab-logic">Logic rules</button>
       <button class="fb-tab" onclick="switchMain('analytics')" id="mtab-analytics">Analytics</button>
@@ -959,6 +960,31 @@ body {
       </div>
     </div>
 
+    <!-- ============ LIBRARY VIEW (Form template library) ============ -->
+    <div id="main-library" class="fb-view" role="main" style="padding:24px 32px 48px; overflow-y:auto; background:#FAFAFB;">
+      <div style="max-width:1280px; margin:0 auto;">
+        <div style="display:flex; align-items:baseline; justify-content:space-between; margin-bottom:6px;">
+          <h1 style="font-size:24px; font-weight:800; letter-spacing:-0.02em; color:#111827; margin:0;">Form template library</h1>
+          <span style="font-size:12px; color:#6B7280;">10 system templates · compliance-mapped</span>
+        </div>
+        <p style="font-size:13.5px; color:#6B7280; margin:0 0 18px; max-width:680px; line-height:1.55;">
+          Pre-built templates covering the full loan origination lifecycle. Deploy as-is or open in the builder to customize. All edits create a new version — the system default is never overwritten.
+        </p>
+
+        <!-- Filter chips -->
+        <div id="library-filters" style="display:flex; gap:6px; flex-wrap:wrap; margin-bottom:18px;">
+          <button class="lib-chip active" data-stage="all" onclick="filterLibrary('all')" style="padding:6px 13px; border-radius:999px; border:1px solid #E5E7EB; background:#111827; color:#fff; font-size:12.5px; font-weight:700; cursor:pointer; font-family:inherit;">All · 10</button>
+          <button class="lib-chip" data-stage="Application" onclick="filterLibrary('Application')" style="padding:6px 13px; border-radius:999px; border:1px solid #E5E7EB; background:#fff; color:#374151; font-size:12.5px; font-weight:600; cursor:pointer; font-family:inherit;">Application · 3</button>
+          <button class="lib-chip" data-stage="Processing" onclick="filterLibrary('Processing')" style="padding:6px 13px; border-radius:999px; border:1px solid #E5E7EB; background:#fff; color:#374151; font-size:12.5px; font-weight:600; cursor:pointer; font-family:inherit;">Processing · 4</button>
+          <button class="lib-chip" data-stage="Underwriting" onclick="filterLibrary('Underwriting')" style="padding:6px 13px; border-radius:999px; border:1px solid #E5E7EB; background:#fff; color:#374151; font-size:12.5px; font-weight:600; cursor:pointer; font-family:inherit;">Underwriting · 1</button>
+          <button class="lib-chip" data-stage="Closing" onclick="filterLibrary('Closing')" style="padding:6px 13px; border-radius:999px; border:1px solid #E5E7EB; background:#fff; color:#374151; font-size:12.5px; font-weight:600; cursor:pointer; font-family:inherit;">Closing · 1</button>
+          <button class="lib-chip" data-stage="Post-Close" onclick="filterLibrary('Post-Close')" style="padding:6px 13px; border-radius:999px; border:1px solid #E5E7EB; background:#fff; color:#374151; font-size:12.5px; font-weight:600; cursor:pointer; font-family:inherit;">Post-Close · 1</button>
+        </div>
+
+        <!-- Cards grid -->
+        <div id="library-grid" style="display:grid; grid-template-columns:repeat(auto-fill, minmax(360px, 1fr)); gap:14px;"></div>
+      </div>
+    </div>
   </div><!-- /fb-app -->
 </div><!-- /app-wrapper -->
 
@@ -978,8 +1004,81 @@ var AI_FIELDS = [
   {id:'vermethod', label:'Verification method', type:'Dropdown', fieldId:'VERIFY.METHOD', required:false, ai:true, options:'VOE · Paystub · Tax return · Bank statement'},
 ];
 
+// ── Template library (10 PRD templates) ──────────────────────────────────────
+var LIBRARY_TEMPLATES = [
+  { id:'prequal', name:'Prequalification Form', stage:'Application',
+    purpose:'Borrower personal info, SSN, employment, income, est. property value, loan purpose, credit tier, co-borrower flag. The entry-point form.',
+    compliance:['ECOA','FCRA','Reg B'], fields:30 },
+  { id:'urla', name:'Uniform Residential Loan Application (URLA 1003)', stage:'Application',
+    purpose:'All URLA 2020 sections: borrower, employment, income, assets, liabilities, REO, loan, declarations, military, HMDA, co-borrower.',
+    compliance:['HMDA','RESPA','TRID','URLA 2020','ECOA'], fields:140 },
+  { id:'income', name:'Income & Employment Verification', stage:'Processing',
+    purpose:'Employer, employment type, start date, gross/monthly/YTD income, other income sources, doc type, verification method.',
+    compliance:['TRID','FNMA B3-3.1','FHLMC 5306'], fields:18 },
+  { id:'assets', name:'Asset & Reserves Verification', stage:'Processing',
+    purpose:'Bank accounts, balances, source of funds, gift letter flag, large deposit explanation, retirement, reserves auto-calc.',
+    compliance:['FNMA B3-4','AML SoF','RESPA'], fields:22 },
+  { id:'credauth', name:'Credit Authorization & Disclosure', stage:'Application',
+    purpose:'Borrower consent to pull credit, authorization date/signature, bureau selection, hard/soft inquiry, pre-adverse notice.',
+    compliance:['FCRA §604','ECOA','FACTA'], fields:11 },
+  { id:'property', name:'Property Information Form', stage:'Processing',
+    purpose:'Subject address, type (SFR/condo/multi/manufactured), occupancy, year built, lot size, HOA, flood zone, appraisal trigger.',
+    compliance:['TRID','FNMA property type','HMDA reporting'], fields:16 },
+  { id:'disclose', name:'Disclosure Tracking & Acknowledgment', stage:'Processing',
+    purpose:'LE issued/ack date, COC log, revised LE, CD issued/ack, 3-day waiting period calc, e-consent flag.',
+    compliance:['TRID 3-day','RESPA §5','CFPB timing'], fields:14 },
+  { id:'uwcond', name:'Underwriting Conditions Checklist', stage:'Underwriting',
+    purpose:'Auto-populated condition list, condition type (PTD/PTF/post-close), responsible party, received date, doc reference, UW sign-off.',
+    compliance:['FNMA/FHLMC UW','Investor overlays'], fields:12 },
+  { id:'preclose', name:'Pre-Close Audit Checklist', stage:'Closing',
+    purpose:'Final loan amount, lock expiry, title commitment, flood cert, HOI binder, wire verified, closing agent, final 1003, final CD.',
+    compliance:['TRID final CD','RESPA','State closing'], fields:19 },
+  { id:'postclose', name:'Post-Close & Shipping Form', stage:'Post-Close',
+    purpose:'Note date, first payment, investor commitment, delivery package, trailing docs, MERS, warehouse repayment, exception log.',
+    compliance:['FNMA/FHLMC delivery','MERS','Investor commits'], fields:17 },
+];
+
+var libraryActiveStage = 'all';
+function renderLibrary() {
+  var grid = document.getElementById('library-grid');
+  if (!grid) return;
+  var rows = LIBRARY_TEMPLATES.filter(function(t) {
+    return libraryActiveStage === 'all' || t.stage === libraryActiveStage;
+  });
+  grid.innerHTML = rows.map(function(t) {
+    var stageColor = ({Application:'#5166FE', Processing:'#0EA5E9', Underwriting:'#7E68FA', Closing:'#059669', 'Post-Close':'#6B7280'})[t.stage] || '#6B7280';
+    return ''
+      + '<div class="lib-card" style="background:#fff; border:1px solid #E5E7EB; border-radius:14px; padding:18px 18px 16px; display:flex; flex-direction:column; gap:10px; box-shadow:0 1px 3px rgba(15,23,42,0.04);">'
+      + '  <div style="display:flex; align-items:center; gap:8px;">'
+      + '    <span style="font-size:10px; font-weight:800; letter-spacing:0.08em; text-transform:uppercase; color:' + stageColor + '; background:' + stageColor + '18; padding:3px 8px; border-radius:4px;">' + t.stage + '</span>'
+      + '    <span style="font-size:11px; color:#9CA3AF; font-family:DM Mono;">' + t.fields + ' fields</span>'
+      + '  </div>'
+      + '  <div style="font-size:15px; font-weight:800; color:#111827; letter-spacing:-0.01em; line-height:1.3;">' + t.name + '</div>'
+      + '  <div style="font-size:12.5px; color:#4B5563; line-height:1.5; flex:1;">' + t.purpose + '</div>'
+      + '  <div style="display:flex; flex-wrap:wrap; gap:5px; padding-top:4px; border-top:1px solid #F3F4F6; margin-top:2px;">'
+      +      t.compliance.map(function(c) { return '<span style="font-size:10.5px; font-weight:600; color:#6B7280; background:#F3F4F6; padding:2px 7px; border-radius:999px;">' + c + '</span>'; }).join('')
+      + '  </div>'
+      + '  <div style="display:flex; gap:6px; margin-top:6px;">'
+      + '    <button onclick="useTemplate(\'' + t.id + '\')" style="flex:1; background:#5166FE; color:#fff; border:none; border-radius:7px; padding:8px 12px; font-size:12.5px; font-weight:700; cursor:pointer; font-family:inherit;">Use as-is →</button>'
+      + '    <button onclick="customizeTemplate(\'' + t.id + '\')" style="background:#fff; color:#374151; border:1px solid #E5E7EB; border-radius:7px; padding:8px 12px; font-size:12.5px; font-weight:600; cursor:pointer; font-family:inherit;">Customize</button>'
+      + '  </div>'
+      + '</div>';
+  }).join('');
+  // Update chip active states
+  document.querySelectorAll('.lib-chip').forEach(function(c) {
+    var on = c.getAttribute('data-stage') === libraryActiveStage;
+    c.style.background = on ? '#111827' : '#fff';
+    c.style.color = on ? '#fff' : '#374151';
+    c.style.fontWeight = on ? '700' : '600';
+  });
+}
+function filterLibrary(stage) { libraryActiveStage = stage; renderLibrary(); }
+function useTemplate(id) { switchMain('builder'); }
+function customizeTemplate(id) { switchMain('builder'); }
+
 function switchMain(tab) {
-  ['builder','logic','analytics','publish'].forEach(function(t) {
+  if (tab === 'library') renderLibrary();
+  ['library','builder','logic','analytics','publish'].forEach(function(t) {
     document.getElementById('main-'+t).classList.remove('active');
     document.getElementById('mtab-'+t).classList.remove('active');
   });
