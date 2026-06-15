@@ -86,21 +86,26 @@ function LeftNavItem({ icon, label, active, onClick, disabled, iconSize = 19, st
   );
 }
 
-export function LeftNav({ route, onNavigate, onOpenCmd, onOpenPrefs, onLogoClick }) {
+export function LeftNav({ route, onNavigate, onOpenCmd, onOpenPrefs, onLogoClick, persona }) {
   const logoInteractive = flags.logoToLogin && typeof onLogoClick === 'function';
   // Polished icon set (flag: leftNavPolish):
   //   pipeline: 'pipeline' (bar chart) → 'listCheck' (list of files in pipeline)
   //   feed:     'bell'     (alerts)    → 'sparkle' (AI insights feed)
-  const topItems = [
+  // Consumer = borrower in the loan app; they only see Home + Settings —
+  // no pipeline, AI feed, or admin console.
+  const isConsumer = persona === 'Consumer';
+  const allTop = [
     { id: 'home',     icon: 'home', label: 'Home', kind: 'route' },
-    { id: 'pipeline', icon: flags.leftNavPolish ? 'listCheck' : 'pipeline', label: 'Pipeline', kind: 'route' },
-    { id: 'feed',     icon: flags.leftNavPolish ? 'sparkle'   : 'bell',     label: 'Feed',     kind: 'route' },
-    { id: 'search',   icon: 'search', label: 'Search (⌘K)', kind: 'action' },
+    { id: 'pipeline', icon: flags.leftNavPolish ? 'listCheck' : 'pipeline', label: 'Pipeline', kind: 'route', hideFor: ['Consumer'] },
+    { id: 'feed',     icon: flags.leftNavPolish ? 'sparkle'   : 'bell',     label: 'Feed',     kind: 'route', hideFor: ['Consumer'] },
+    { id: 'search',   icon: 'search', label: 'Search (⌘K)', kind: 'action', hideFor: ['Consumer'] },
   ];
-  const bottomItems = [
-    { id: 'admin',    icon: 'sliders',  label: 'Admin Console', kind: 'route' },
+  const allBottom = [
+    { id: 'admin',    icon: 'sliders',  label: 'Admin Console', kind: 'route', hideFor: ['Consumer', 'LO', 'Processor', 'Underwriter'] },
     { id: 'settings', icon: 'settings', label: 'Settings', kind: 'action' },
   ];
+  const topItems    = allTop.filter(i => !(i.hideFor || []).includes(persona));
+  const bottomItems = allBottom.filter(i => !(i.hideFor || []).includes(persona));
 
   const handle = (item) => {
     if (item.kind === 'route' && onNavigate) onNavigate(item.id);

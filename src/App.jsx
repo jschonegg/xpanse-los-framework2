@@ -175,6 +175,7 @@ export default function App() {
     <WorkflowProvider>
       <LeftNav
         route={route}
+        persona={persona}
         onNavigate={navigate}
         onOpenCmd={() => setCmdOpen(true)}
         onOpenPrefs={() => setPrefsOpen(true)}
