@@ -1,6 +1,7 @@
 import React from 'react';
 import { flags } from '../flags';
 import { PERSONAS, findPersonaByCredentials } from '../personas';
+import { Icon } from './Icon';
 
 const LOGIN_CSS = `
 .lx-stage { min-height: 100vh; display: flex; background: var(--bg-app, #F8F8F6); font-family: inherit; }
@@ -186,6 +187,13 @@ export function LoginScreen({ onLogin }) {
   const [email, setEmail] = React.useState('');
   const [password, setPassword] = React.useState('');
   const [error, setError] = React.useState('');
+  const [copiedId, setCopiedId] = React.useState(null);
+
+  const copyEmail = (p) => {
+    try { navigator.clipboard?.writeText(p.email); } catch (e) { /* clipboard unavailable */ }
+    setCopiedId(p.id);
+    setTimeout(() => setCopiedId(c => (c === p.id ? null : c)), 1400);
+  };
 
   React.useEffect(() => {
     if (document.getElementById('lx-login-css')) return;
@@ -304,11 +312,26 @@ export function LoginScreen({ onLogin }) {
               borderRadius: 8, fontSize: 11.5, color: '#374151',
             }}>
               <div style={{ fontSize: 10.5, fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', color: '#6B7280', marginBottom: 5 }}>
-                Demo accounts · password <span style={{ fontFamily: 'DM Mono', color: '#111827' }}>xpanse</span>
+                Demo accounts · password: <span style={{ fontFamily: 'DM Sans', color: '#111827' }}>1234</span>
               </div>
               {PERSONAS.map(p => (
-                <div key={p.id} style={{ display: 'flex', justifyContent: 'space-between', gap: 12, padding: '2px 0' }}>
-                  <span style={{ fontFamily: 'DM Mono', color: '#111827' }}>{p.email}</span>
+                <div key={p.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, padding: '2px 0' }}>
+                  <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, minWidth: 0 }}>
+                    <span style={{ fontFamily: 'DM Sans', color: '#111827', overflow: 'hidden', textOverflow: 'ellipsis' }}>{p.email}</span>
+                    <button
+                      type="button"
+                      onClick={() => copyEmail(p)}
+                      title={copiedId === p.id ? 'Copied!' : 'Copy email'}
+                      aria-label={`Copy ${p.email}`}
+                      style={{
+                        background: 'none', border: 'none', padding: 1, cursor: 'pointer',
+                        display: 'inline-flex', alignItems: 'center', flexShrink: 0,
+                        color: copiedId === p.id ? 'var(--status-green, #1F7A45)' : '#9AA0A6',
+                      }}
+                    >
+                      <Icon name={copiedId === p.id ? 'check' : 'copy'} size={12}/>
+                    </button>
+                  </span>
                   <span style={{ color: '#6B7280' }}>{p.role}</span>
                 </div>
               ))}
