@@ -25,7 +25,7 @@ const defaults = {
   aiInsightsUnderScorecard: true,
   homePolishV2: true,
   personaLogin: true,
-  consumerPortalDashboard: false,
+  consumerPortalDashboard: true,
 };
 
 function readOverrides() {
