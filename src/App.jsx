@@ -17,6 +17,7 @@ import { AdminWorkflowsView } from './views/AdminWorkflows';
 import { WorkflowProvider } from './workflows/WorkflowContext';
 import { flags } from './flags';
 import { PersonaStubHome } from './views/PersonaStubHome';
+import { AdminHomeView } from './views/AdminHome';
 import { findPersonaById } from './personas';
 
 // ── Standalone URLA window (opened via window.open) ──────────────────────────
@@ -186,6 +187,7 @@ export default function App() {
           <>
             {route === 'home' && persona === 'Processor' && <ProcessorHomeView onNavigate={navigate} onOpenLoan={openLoan} onOpenAi={openAiWith} onOpenDepositReview={() => navigate('deposit-review')}/>}
             {route === 'home' && persona === 'LO' && <HomeView onNavigate={navigate} onOpenLoan={openLoan} onOpenAi={openAiWith}/>}
+            {route === 'home' && persona === 'Admin' && <AdminHomeView onNavigate={navigate}/>}
             {route === 'home' && (persona === 'Underwriter' || persona === 'Consumer') && (
               <PersonaStubHome persona={findPersonaById(persona)}/>
             )}
