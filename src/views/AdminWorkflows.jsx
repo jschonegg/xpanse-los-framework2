@@ -265,8 +265,6 @@ function AdminGlobalRail({ onExit, onHome, onOpenCategory, expanded, adminPage, 
 
       <div style={{ flex: 1, minHeight: 8 }}/>
 
-      <NavyRailItem icon="arrowLeft" label="Back to LOS" onClick={onExit} expanded={expanded}/>
-
       <div style={{ marginTop: 8, borderTop: '1px solid rgba(255,255,255,0.06)', display: 'flex', alignItems: 'center', gap: 10, justifyContent: expanded ? 'flex-start' : 'center', padding: expanded ? '12px 8px 0' : '12px 0 0', flexShrink: 0 }}>
         <Avatar initials="J" size={30} color="#3D49E6"/>
         {expanded && <span style={{ fontSize: 12.5, fontWeight: 600, color: 'rgba(255,255,255,0.85)' }}>Jordan</span>}
