@@ -235,7 +235,7 @@ export function LoginScreen({ onLogin }) {
             Welcome to your<br/>
             <span className="lx-accent">mortgage workspace</span>.
           </h1>
-          <p className="lx-sub">Access to view your pipeline, manage tasks, and keep loans moving in one secure place.</p>
+          <p className="lx-sub">View your pipeline, manage tasks, and keep loans moving in one secure place.</p>
         </div>
 
         <div className="lx-brand-foot">
