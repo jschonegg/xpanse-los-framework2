@@ -1471,7 +1471,7 @@ export function AdminWorkflowsView({ onExit }) {
   return (
     <div style={{ display: 'flex', flex: 1, minHeight: 0, height: '100%', background: 'var(--bg-app)' }}>
       <AdminGlobalRail onExit={onExit} onHome={() => setAdminPage('home')} onOpenCategory={(cat) => setAdminPage(defaultPageOf(cat))} expanded={isHome} adminPage={adminPage} activeCatId={activeCat?.id}/>
-      {!isHome && activeCat && <AdminSidebar category={activeCat} adminPage={adminPage} onNavigate={setAdminPage} onExit={onExit}/>}
+      {!isHome && activeCat && adminPage !== 'admin-forms' && <AdminSidebar category={activeCat} adminPage={adminPage} onNavigate={setAdminPage} onExit={onExit}/>}
       {main}
     </div>
   );
