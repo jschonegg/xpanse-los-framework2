@@ -2993,7 +2993,7 @@ function LoanDetailView({ loanId, tab, onTab, persona = 'LO', previewWorkflow = 
 
         {/* Main */}
         <main style={{ flex: 1, padding: '24px 28px 40px', overflowY: 'auto', display: 'flex', flexDirection: 'column', minHeight: 0 }}>
-          {(!localTab || localTab === 'now') && <LoanSummaryCards loan={loan} meta={meta}/>}
+          {(!localTab || localTab === 'now') && <LoanSummaryCards loan={loan} meta={meta} persona={persona}/>}
           {localTab === 'forms' ? <FormsView loan={loan} favorites={formFavorites} onToggleFavorite={toggleFormFavorite} onOpenForm={(fid) => handleTab('form:' + fid)}/>
            : (typeof localTab === 'string' && localTab.startsWith('form:')) ? <FormDetailView formId={Number(localTab.slice(5))} loan={loan} favorites={formFavorites} onToggleFavorite={toggleFormFavorite} onBack={() => handleTab('forms')}/>
            : localTab === 'story' ? <StoryTab/>

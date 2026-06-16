@@ -372,8 +372,236 @@ function ProductCard({ loan }) {
   );
 }
 
-// ── Public: the 3-card row ─────────────────────────────────────────────────
-export function LoanSummaryCards({ loan, meta }) {
+// ── Shared: mini progress bar + colored stat ───────────────────────────────
+function ProgressBar({ pct, tone = 'green' }) {
+  const color = tone === 'red' ? 'var(--status-red)' : tone === 'amber' ? 'var(--status-amber)' : 'var(--status-green)';
+  return (
+    <div style={{ height: 6, background: 'var(--bg-muted)', borderRadius: 999, overflow: 'hidden' }}>
+      <div style={{ height: '100%', width: `${pct}%`, background: color, borderRadius: 999, transition: 'width 0.4s ease' }}/>
+    </div>
+  );
+}
+
+function MiniStat({ label, value, tone }) {
+  const color = tone === 'red' ? 'var(--status-red)' : tone === 'amber' ? 'var(--status-amber)' : tone === 'green' ? 'var(--status-green)' : 'var(--text-primary)';
+  return (
+    <div style={{ minWidth: 0 }}>
+      <div style={{ fontSize: 10.5, fontWeight: 600, color: 'var(--text-tertiary)', letterSpacing: '0.05em', textTransform: 'uppercase' }}>{label}</div>
+      <div style={{ fontSize: 16, fontWeight: 600, color, marginTop: 2 }}>{value}</div>
+    </div>
+  );
+}
+
+// ── Card: Conditions (Processor + Underwriter) ──────────────────────────────
+function ConditionsCard({ loan }) {
+  const total = loan?.conditionsTotal || 0;
+  const open = loan?.conditionsOpen || 0;
+  const cleared = Math.max(0, total - open);
+  const pct = total > 0 ? Math.round((cleared / total) * 100) : 100;
+  const tone = open === 0 ? 'green' : open > 4 ? 'red' : 'amber';
+  const awaiting = Math.ceil(open / 2);
+  const ready = Math.max(0, open - awaiting);
+
+  return (
+    <div className="card" style={{ display: 'flex', flexDirection: 'column', minWidth: 0 }}>
+      <CardHeader
+        icon="listCheck"
+        iconBg="#FBEFE5"
+        title="Conditions"
+        right={
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+            <Badge tone={tone} icon={open === 0 ? 'check' : 'alertCircle'}>{open === 0 ? 'All clear' : `${open} open`}</Badge>
+            <CardLink>View all</CardLink>
+          </div>
+        }
+      />
+      <div style={{ padding: '14px 16px', display: 'flex', flexDirection: 'column', gap: 12 }}>
+        <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', gap: 8 }}>
+          <div style={{ display: 'flex', alignItems: 'baseline', gap: 6 }}>
+            <span style={{ fontSize: 26, fontWeight: 600, color: 'var(--text-primary)', letterSpacing: '-0.02em' }}>{cleared}</span>
+            <span style={{ fontSize: 14, color: 'var(--text-tertiary)' }}>/ {total} cleared</span>
+          </div>
+          <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-secondary)' }}>{pct}%</span>
+        </div>
+        <ProgressBar pct={pct} tone={tone}/>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 12, paddingTop: 10, borderTop: '1px solid var(--border-subtle)' }}>
+          <MiniStat label="Open" value={open} tone={open > 0 ? 'amber' : 'green'}/>
+          <MiniStat label="Awaiting borrower" value={awaiting}/>
+          <MiniStat label="Ready to clear" value={ready} tone={ready > 0 ? 'green' : undefined}/>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ── Card: Documents (Processor) ─────────────────────────────────────────────
+function DocItemRow({ label, status }) {
+  const map = {
+    received: { tone: 'green',   text: 'Received' },
+    review:   { tone: 'amber',   text: 'In review' },
+    pending:  { tone: 'neutral', text: 'Pending' },
+  }[status] || { tone: 'neutral', text: '—' };
+  return (
+    <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '5px 0' }}>
+      <span style={{ flex: 1, fontSize: 12.5, color: 'var(--text-secondary)' }}>{label}</span>
+      <Badge tone={map.tone}>{map.text}</Badge>
+    </div>
+  );
+}
+
+function DocumentsCard({ loan }) {
+  const open = loan?.conditionsOpen || 0;
+  const needsReview = loan?.aiStatus === 'Needs Review';
+  const received = (loan?.conditionsTotal || 8) + 4; // intake docs ≈ conditions + standard set
+  const inReview = needsReview ? 6 : 0;
+  const tone = needsReview ? 'amber' : 'green';
+
+  return (
+    <div className="card" style={{ display: 'flex', flexDirection: 'column', minWidth: 0 }}>
+      <CardHeader
+        icon="fileSearch"
+        iconBg="#EAF1FB"
+        title="Documents"
+        right={
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+            <Badge tone={tone} icon={needsReview ? 'alertCircle' : 'check'}>{needsReview ? 'Review' : 'Clean'}</Badge>
+            <CardLink>Open docs</CardLink>
+          </div>
+        }
+      />
+      <div style={{ padding: '14px 16px', display: 'flex', flexDirection: 'column', gap: 10 }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 12 }}>
+          <MiniStat label="Received" value={received}/>
+          <MiniStat label="In review" value={inReview} tone={inReview > 0 ? 'amber' : undefined}/>
+          <MiniStat label="Outstanding" value={open} tone={open > 0 ? 'red' : 'green'}/>
+        </div>
+        <div style={{ paddingTop: 8, borderTop: '1px solid var(--border-subtle)' }}>
+          <DocItemRow label="Income (paystubs, W-2)" status="received"/>
+          <DocItemRow label="Asset statements"        status={needsReview ? 'review' : 'received'}/>
+          <DocItemRow label="Appraisal report"        status={/appraisal/i.test(loan?.milestone || '') ? 'pending' : 'received'}/>
+          <DocItemRow label="Title commitment"        status={/title/i.test(loan?.milestone || '') ? 'pending' : 'received'}/>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ── Card: Vendor Orders (Processor) ─────────────────────────────────────────
+function VendorRow({ label, tone, text }) {
+  return (
+    <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '6px 0' }}>
+      <span style={{ flex: 1, fontSize: 12.5, color: 'var(--text-secondary)' }}>{label}</span>
+      <Badge tone={tone}>{text}</Badge>
+    </div>
+  );
+}
+
+function OrdersCard({ loan }) {
+  const m = loan?.milestone || '';
+  const isProcessing = loan?.status === 'Processing';
+  const appraisal = /appraisal/i.test(m) ? { tone: 'amber', text: 'In progress' } : { tone: 'green', text: 'Received' };
+  const title     = /title/i.test(m)     ? { tone: 'red',   text: 'Delayed' }     : { tone: 'green', text: 'Received' };
+  const flood     = { tone: 'green', text: 'Cleared' };
+  const voe       = isProcessing ? { tone: 'amber', text: 'Pending' } : { tone: 'green', text: 'Verified' };
+  const pendingCount = [appraisal, title, voe].filter(o => o.tone !== 'green').length;
+
+  return (
+    <div className="card" style={{ display: 'flex', flexDirection: 'column', minWidth: 0 }}>
+      <CardHeader
+        icon="home"
+        iconBg="#E3F1E8"
+        title="Vendor Orders"
+        right={
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+            <Badge tone={pendingCount > 0 ? 'amber' : 'green'} icon={pendingCount > 0 ? 'clock' : 'check'}>
+              {pendingCount > 0 ? `${pendingCount} pending` : 'All in'}
+            </Badge>
+            <CardLink icon="zap">Order</CardLink>
+          </div>
+        }
+      />
+      <div style={{ padding: '10px 16px 14px' }}>
+        <VendorRow label="Appraisal (AMC)"        tone={appraisal.tone} text={appraisal.text}/>
+        <VendorRow label="Title commitment"       tone={title.tone}     text={title.text}/>
+        <VendorRow label="Flood certification"    tone={flood.tone}     text={flood.text}/>
+        <VendorRow label="VOE / VOI"              tone={voe.tone}       text={voe.text}/>
+      </div>
+    </div>
+  );
+}
+
+// ── Card: Risk & Decision (Underwriter) ─────────────────────────────────────
+function RiskDecisionCard({ loan }) {
+  const dti = dtiTone(loan?.dti);
+  const tier = ficoTier(loan?.credit?.fico);
+  const ltvHigh = loan?.ltv != null && loan.ltv > 80;
+  const refer = loan?.aus && /Refer/i.test(loan.aus);
+  const open = loan?.conditionsOpen || 0;
+
+  // Recommended decision derived from AUS + conditions
+  const decision = refer ? { tone: 'red', label: 'Refer — manual review' }
+    : open > 0 ? { tone: 'amber', label: 'Approve w/ conditions' }
+    : { tone: 'green', label: 'Clear to approve' };
+
+  return (
+    <div className="card" style={{ display: 'flex', flexDirection: 'column', minWidth: 0 }}>
+      <CardHeader
+        icon="alertCircle"
+        iconBg="#FBEFE5"
+        title="Risk & Decision"
+        right={
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+            <Badge tone={decision.tone} icon={decision.tone === 'green' ? 'check' : 'alertCircle'}>{decision.tone === 'red' ? 'Refer' : decision.tone === 'amber' ? 'Conditional' : 'Clear'}</Badge>
+            <CardLink>Decision</CardLink>
+          </div>
+        }
+      />
+      <div style={{ padding: '14px 16px', display: 'flex', flexDirection: 'column', gap: 12 }}>
+        <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', gap: 8 }}>
+          <span style={{
+            fontSize: 17, fontWeight: 600, letterSpacing: '-0.01em',
+            color: decision.tone === 'red' ? 'var(--status-red)' : decision.tone === 'amber' ? 'var(--status-amber)' : 'var(--status-green)',
+          }}>{decision.label}</span>
+        </div>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 12, paddingTop: 10, borderTop: '1px solid var(--border-subtle)' }}>
+          <div>
+            <div style={{ fontSize: 10.5, fontWeight: 600, color: 'var(--text-tertiary)', letterSpacing: '0.05em', textTransform: 'uppercase' }}>DTI</div>
+            <div style={{ fontSize: 16, fontWeight: 600, marginTop: 2, color: dti.tone === 'red' ? 'var(--status-red)' : dti.tone === 'amber' ? 'var(--status-amber)' : 'var(--status-green)' }}>
+              {loan?.dti != null ? `${loan.dti}%` : '—'}
+            </div>
+            <div style={{ fontSize: 10.5, color: 'var(--text-tertiary)', marginTop: 1 }}>{dti.note}</div>
+          </div>
+          <div>
+            <div style={{ fontSize: 10.5, fontWeight: 600, color: 'var(--text-tertiary)', letterSpacing: '0.05em', textTransform: 'uppercase' }}>LTV</div>
+            <div style={{ fontSize: 16, fontWeight: 600, marginTop: 2, color: ltvHigh ? 'var(--status-amber)' : 'var(--status-green)' }}>
+              {loan?.ltv != null ? `${loan.ltv}%` : '—'}
+            </div>
+            <div style={{ fontSize: 10.5, color: 'var(--text-tertiary)', marginTop: 1 }}>{ltvHigh ? 'MI required' : 'No MI'}</div>
+          </div>
+          <div>
+            <div style={{ fontSize: 10.5, fontWeight: 600, color: 'var(--text-tertiary)', letterSpacing: '0.05em', textTransform: 'uppercase' }}>FICO</div>
+            <div style={{ fontSize: 16, fontWeight: 600, marginTop: 2, color: 'var(--text-primary)' }}>{loan?.credit?.fico ?? '—'}</div>
+            <div style={{ fontSize: 10.5, color: 'var(--text-tertiary)', marginTop: 1 }}>{tier.label}</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ── Public: the 3-card row, tuned per persona ───────────────────────────────
+// LO sees the sales view (credit / AUS / pricing); Processor sees the work
+// queue (docs / conditions / vendor orders); Underwriter sees the decision view
+// (AUS / conditions / risk).
+export function LoanSummaryCards({ loan, meta, persona = 'LO' }) {
+  let cards;
+  if (persona === 'Processor') {
+    cards = [<DocumentsCard key="docs" loan={loan}/>, <ConditionsCard key="cond" loan={loan}/>, <OrdersCard key="ord" loan={loan}/>];
+  } else if (persona === 'Underwriter') {
+    cards = [<AUSCard key="aus" loan={loan}/>, <ConditionsCard key="cond" loan={loan}/>, <RiskDecisionCard key="risk" loan={loan}/>];
+  } else {
+    cards = [<CreditCard key="credit" loan={loan}/>, <AUSCard key="aus" loan={loan}/>, <ProductCard key="prod" loan={loan}/>];
+  }
   return (
     <div style={{
       display: 'grid',
@@ -381,9 +609,7 @@ export function LoanSummaryCards({ loan, meta }) {
       gap: 12,
       marginBottom: 20,
     }}>
-      <CreditCard loan={loan} meta={meta}/>
-      <AUSCard loan={loan} meta={meta}/>
-      <ProductCard loan={loan} meta={meta}/>
+      {cards}
     </div>
   );
 }
