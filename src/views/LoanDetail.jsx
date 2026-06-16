@@ -28,7 +28,7 @@ import { LOANS } from '../data/loans';
 import { DocumentsTool } from '../components/DocumentsTool';
 import { IncomeTool } from '../components/IncomeTool';
 import { useWorkflows } from '../workflows/WorkflowContext';
-import { FIXED_SYSTEM_LINKS, PAGE_CONTENT_TAB, getPage } from '../workflows/workflowModel';
+import { FIXED_SYSTEM_LINKS, PAGE_CONTENT_TAB, getPage, personaToWorkflowRole } from '../workflows/workflowModel';
 import { FormsView, FormDetailView } from './FormsLibrary';
 import { formById } from '../data/imsForms';
 // import { PreviewContextSwitcher } from './AdminWorkflows'; // preview-context switcher (removed for now)
@@ -680,7 +680,7 @@ const DEFAULT_NAV_CONFIG = {
   ],
 };
 
-function LeftRail({ tab, onTab, onOpenURLA, dataSubTab, onDataSubTab, onOpenDocs, previewWorkflow, loan, favorites = [] }) {
+function LeftRail({ tab, onTab, onOpenURLA, dataSubTab, onDataSubTab, onOpenDocs, previewWorkflow, loan, favorites = [], persona = 'LO' }) {
   // Groups state: open/closed + doc ordering per group
   const [groups, setGroups] = React.useState(
     DOC_GROUPS.map(g => ({ ...g, open: g.defaultOpen, docs: [...g.docs] }))
@@ -783,9 +783,10 @@ function LeftRail({ tab, onTab, onOpenURLA, dataSubTab, onDataSubTab, onOpenDocs
   // the content router and the 1003 sub-nav keep working unchanged.
   // When `previewWorkflow` is supplied (full-preview overlay from the Admin
   // console), render that workflow's nav instead. Otherwise the workflow is
-  // resolved from this loan's own purpose + status (role-agnostic for now).
+  // resolved from the signed-in persona's role plus this loan's purpose/status,
+  // so a Processor/Underwriter/LO each gets the nav configured for their role.
   const { resolveWorkflowForLoan } = useWorkflows();
-  const activeWorkflow = previewWorkflow || resolveWorkflowForLoan(loan);
+  const activeWorkflow = previewWorkflow || resolveWorkflowForLoan(loan, personaToWorkflowRole(persona));
   const activeNav = React.useMemo(() => ({
     fixed: FIXED_SYSTEM_LINKS.map(l => ({ id: l.tab, label: l.label, icon: l.icon })),
     sections: (activeWorkflow?.sections || []).map(s => ({
@@ -2989,7 +2990,7 @@ function LoanDetailView({ loanId, tab, onTab, persona = 'LO', previewWorkflow = 
       {/* Scrollable region: LeftRail + Main + ToolsPanel.
           Only <main> scrolls vertically; the rails handle their own overflow. */}
       <div style={{ display: 'flex', flex: 1, minHeight: 0, overflow: 'hidden' }}>
-        <LeftRail tab={localTab} onTab={handleTab} onOpenURLA={openURLA} dataSubTab={dataSubTab} onDataSubTab={setDataSubTab} onOpenDocs={openDocsWindow} previewWorkflow={previewWorkflow} loan={loan} favorites={formFavorites}/>
+        <LeftRail tab={localTab} onTab={handleTab} onOpenURLA={openURLA} dataSubTab={dataSubTab} onDataSubTab={setDataSubTab} onOpenDocs={openDocsWindow} previewWorkflow={previewWorkflow} loan={loan} favorites={formFavorites} persona={persona}/>
 
         {/* Main */}
         <main style={{ flex: 1, padding: '24px 28px 40px', overflowY: 'auto', display: 'flex', flexDirection: 'column', minHeight: 0 }}>

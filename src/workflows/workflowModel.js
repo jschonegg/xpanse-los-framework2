@@ -155,6 +155,20 @@ export function loanToWorkflowContext(loan) {
   };
 }
 
+// Map the signed-in persona onto the workflow targeting "role" vocabulary
+// (the role values in RULE_FIELD_DEFS). LO originates loans, so it maps to the
+// 'Sales' role. Returns undefined for personas with no role mapping (e.g.
+// Consumer) → the resolver falls back to role-agnostic matching.
+export const PERSONA_TO_WORKFLOW_ROLE = {
+  LO: 'Sales',
+  Processor: 'Processor',
+  Underwriter: 'Underwriter',
+  Admin: 'Admin',
+};
+export function personaToWorkflowRole(persona) {
+  return PERSONA_TO_WORKFLOW_ROLE[persona];
+}
+
 // ─── id + factory helpers ───────────────────────────────────────────────────
 let _seq = 0;
 export function newId(prefix = 'id') {
@@ -225,9 +239,8 @@ export function buildDefaultWorkflows() {
       priority: 999,
       rules: { logic: 'AND', conditions: [], groups: [] },
       sections: [
-        makeSection('Intake', ['borrower-info', 'loan-scenarios', 'credit', 'savings-calculator', 'aus', 'loan-validation']),
-        makeSection('Pricing', ['pricing', 'offers']),
-        makeSection('Finalize', ['details-of-transaction', 'declarations', '1003']),
+        makeSection('Workflow', ['borrower-info', 'loan-scenarios', 'credit', '1003', 'savings-calculator', 'aus', 'loan-validation', 'details-of-transaction']),
+        makeSection('Pricing', ['rate-sheet', 'pricing', 'offers']),
       ],
       updatedAt: new Date().toISOString(),
       updatedBy: 'System',
@@ -282,8 +295,8 @@ export function buildDefaultWorkflows() {
     {
       id: 'underwriting-refi',
       name: 'Underwriting Refinance Workflow',
-      description: 'Underwriter-focused navigation for refinance loans. Draft — not yet applied to loans.',
-      status: 'draft',
+      description: 'Underwriter-focused navigation for refinance loans.',
+      status: 'active',
       priority: 30,
       rules: {
         logic: 'AND',
