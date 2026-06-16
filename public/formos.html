@@ -30,6 +30,8 @@
   --red: #E24B4A;
   --red-light: #FCEBEB;
   --red-dark: #A32D2D;
+  --purple: #7E68FA;
+  --purple-light: #F0EDFF;
   --font: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Helvetica Neue', Arial, sans-serif;
   --font-mono: 'SF Mono', 'Monaco', 'Inconsolata', 'Fira Code', monospace;
 }
@@ -48,6 +50,7 @@
     --green-light: #0F2A1A;
     --amber-light: #2A1A00;
     --red-light: #2A0A0A;
+    --purple-light: #1A1530;
   }
 }
 
@@ -66,10 +69,7 @@ body {
   padding: 24px 16px;
 }
 
-.app-wrapper {
-  width: 100%;
-  max-width: 1100px;
-}
+.app-wrapper { width: 100%; max-width: 1100px; }
 
 .app-label {
   font-size: 11px;
@@ -85,184 +85,286 @@ body {
   border-radius: var(--radius-lg);
   overflow: hidden;
   box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+  display: flex;
+  flex-direction: column;
 }
 
-/* NAV */
-.fb-nav {
+/* ══════════════════════════════════════
+   TOP BAR — logo, form name, status
+   ══════════════════════════════════════ */
+.fb-topbar {
   display: flex;
   align-items: center;
   padding: 0 16px;
   border-bottom: 0.5px solid var(--border-light);
   background: var(--bg-secondary);
-  gap: 0;
   height: 44px;
+  gap: 12px;
 }
 .fb-logo {
-  font-size: 15px;
-  font-weight: 500;
-  color: var(--text-primary);
-  margin-right: 20px;
-  display: flex;
-  align-items: center;
-  gap: 6px;
+  font-size: 15px; font-weight: 500; color: var(--text-primary);
+  display: flex; align-items: center; gap: 6px; margin-right: 8px;
 }
 .fb-logo i { color: var(--blue); font-size: 16px; }
-.fb-tab {
-  background: none;
-  border: none;
-  border-bottom: 2px solid transparent;
-  padding: 0 14px;
-  height: 44px;
-  font-size: 13px;
-  font-family: var(--font);
-  color: var(--text-secondary);
-  cursor: pointer;
-  margin-bottom: -0.5px;
+.fb-back {
+  background: none; border: none; cursor: pointer; color: var(--text-secondary);
+  font-size: 14px; display: flex; align-items: center; padding: 4px;
+  border-radius: var(--radius-sm);
 }
-.fb-tab.active { color: var(--text-primary); font-weight: 500; border-bottom-color: var(--blue-mid); }
-.fb-tab:hover:not(.active) { color: var(--text-primary); }
-.fb-badge {
-  margin-left: auto;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  font-size: 12px;
-  color: var(--text-secondary);
+.fb-back:hover { background: var(--bg-tertiary); color: var(--text-primary); }
+.fb-form-name {
+  font-size: 14px; font-weight: 500; color: var(--text-primary);
+  background: none; border: 1px solid transparent; padding: 4px 8px;
+  border-radius: var(--radius-sm); font-family: var(--font);
+  min-width: 180px;
 }
-.ai-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--green); display: inline-block; }
-.pill {
-  font-size: 11px;
-  padding: 2px 8px;
-  border-radius: 4px;
-  font-weight: 500;
+.fb-form-name:hover { border-color: var(--border-light); }
+.fb-form-name:focus { outline: none; border-color: var(--blue-mid); background: var(--bg-primary); }
+.fb-status {
+  margin-left: auto; display: flex; align-items: center; gap: 10px;
+  font-size: 12px; color: var(--text-secondary);
+}
+.status-pill {
+  font-size: 11px; padding: 2px 8px; border-radius: 4px; font-weight: 500;
 }
 .pill-draft { background: var(--amber-light); color: var(--amber-dark); }
 .pill-live { background: var(--green-light); color: var(--green-dark); }
-.pill-ai { background: var(--blue-light); color: var(--blue); }
+.save-indicator { display: flex; align-items: center; gap: 4px; font-size: 11px; color: var(--text-tertiary); }
+.save-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--green); }
 
-/* BODY */
-.fb-body { display: flex; height: 580px; }
+/* ══════════════════════════════════════
+   WORKFLOW STEPPER — replaces flat tabs
+   ══════════════════════════════════════ */
+.fb-stepper {
+  display: flex; align-items: center; padding: 0 20px;
+  border-bottom: 0.5px solid var(--border-light);
+  height: 40px; gap: 0; background: var(--bg-primary);
+}
+.step-item {
+  display: flex; align-items: center; gap: 6px; padding: 0 14px;
+  height: 40px; font-size: 12px; cursor: pointer;
+  color: var(--text-tertiary); border-bottom: 2px solid transparent;
+  margin-bottom: -0.5px; white-space: nowrap;
+  background: none; border-top: none; border-left: none; border-right: none;
+  font-family: var(--font);
+}
+.step-item:hover { color: var(--text-secondary); }
+.step-item.active { color: var(--text-primary); font-weight: 500; border-bottom-color: var(--blue-mid); }
+.step-item.completed { color: var(--green); }
+.step-item.disabled { opacity: 0.4; cursor: not-allowed; pointer-events: none; }
+.step-num {
+  width: 20px; height: 20px; border-radius: 50%; font-size: 11px; font-weight: 600;
+  display: flex; align-items: center; justify-content: center;
+  background: var(--bg-tertiary); color: var(--text-tertiary);
+}
+.step-item.active .step-num { background: var(--blue); color: #fff; }
+.step-item.completed .step-num { background: var(--green-light); color: var(--green); }
+.step-connector {
+  width: 24px; height: 1px; background: var(--border-light); flex-shrink: 0;
+}
+.step-connector.done { background: var(--green); }
 
-/* LEFT SIDEBAR */
-.fb-sidebar {
-  width: 184px;
-  border-right: 0.5px solid var(--border-light);
-  display: flex;
-  flex-direction: column;
-  overflow: hidden;
-  flex-shrink: 0;
+/* ══════════════════════════════════════
+   VIEWS
+   ══════════════════════════════════════ */
+.fb-view { display: none; flex: 1; overflow: hidden; }
+.fb-view.active { display: flex; flex-direction: column; }
+
+/* ══════════════════════════════════════
+   START VIEW — the landing screen
+   ══════════════════════════════════════ */
+.start-view {
+  flex: 1; overflow-y: auto; padding: 40px 32px 48px;
   background: var(--bg-secondary);
 }
+.start-inner { max-width: 760px; margin: 0 auto; }
+.start-title {
+  font-size: 22px; font-weight: 600; color: var(--text-primary);
+  margin-bottom: 4px; letter-spacing: -0.01em;
+}
+.start-sub {
+  font-size: 14px; color: var(--text-secondary); margin-bottom: 28px; line-height: 1.5;
+}
+
+/* AI Hero prompt */
+.ai-hero {
+  background: var(--bg-primary); border: 1px solid var(--border-light);
+  border-radius: var(--radius-lg); padding: 24px; margin-bottom: 24px;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+}
+.ai-hero-header {
+  display: flex; align-items: center; gap: 8px; margin-bottom: 12px;
+}
+.ai-hero-icon {
+  width: 32px; height: 32px; border-radius: 8px;
+  background: linear-gradient(135deg, var(--blue), var(--purple));
+  display: flex; align-items: center; justify-content: center;
+  color: #fff; font-size: 16px;
+}
+.ai-hero-label {
+  font-size: 15px; font-weight: 600; color: var(--text-primary);
+}
+.ai-hero-badge {
+  font-size: 11px; padding: 2px 8px; border-radius: 4px; font-weight: 500;
+  background: var(--purple-light); color: var(--purple); margin-left: 4px;
+}
+.ai-hero-desc {
+  font-size: 13px; color: var(--text-secondary); margin-bottom: 14px; line-height: 1.5;
+}
+.ai-prompt-wrap {
+  display: flex; gap: 8px; align-items: stretch;
+}
+.ai-prompt-input {
+  flex: 1; background: var(--bg-secondary); border: 1px solid var(--border-light);
+  border-radius: var(--radius-md); padding: 12px 14px; font-size: 13px;
+  font-family: var(--font); color: var(--text-primary); resize: none;
+  min-height: 44px;
+}
+.ai-prompt-input:focus { outline: none; border-color: var(--blue-mid); background: var(--bg-primary); }
+.ai-prompt-input::placeholder { color: var(--text-tertiary); }
+.ai-generate-btn {
+  background: linear-gradient(135deg, var(--blue), #2B6CB8);
+  color: #fff; border: none; border-radius: var(--radius-md);
+  padding: 0 20px; font-size: 13px; font-family: var(--font);
+  cursor: pointer; display: flex; align-items: center; gap: 6px;
+  font-weight: 500; white-space: nowrap;
+}
+.ai-generate-btn:hover { filter: brightness(1.1); }
+.ai-examples {
+  display: flex; gap: 6px; margin-top: 10px; flex-wrap: wrap;
+}
+.ai-example {
+  font-size: 11px; padding: 4px 10px; border-radius: 999px;
+  background: var(--bg-secondary); border: 1px solid var(--border-light);
+  color: var(--text-secondary); cursor: pointer; font-family: var(--font);
+}
+.ai-example:hover { background: var(--blue-light); color: var(--blue); border-color: var(--blue-mid); }
+
+/* Divider */
+.start-divider {
+  display: flex; align-items: center; gap: 12px; margin-bottom: 24px;
+}
+.start-divider-line { flex: 1; height: 1px; background: var(--border-light); }
+.start-divider-text { font-size: 12px; color: var(--text-tertiary); font-weight: 500; }
+
+/* Template grid */
+.start-section-label {
+  font-size: 11px; font-weight: 600; color: var(--text-tertiary);
+  text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 10px;
+}
+.template-filters {
+  display: flex; gap: 6px; margin-bottom: 14px; flex-wrap: wrap;
+}
+.filter-chip {
+  padding: 5px 12px; border-radius: 999px; border: 1px solid var(--border-light);
+  background: var(--bg-primary); color: var(--text-secondary);
+  font-size: 12px; font-weight: 500; cursor: pointer; font-family: var(--font);
+}
+.filter-chip:hover { border-color: var(--border-mid); color: var(--text-primary); }
+.filter-chip.active { background: var(--text-primary); color: var(--bg-primary); border-color: var(--text-primary); font-weight: 600; }
+.template-grid {
+  display: grid; grid-template-columns: repeat(auto-fill, minmax(340px, 1fr)); gap: 12px;
+  margin-bottom: 20px;
+}
+.template-card {
+  background: var(--bg-primary); border: 1px solid var(--border-light);
+  border-radius: var(--radius-lg); padding: 16px;
+  cursor: pointer; transition: border-color .15s, box-shadow .15s;
+}
+.template-card:hover { border-color: var(--blue-mid); box-shadow: 0 2px 8px rgba(24,95,165,0.1); }
+.tc-top { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
+.tc-stage {
+  font-size: 10px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase;
+  padding: 3px 8px; border-radius: 4px;
+}
+.tc-fields { font-size: 11px; color: var(--text-tertiary); }
+.tc-name { font-size: 14px; font-weight: 600; color: var(--text-primary); margin-bottom: 4px; line-height: 1.3; }
+.tc-desc { font-size: 12px; color: var(--text-secondary); line-height: 1.5; margin-bottom: 8px; }
+.tc-compliance { display: flex; flex-wrap: wrap; gap: 4px; }
+.tc-tag {
+  font-size: 10px; font-weight: 600; color: var(--text-tertiary);
+  background: var(--bg-secondary); padding: 2px 6px; border-radius: 999px;
+}
+
+/* Blank canvas card */
+.blank-card {
+  background: var(--bg-primary); border: 1.5px dashed var(--border-mid);
+  border-radius: var(--radius-lg); padding: 24px; text-align: center;
+  cursor: pointer; transition: border-color .15s;
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  gap: 8px; min-height: 120px;
+}
+.blank-card:hover { border-color: var(--blue-mid); background: var(--blue-light); }
+.blank-card i { font-size: 24px; color: var(--text-tertiary); }
+.blank-card span { font-size: 13px; font-weight: 500; color: var(--text-secondary); }
+
+/* ══════════════════════════════════════
+   BUILD VIEW — canvas + sidebar + panel
+   ══════════════════════════════════════ */
+.build-body { display: flex; flex: 1; overflow: hidden; }
+
+/* Left sidebar — field palette */
+.fb-sidebar {
+  width: 184px; border-right: 0.5px solid var(--border-light);
+  display: flex; flex-direction: column; overflow: hidden;
+  flex-shrink: 0; background: var(--bg-secondary);
+}
 .sidebar-search {
-  margin: 10px 10px 6px;
-  background: var(--bg-primary);
-  border: 0.5px solid var(--border-light);
-  border-radius: var(--radius-md);
-  padding: 6px 10px;
-  font-size: 12px;
-  font-family: var(--font);
-  color: var(--text-primary);
-  width: calc(100% - 20px);
+  margin: 10px 10px 6px; background: var(--bg-primary);
+  border: 0.5px solid var(--border-light); border-radius: var(--radius-md);
+  padding: 6px 10px; font-size: 12px; font-family: var(--font);
+  color: var(--text-primary); width: calc(100% - 20px);
 }
 .sidebar-search:focus { outline: none; border-color: var(--blue-mid); }
 .sidebar-section {
-  padding: 10px 12px 4px;
-  font-size: 10px;
-  font-weight: 500;
-  color: var(--text-tertiary);
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
+  padding: 10px 12px 4px; font-size: 10px; font-weight: 500;
+  color: var(--text-tertiary); text-transform: uppercase; letter-spacing: 0.5px;
 }
 .field-item {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 7px 12px;
-  cursor: pointer;
-  color: var(--text-primary);
-  font-size: 12px;
+  display: flex; align-items: center; gap: 8px;
+  padding: 7px 12px; cursor: pointer; color: var(--text-primary); font-size: 12px;
 }
 .field-item:hover { background: var(--bg-tertiary); }
 .field-item i { font-size: 14px; color: var(--text-secondary); flex-shrink: 0; }
 
-/* CANVAS */
+/* Center canvas */
 .fb-canvas { flex: 1; display: flex; flex-direction: column; overflow: hidden; min-width: 0; }
-.ai-bar {
-  padding: 10px 12px;
-  border-bottom: 0.5px solid var(--border-light);
-  display: flex;
-  gap: 8px;
-  align-items: center;
-  background: var(--bg-secondary);
+.canvas-header {
+  padding: 8px 12px; border-bottom: 0.5px solid var(--border-light);
+  display: flex; align-items: center; gap: 8px; background: var(--bg-secondary);
+  font-size: 12px; color: var(--text-secondary);
 }
+.canvas-header .field-count { font-weight: 500; color: var(--text-primary); }
+.canvas-header .compliance-badge {
+  margin-left: auto; display: flex; align-items: center; gap: 4px;
+  font-size: 11px; padding: 3px 8px; border-radius: 4px;
+}
+.compliance-pass { background: var(--green-light); color: var(--green-dark); }
+.compliance-warn { background: var(--amber-light); color: var(--amber-dark); }
+.canvas-body { flex: 1; overflow-y: auto; padding: 16px; }
+
+.ai-bar {
+  padding: 8px 12px; border-bottom: 0.5px solid var(--border-light);
+  display: flex; gap: 8px; align-items: center; background: var(--bg-primary);
+}
+.ai-bar-icon { color: var(--purple); font-size: 15px; flex-shrink: 0; }
 .ai-bar-input {
-  flex: 1;
-  background: var(--bg-primary);
-  border: 0.5px solid var(--border-light);
-  border-radius: var(--radius-md);
-  padding: 7px 10px;
-  font-size: 12px;
-  font-family: var(--font);
-  color: var(--text-primary);
+  flex: 1; background: var(--bg-secondary); border: 0.5px solid var(--border-light);
+  border-radius: var(--radius-md); padding: 7px 10px; font-size: 12px;
+  font-family: var(--font); color: var(--text-primary);
 }
 .ai-bar-input:focus { outline: none; border-color: var(--blue-mid); }
-.btn-primary {
-  background: var(--blue);
-  color: #fff;
-  border: none;
-  border-radius: var(--radius-md);
-  padding: 7px 14px;
-  font-size: 12px;
-  font-family: var(--font);
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  white-space: nowrap;
-  font-weight: 500;
-}
-.btn-primary:hover { background: #0C447C; }
-.btn-primary i { font-size: 13px; }
-.btn-secondary {
-  background: none;
-  border: 0.5px solid var(--border-mid);
-  border-radius: var(--radius-md);
-  padding: 6px 12px;
-  font-size: 12px;
-  font-family: var(--font);
-  color: var(--text-primary);
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  gap: 6px;
-}
-.btn-secondary:hover { background: var(--bg-secondary); }
 
-.canvas-body {
-  flex: 1;
-  overflow-y: auto;
-  padding: 16px;
-}
-
-/* CHAT */
+/* Chat messages */
 .chat-msg { margin-bottom: 10px; }
 .chat-user {
-  background: var(--blue);
-  color: #fff;
-  border-radius: var(--radius-md);
-  padding: 8px 12px;
-  font-size: 12px;
-  margin-left: 32px;
-  line-height: 1.5;
+  background: var(--blue); color: #fff; border-radius: var(--radius-md);
+  padding: 8px 12px; font-size: 12px; margin-left: 32px; line-height: 1.5;
 }
 .chat-ai {
-  background: var(--bg-secondary);
-  border-radius: var(--radius-md);
-  padding: 8px 12px;
-  font-size: 12px;
-  color: var(--text-primary);
-  margin-right: 32px;
-  line-height: 1.5;
+  background: var(--bg-secondary); border-radius: var(--radius-md);
+  padding: 8px 12px; font-size: 12px; color: var(--text-primary);
+  margin-right: 32px; line-height: 1.5;
 }
 .thinking { display: flex; gap: 3px; align-items: center; padding: 2px 0; }
 .dot {
@@ -274,37 +376,17 @@ body {
 .dot:nth-child(3) { animation-delay: .4s; }
 @keyframes pulse { 0%,80%,100%{opacity:.3} 40%{opacity:1} }
 
-/* FORM CANVAS AREA */
-.drop-zone {
-  border: 1.5px dashed var(--border-mid);
-  border-radius: var(--radius-md);
-  padding: 32px 24px;
-  text-align: center;
-  color: var(--text-secondary);
-  font-size: 13px;
-  margin-bottom: 8px;
-}
-.drop-zone i { font-size: 28px; margin-bottom: 10px; display: block; }
+/* Form field cards */
 .form-banner {
-  background: var(--bg-secondary);
-  border-radius: var(--radius-md);
-  padding: 10px 12px;
-  margin-bottom: 12px;
-  font-size: 12px;
-  color: var(--text-secondary);
-  display: flex;
-  align-items: center;
-  gap: 8px;
+  background: var(--bg-secondary); border-radius: var(--radius-md);
+  padding: 10px 12px; margin-bottom: 12px; font-size: 12px;
+  color: var(--text-secondary); display: flex; align-items: center; gap: 8px;
 }
 .form-banner i { color: var(--blue); font-size: 14px; }
 .field-card {
-  background: var(--bg-primary);
-  border: 0.5px solid var(--border-light);
-  border-radius: var(--radius-md);
-  padding: 10px 12px;
-  margin-bottom: 8px;
-  cursor: pointer;
-  transition: border-color .15s;
+  background: var(--bg-primary); border: 0.5px solid var(--border-light);
+  border-radius: var(--radius-md); padding: 10px 12px; margin-bottom: 8px;
+  cursor: pointer; transition: border-color .15s; position: relative;
 }
 .field-card:hover { border-color: var(--blue-mid); }
 .field-card.selected { border-color: var(--blue-mid); background: var(--blue-light); }
@@ -312,115 +394,120 @@ body {
 .field-id { font-size: 10px; color: var(--text-tertiary); font-family: var(--font-mono); margin-bottom: 2px; }
 .field-name { font-size: 13px; font-weight: 500; color: var(--text-primary); }
 .field-type-badge {
-  font-size: 11px;
-  color: var(--text-secondary);
-  padding: 2px 6px;
-  border-radius: 4px;
-  background: var(--bg-secondary);
-  border: 0.5px solid var(--border-light);
-  white-space: nowrap;
+  font-size: 11px; color: var(--text-secondary); padding: 2px 6px;
+  border-radius: 4px; background: var(--bg-secondary);
+  border: 0.5px solid var(--border-light); white-space: nowrap;
 }
 .calc-badge { background: var(--amber-light); color: var(--amber-dark); border: none; }
-.ai-mapped-badge { background: var(--green-light); color: var(--green-dark); font-size: 10px; padding: 2px 6px; border-radius: 4px; margin-left: auto; white-space: nowrap; }
-.field-options { font-size: 11px; color: var(--text-secondary); margin-top: 6px; padding-top: 6px; border-top: 0.5px solid var(--border-light); }
+.ai-mapped-badge {
+  background: var(--green-light); color: var(--green-dark);
+  font-size: 10px; padding: 2px 6px; border-radius: 4px; margin-left: auto; white-space: nowrap;
+}
+.field-options {
+  font-size: 11px; color: var(--text-secondary); margin-top: 6px;
+  padding-top: 6px; border-top: 0.5px solid var(--border-light);
+}
+.field-logic-inline {
+  display: flex; align-items: center; gap: 6px; margin-top: 6px;
+  padding: 5px 8px; border-radius: var(--radius-sm);
+  background: var(--purple-light); font-size: 11px; color: var(--purple);
+}
+.field-logic-inline i { font-size: 12px; }
+.drop-zone {
+  border: 1.5px dashed var(--border-mid); border-radius: var(--radius-md);
+  padding: 32px 24px; text-align: center; color: var(--text-secondary);
+  font-size: 13px; margin-bottom: 8px;
+}
+.drop-zone i { font-size: 28px; margin-bottom: 10px; display: block; }
 
-/* RIGHT PANEL */
+/* Right panel */
 .fb-right {
-  width: 210px;
-  border-left: 0.5px solid var(--border-light);
-  display: flex;
-  flex-direction: column;
-  overflow: hidden;
-  flex-shrink: 0;
+  width: 220px; border-left: 0.5px solid var(--border-light);
+  display: flex; flex-direction: column; overflow: hidden; flex-shrink: 0;
 }
 .right-tabs { display: flex; border-bottom: 0.5px solid var(--border-light); }
 .rtab {
-  flex: 1;
-  padding: 10px 4px;
-  font-size: 12px;
-  font-family: var(--font);
-  text-align: center;
-  cursor: pointer;
-  color: var(--text-secondary);
-  border: none;
-  background: none;
-  border-bottom: 2px solid transparent;
+  flex: 1; padding: 10px 4px; font-size: 12px; font-family: var(--font);
+  text-align: center; cursor: pointer; color: var(--text-secondary);
+  border: none; background: none; border-bottom: 2px solid transparent;
 }
 .rtab.active { color: var(--text-primary); font-weight: 500; border-bottom-color: var(--blue-mid); }
 .right-body { flex: 1; overflow-y: auto; padding: 12px; }
 .prop-label { font-size: 11px; color: var(--text-secondary); margin-bottom: 4px; margin-top: 10px; }
 .prop-label:first-child { margin-top: 0; }
 .prop-val {
-  font-size: 12px;
-  color: var(--text-primary);
-  padding: 6px 8px;
-  background: var(--bg-secondary);
-  border-radius: var(--radius-md);
+  font-size: 12px; color: var(--text-primary); padding: 6px 8px;
+  background: var(--bg-secondary); border-radius: var(--radius-md);
   border: 0.5px solid var(--border-light);
 }
 .prop-mono { font-family: var(--font-mono); font-size: 11px; }
 .toggle-row { display: flex; align-items: center; justify-content: space-between; margin-top: 10px; }
 .toggle-label { font-size: 12px; color: var(--text-primary); }
 .toggle {
-  width: 30px; height: 17px; border-radius: 9px;
-  background: var(--blue);
-  position: relative; cursor: pointer; flex-shrink: 0;
-  transition: background .15s;
+  width: 30px; height: 17px; border-radius: 9px; background: var(--blue);
+  position: relative; cursor: pointer; flex-shrink: 0; transition: background .15s;
 }
 .toggle::after {
-  content: ''; position: absolute;
-  top: 2px; right: 2px;
-  width: 13px; height: 13px;
-  border-radius: 50%; background: #fff;
+  content: ''; position: absolute; top: 2px; right: 2px;
+  width: 13px; height: 13px; border-radius: 50%; background: #fff;
   transition: right .15s;
 }
 .toggle.off { background: var(--border-mid); }
 .toggle.off::after { right: auto; left: 2px; }
 .prop-select {
-  width: 100%;
-  background: var(--bg-secondary);
-  border: 0.5px solid var(--border-light);
-  border-radius: var(--radius-md);
-  padding: 6px 8px;
-  font-size: 12px;
-  font-family: var(--font);
-  color: var(--text-primary);
-  cursor: pointer;
-  margin-top: 4px;
+  width: 100%; background: var(--bg-secondary);
+  border: 0.5px solid var(--border-light); border-radius: var(--radius-md);
+  padding: 6px 8px; font-size: 12px; font-family: var(--font);
+  color: var(--text-primary); cursor: pointer; margin-top: 4px;
 }
 .empty-state { text-align: center; padding: 24px 12px; color: var(--text-secondary); font-size: 12px; }
 .empty-state i { font-size: 24px; display: block; margin-bottom: 8px; }
 
-/* CHECK ITEMS */
+/* Getting started guide in right panel */
+.guide-card {
+  background: var(--bg-secondary); border-radius: var(--radius-md);
+  padding: 10px; margin-bottom: 8px;
+}
+.guide-step {
+  display: flex; gap: 8px; font-size: 12px; color: var(--text-secondary);
+  align-items: flex-start; line-height: 1.5;
+}
+.guide-num {
+  width: 18px; height: 18px; border-radius: 50%; background: var(--blue-light);
+  color: var(--blue); font-size: 10px; font-weight: 600;
+  display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+  margin-top: 1px;
+}
+
+/* Check items */
 .check-item {
-  display: flex;
-  align-items: flex-start;
-  gap: 8px;
-  padding: 7px 8px;
-  border-radius: var(--radius-sm);
-  margin-bottom: 5px;
-  font-size: 11px;
-  line-height: 1.4;
+  display: flex; align-items: flex-start; gap: 8px;
+  padding: 7px 8px; border-radius: var(--radius-sm);
+  margin-bottom: 5px; font-size: 11px; line-height: 1.4;
 }
 .check-ok { background: var(--green-light); color: var(--green-dark); }
 .check-warn { background: var(--amber-light); color: var(--amber-dark); }
 .check-info { background: var(--blue-light); color: var(--blue); }
 .check-item i { font-size: 13px; flex-shrink: 0; margin-top: 1px; }
 
-/* ==============================
-   VIEWS
-   ============================== */
-.fb-view { display: none; }
-.fb-view.active { display: flex; flex-direction: column; }
-.view-body { flex: 1; overflow-y: auto; padding: 16px; }
+/* ══════════════════════════════════════
+   CONFIGURE VIEW — logic + analytics
+   ══════════════════════════════════════ */
+.configure-body { flex: 1; overflow-y: auto; padding: 20px 24px; }
+.config-section { margin-bottom: 24px; }
+.config-section-header {
+  display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px;
+}
+.config-section-title {
+  font-size: 15px; font-weight: 500; color: var(--text-primary);
+  display: flex; align-items: center; gap: 8px;
+}
+.config-section-title i { font-size: 16px; }
 
-/* LOGIC VIEW */
+/* Logic rule cards */
 .logic-rule-card {
-  background: var(--bg-primary);
-  border: 0.5px solid var(--border-light);
-  border-radius: var(--radius-md);
-  padding: 14px;
-  margin-bottom: 12px;
+  background: var(--bg-primary); border: 0.5px solid var(--border-light);
+  border-radius: var(--radius-md); padding: 14px; margin-bottom: 12px;
 }
 .rule-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
 .rule-title { font-size: 13px; font-weight: 500; color: var(--text-primary); display: flex; align-items: center; gap: 8px; }
@@ -428,163 +515,122 @@ body {
 .logic-row { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; flex-wrap: wrap; }
 .logic-label { font-size: 12px; color: var(--text-secondary); width: 32px; flex-shrink: 0; }
 .logic-select {
-  background: var(--bg-secondary);
-  border: 0.5px solid var(--border-light);
-  border-radius: var(--radius-md);
-  padding: 5px 8px;
-  font-size: 12px;
-  font-family: var(--font);
-  color: var(--text-primary);
-  cursor: pointer;
+  background: var(--bg-secondary); border: 0.5px solid var(--border-light);
+  border-radius: var(--radius-md); padding: 5px 8px; font-size: 12px;
+  font-family: var(--font); color: var(--text-primary); cursor: pointer;
 }
 .logic-then {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 10px;
-  border-radius: var(--radius-md);
-  background: var(--bg-secondary);
-  font-size: 12px;
-  flex-wrap: wrap;
+  display: flex; align-items: center; gap: 8px; padding: 10px;
+  border-radius: var(--radius-md); background: var(--bg-secondary);
+  font-size: 12px; flex-wrap: wrap;
 }
 .then-label { color: var(--text-secondary); flex-shrink: 0; }
 .add-rule-btn {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  padding: 8px 12px;
-  border: 0.5px dashed var(--border-mid);
-  border-radius: var(--radius-md);
-  font-size: 12px;
-  font-family: var(--font);
-  color: var(--text-secondary);
-  cursor: pointer;
-  background: none;
-  width: 100%;
-  margin-top: 4px;
+  display: flex; align-items: center; gap: 6px; padding: 8px 12px;
+  border: 0.5px dashed var(--border-mid); border-radius: var(--radius-md);
+  font-size: 12px; font-family: var(--font); color: var(--text-secondary);
+  cursor: pointer; background: none; width: 100%; margin-top: 4px;
 }
 .add-rule-btn:hover { background: var(--bg-secondary); color: var(--text-primary); }
 .ai-suggestion {
-  margin-top: 14px;
-  background: var(--green-light);
-  border-radius: var(--radius-md);
-  padding: 10px 12px;
-  font-size: 12px;
-  color: var(--green-dark);
-  display: flex;
-  gap: 8px;
-  align-items: flex-start;
-  line-height: 1.5;
+  margin-top: 14px; background: var(--green-light); border-radius: var(--radius-md);
+  padding: 10px 12px; font-size: 12px; color: var(--green-dark);
+  display: flex; gap: 8px; align-items: flex-start; line-height: 1.5;
 }
 .ai-suggestion i { font-size: 14px; flex-shrink: 0; margin-top: 2px; }
 .link { text-decoration: underline; cursor: pointer; }
 
-/* ANALYTICS VIEW */
-.metric-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 16px; }
+/* Analytics inline */
+.metric-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-bottom: 16px; }
 .metric-card { background: var(--bg-secondary); border-radius: var(--radius-md); padding: 12px 14px; }
 .metric-label { font-size: 11px; color: var(--text-secondary); margin-bottom: 4px; }
-.metric-val { font-size: 22px; font-weight: 500; color: var(--text-primary); }
-.metric-unit { font-size: 14px; font-weight: 400; }
+.metric-val { font-size: 20px; font-weight: 500; color: var(--text-primary); }
+.metric-unit { font-size: 13px; font-weight: 400; }
 .metric-delta { font-size: 11px; margin-top: 2px; }
 .delta-up { color: var(--green); }
 .delta-down { color: var(--red); }
-.section-label { font-size: 11px; font-weight: 500; color: var(--text-secondary); margin-bottom: 10px; text-transform: uppercase; letter-spacing: 0.5px; }
+.section-label {
+  font-size: 11px; font-weight: 500; color: var(--text-secondary);
+  margin-bottom: 10px; text-transform: uppercase; letter-spacing: 0.5px;
+}
 .bar-row { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; font-size: 12px; }
 .bar-label { width: 140px; color: var(--text-secondary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; flex-shrink: 0; }
 .bar-track { flex: 1; background: var(--bg-secondary); border-radius: 4px; height: 8px; }
 .bar-fill { height: 8px; border-radius: 4px; }
 .bar-pct { width: 36px; text-align: right; color: var(--text-primary); font-weight: 500; }
 .ai-insight {
-  background: var(--green-light);
-  border-radius: var(--radius-md);
-  padding: 10px 12px;
-  font-size: 12px;
-  color: var(--green-dark);
-  display: flex;
-  gap: 8px;
-  align-items: flex-start;
-  margin-bottom: 8px;
-  line-height: 1.5;
+  background: var(--green-light); border-radius: var(--radius-md);
+  padding: 10px 12px; font-size: 12px; color: var(--green-dark);
+  display: flex; gap: 8px; align-items: flex-start; margin-bottom: 8px; line-height: 1.5;
 }
 .ai-insight i { font-size: 14px; flex-shrink: 0; margin-top: 2px; }
 
-/* PUBLISH VIEW */
-.publish-section {
-  background: var(--bg-primary);
-  border: 0.5px solid var(--border-light);
-  border-radius: var(--radius-md);
-  padding: 14px;
-  margin-bottom: 12px;
+/* ══════════════════════════════════════
+   REVIEW & PUBLISH VIEW
+   ══════════════════════════════════════ */
+.review-body { flex: 1; overflow-y: auto; padding: 20px 24px; }
+.review-cols { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+.review-section {
+  background: var(--bg-primary); border: 0.5px solid var(--border-light);
+  border-radius: var(--radius-md); padding: 14px; margin-bottom: 12px;
 }
-.publish-title {
-  font-size: 13px;
-  font-weight: 500;
-  color: var(--text-primary);
-  margin-bottom: 10px;
-  display: flex;
-  align-items: center;
-  gap: 8px;
+.review-title {
+  font-size: 13px; font-weight: 500; color: var(--text-primary);
+  margin-bottom: 10px; display: flex; align-items: center; gap: 8px;
 }
-.publish-title i { font-size: 15px; }
+.review-title i { font-size: 15px; }
 .check-row {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  font-size: 12px;
-  padding: 7px 0;
-  border-bottom: 0.5px solid var(--border-light);
+  display: flex; align-items: center; gap: 8px; font-size: 12px;
+  padding: 7px 0; border-bottom: 0.5px solid var(--border-light);
   color: var(--text-primary);
 }
 .check-row:last-child { border-bottom: none; }
 .check-row .i-ok { color: var(--green); font-size: 15px; }
 .check-row .i-warn { color: var(--amber); font-size: 15px; }
 .version-row {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 7px 0;
-  border-bottom: 0.5px solid var(--border-light);
-  font-size: 12px;
+  display: flex; align-items: center; gap: 8px; padding: 7px 0;
+  border-bottom: 0.5px solid var(--border-light); font-size: 12px;
 }
 .version-row:last-child { border-bottom: none; }
 .env-row { display: flex; gap: 8px; margin-bottom: 10px; }
 .env-card {
-  flex: 1;
-  border: 0.5px solid var(--border-light);
-  border-radius: var(--radius-md);
-  padding: 10px;
-  font-size: 12px;
-  cursor: pointer;
-  text-align: center;
-  background: var(--bg-primary);
-  color: var(--text-secondary);
-  transition: border-color .15s;
+  flex: 1; border: 0.5px solid var(--border-light); border-radius: var(--radius-md);
+  padding: 10px; font-size: 12px; cursor: pointer; text-align: center;
+  background: var(--bg-primary); color: var(--text-secondary); transition: border-color .15s;
 }
 .env-card i { font-size: 18px; margin-bottom: 4px; display: block; }
 .env-card.selected { border-color: var(--blue-mid); background: var(--blue-light); color: var(--blue); }
 .env-card.selected i { color: var(--blue); }
+.assign-row { display: flex; align-items: center; gap: 8px; margin-top: 8px; font-size: 12px; color: var(--text-secondary); }
+
+/* Buttons */
+.btn-primary {
+  background: var(--blue); color: #fff; border: none;
+  border-radius: var(--radius-md); padding: 7px 14px; font-size: 12px;
+  font-family: var(--font); cursor: pointer; display: flex;
+  align-items: center; gap: 6px; white-space: nowrap; font-weight: 500;
+}
+.btn-primary:hover { background: #0C447C; }
+.btn-primary i { font-size: 13px; }
+.btn-secondary {
+  background: none; border: 0.5px solid var(--border-mid);
+  border-radius: var(--radius-md); padding: 6px 12px; font-size: 12px;
+  font-family: var(--font); color: var(--text-primary); cursor: pointer;
+  display: flex; align-items: center; gap: 6px;
+}
+.btn-secondary:hover { background: var(--bg-secondary); }
 .publish-btn {
-  width: 100%;
-  background: var(--blue);
-  color: #fff;
-  border: none;
-  border-radius: var(--radius-md);
-  padding: 11px;
-  font-size: 13px;
-  font-family: var(--font);
-  cursor: pointer;
-  font-weight: 500;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  margin-top: 12px;
+  width: 100%; background: var(--blue); color: #fff; border: none;
+  border-radius: var(--radius-md); padding: 11px; font-size: 13px;
+  font-family: var(--font); cursor: pointer; font-weight: 500;
+  display: flex; align-items: center; justify-content: center;
+  gap: 8px; margin-top: 12px;
 }
 .publish-btn:hover { background: #0C447C; }
 .publish-btn.success { background: var(--green); }
-.assign-row { display: flex; align-items: center; gap: 8px; margin-top: 8px; font-size: 12px; color: var(--text-secondary); }
+.pill { font-size: 11px; padding: 2px 8px; border-radius: 4px; font-weight: 500; }
 
-/* SCROLLBAR */
+/* Scrollbar */
 ::-webkit-scrollbar { width: 4px; }
 ::-webkit-scrollbar-track { background: transparent; }
 ::-webkit-scrollbar-thumb { background: var(--border-mid); border-radius: 2px; }
@@ -593,508 +639,612 @@ body {
 <body>
 
 <div class="app-wrapper">
-  <div class="app-label">FormOS — AI-Powered LOS Form Builder · Prototype v1</div>
+  <div class="app-label">FormOS — AI-Powered LOS Form Builder · Prototype v2</div>
 
   <div class="fb-app">
 
-    <!-- TOP NAV -->
-    <nav class="fb-nav" role="navigation" aria-label="Main navigation">
+    <!-- ═══ TOP BAR ═══ -->
+    <div class="fb-topbar">
       <div class="fb-logo">
         <i class="ti ti-forms" aria-hidden="true"></i>
         FormOS
       </div>
-      <button class="fb-tab active" onclick="switchMain('library')" id="mtab-library">Library</button>
-      <button class="fb-tab" onclick="switchMain('builder')" id="mtab-builder">Builder</button>
-      <button class="fb-tab" onclick="switchMain('logic')" id="mtab-logic">Logic rules</button>
-      <button class="fb-tab" onclick="switchMain('analytics')" id="mtab-analytics">Analytics</button>
-      <button class="fb-tab" onclick="switchMain('publish')" id="mtab-publish">Publish</button>
-      <div class="fb-badge">
-        <span class="ai-dot" aria-hidden="true"></span>
-        AI ready
-        &nbsp;|&nbsp;
-        <strong style="color:var(--text-primary);font-weight:500">Income Verification v2</strong>
-        &nbsp;
-        <span class="pill pill-draft">Draft</span>
+      <button class="fb-back" id="back-btn" onclick="goBack()" style="display:none" title="Back to templates">
+        <i class="ti ti-arrow-left"></i>
+      </button>
+      <input class="fb-form-name" id="form-name" value="Untitled form" spellcheck="false" aria-label="Form name">
+      <div class="fb-status">
+        <div class="save-indicator" id="save-indicator" style="display:none">
+          <span class="save-dot"></span> Saved
+        </div>
+        <span class="status-pill pill-draft" id="status-pill">Draft</span>
       </div>
-    </nav>
+    </div>
 
-    <!-- ===== BUILDER VIEW ===== -->
-    <div id="main-builder" class="fb-view" role="main">
-      <div class="fb-body">
+    <!-- ═══ WORKFLOW STEPPER ═══ -->
+    <div class="fb-stepper" id="stepper">
+      <button class="step-item active" onclick="goToStep('start')" id="step-start">
+        <span class="step-num">1</span> Start
+      </button>
+      <div class="step-connector" id="conn-1"></div>
+      <button class="step-item disabled" onclick="goToStep('build')" id="step-build">
+        <span class="step-num">2</span> Build
+      </button>
+      <div class="step-connector" id="conn-2"></div>
+      <button class="step-item disabled" onclick="goToStep('configure')" id="step-configure">
+        <span class="step-num">3</span> Configure
+      </button>
+      <div class="step-connector" id="conn-3"></div>
+      <button class="step-item disabled" onclick="goToStep('review')" id="step-review">
+        <span class="step-num">4</span> Review & Publish
+      </button>
+    </div>
 
-        <!-- Left sidebar: field library -->
-        <aside class="fb-sidebar" aria-label="Field library">
-          <input class="sidebar-search" placeholder="Search fields…" aria-label="Search fields">
-          <div class="sidebar-section">Borrower</div>
-          <div class="field-item" onclick="addField('name','Full legal name','Text')" role="button" tabindex="0">
-            <i class="ti ti-user" aria-hidden="true"></i> Full legal name
+    <!-- ═══════════════════════════════════
+         STEP 1: START — Choose your path
+         ═══════════════════════════════════ -->
+    <div id="view-start" class="fb-view active">
+      <div class="start-view">
+        <div class="start-inner">
+          <h1 class="start-title">Create a new form</h1>
+          <p class="start-sub">Describe what you need and AI will build it, pick a compliance-mapped template, or start from a blank canvas.</p>
+
+          <!-- AI Hero -->
+          <div class="ai-hero">
+            <div class="ai-hero-header">
+              <div class="ai-hero-icon"><i class="ti ti-sparkles"></i></div>
+              <span class="ai-hero-label">Generate with AI</span>
+              <span class="ai-hero-badge">Recommended</span>
+            </div>
+            <p class="ai-hero-desc">Describe the form you need in plain English. AI will generate fields, map compliance IDs, set validation rules, and pre-configure conditional logic.</p>
+            <div class="ai-prompt-wrap">
+              <input class="ai-prompt-input" id="ai-prompt" placeholder='e.g. "Income verification form with TRID compliance for conventional loans"' aria-label="Describe the form you need">
+              <button class="ai-generate-btn" onclick="startAIGeneration()">
+                <i class="ti ti-sparkles"></i> Generate
+              </button>
+            </div>
+            <div class="ai-examples">
+              <button class="ai-example" onclick="useExample('Borrower income verification with TRID compliance checks')">Income verification</button>
+              <button class="ai-example" onclick="useExample('URLA 1003 borrower section with HMDA fields')">URLA borrower</button>
+              <button class="ai-example" onclick="useExample('Asset verification form with source of funds and gift letter')">Asset verification</button>
+              <button class="ai-example" onclick="useExample('Credit authorization and disclosure consent form')">Credit auth</button>
+            </div>
           </div>
-          <div class="field-item" onclick="addField('ssn','SSN (last 4)','Password')" role="button" tabindex="0">
-            <i class="ti ti-lock" aria-hidden="true"></i> SSN (last 4)
+
+          <!-- Divider -->
+          <div class="start-divider">
+            <div class="start-divider-line"></div>
+            <span class="start-divider-text">or start from a template</span>
+            <div class="start-divider-line"></div>
           </div>
-          <div class="field-item" onclick="addField('dob','Date of birth','Date')" role="button" tabindex="0">
-            <i class="ti ti-calendar" aria-hidden="true"></i> Date of birth
+
+          <!-- Template filters -->
+          <div class="template-filters" id="template-filters"></div>
+
+          <!-- Template grid -->
+          <div class="template-grid" id="template-grid"></div>
+
+          <!-- Blank canvas option -->
+          <div class="blank-card" onclick="startBlank()">
+            <i class="ti ti-plus"></i>
+            <span>Blank canvas</span>
           </div>
-          <div class="sidebar-section">Employment</div>
-          <div class="field-item" onclick="addField('employer','Employer name','Text')" role="button" tabindex="0">
-            <i class="ti ti-building" aria-hidden="true"></i> Employer name
-          </div>
-          <div class="field-item" onclick="addField('emptype','Employment type','Dropdown')" role="button" tabindex="0">
-            <i class="ti ti-briefcase" aria-hidden="true"></i> Employment type
-          </div>
-          <div class="field-item" onclick="addField('startdate','Start date','Date')" role="button" tabindex="0">
-            <i class="ti ti-calendar-event" aria-hidden="true"></i> Start date
-          </div>
-          <div class="sidebar-section">Income</div>
-          <div class="field-item" onclick="addField('baseinc','Monthly base income','Currency')" role="button" tabindex="0">
-            <i class="ti ti-currency-dollar" aria-hidden="true"></i> Monthly base income
-          </div>
-          <div class="field-item" onclick="addField('otherinc','Other income','Currency')" role="button" tabindex="0">
-            <i class="ti ti-plus" aria-hidden="true"></i> Other income
-          </div>
-          <div class="field-item" onclick="addField('totalinc','Total income (auto-calc)','Calculated')" role="button" tabindex="0">
-            <i class="ti ti-math-function" aria-hidden="true"></i> Total income (auto-calc)
-          </div>
-          <div class="sidebar-section">Property</div>
-          <div class="field-item" onclick="addField('propaddr','Property address','Address')" role="button" tabindex="0">
-            <i class="ti ti-home" aria-hidden="true"></i> Property address
-          </div>
-          <div class="field-item" onclick="addField('propval','Estimated value','Currency')" role="button" tabindex="0">
-            <i class="ti ti-building-estate" aria-hidden="true"></i> Estimated value
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══════════════════════════════════
+         STEP 2: BUILD — Canvas + field editing
+         ═══════════════════════════════════ -->
+    <div id="view-build" class="fb-view" style="min-height:580px">
+      <div class="build-body">
+
+        <!-- Left sidebar -->
+        <aside class="fb-sidebar" aria-label="Field palette">
+          <input class="sidebar-search" placeholder="Search fields..." aria-label="Search fields">
+          <div style="flex:1;overflow-y:auto;">
+            <div class="sidebar-section">Borrower</div>
+            <div class="field-item" onclick="addField('name','Full legal name','Text')" role="button" tabindex="0">
+              <i class="ti ti-user"></i> Full legal name
+            </div>
+            <div class="field-item" onclick="addField('ssn','SSN (last 4)','Password')" role="button" tabindex="0">
+              <i class="ti ti-lock"></i> SSN (last 4)
+            </div>
+            <div class="field-item" onclick="addField('dob','Date of birth','Date')" role="button" tabindex="0">
+              <i class="ti ti-calendar"></i> Date of birth
+            </div>
+            <div class="sidebar-section">Employment</div>
+            <div class="field-item" onclick="addField('employer','Employer name','Text')" role="button" tabindex="0">
+              <i class="ti ti-building"></i> Employer name
+            </div>
+            <div class="field-item" onclick="addField('emptype','Employment type','Dropdown')" role="button" tabindex="0">
+              <i class="ti ti-briefcase"></i> Employment type
+            </div>
+            <div class="field-item" onclick="addField('startdate','Start date','Date')" role="button" tabindex="0">
+              <i class="ti ti-calendar-event"></i> Start date
+            </div>
+            <div class="sidebar-section">Income</div>
+            <div class="field-item" onclick="addField('baseinc','Monthly base income','Currency')" role="button" tabindex="0">
+              <i class="ti ti-currency-dollar"></i> Monthly base income
+            </div>
+            <div class="field-item" onclick="addField('otherinc','Other income','Currency')" role="button" tabindex="0">
+              <i class="ti ti-plus"></i> Other income
+            </div>
+            <div class="field-item" onclick="addField('totalinc','Total income (auto-calc)','Calculated')" role="button" tabindex="0">
+              <i class="ti ti-math-function"></i> Total income (auto-calc)
+            </div>
+            <div class="sidebar-section">Property</div>
+            <div class="field-item" onclick="addField('propaddr','Property address','Address')" role="button" tabindex="0">
+              <i class="ti ti-home"></i> Property address
+            </div>
+            <div class="field-item" onclick="addField('propval','Estimated value','Currency')" role="button" tabindex="0">
+              <i class="ti ti-building-estate"></i> Estimated value
+            </div>
           </div>
         </aside>
 
         <!-- Center canvas -->
         <main class="fb-canvas" aria-label="Form canvas">
           <div class="ai-bar">
-            <i class="ti ti-sparkles" aria-hidden="true" style="color:var(--blue);font-size:16px;flex-shrink:0"></i>
-            <input class="ai-bar-input" id="ai-prompt" placeholder='Describe the form you need… e.g. "borrower income verification with compliance checks"' aria-label="AI form prompt">
-            <button class="btn-primary" onclick="runAI()" aria-label="Generate form with AI">
-              <i class="ti ti-sparkles" aria-hidden="true"></i>Generate
+            <i class="ti ti-sparkles ai-bar-icon"></i>
+            <input class="ai-bar-input" id="ai-prompt-inline" placeholder='Add fields with AI... e.g. "add a co-borrower section"' aria-label="AI field prompt">
+            <button class="btn-primary" onclick="runInlineAI()" style="padding:6px 12px">
+              <i class="ti ti-sparkles"></i>Add
             </button>
+          </div>
+          <div class="canvas-header" id="canvas-header">
+            <span class="field-count" id="field-count">0 fields</span>
+            <span style="margin:0 6px">·</span>
+            <span>Drag to reorder</span>
+            <div class="compliance-badge compliance-pass" id="compliance-status" style="display:none">
+              <i class="ti ti-shield-check" style="font-size:12px"></i> Compliance mapped
+            </div>
           </div>
           <div class="canvas-body" id="canvas-body">
             <div id="ai-chat-area" style="display:none;margin-bottom:16px" aria-live="polite"></div>
             <div id="form-area">
               <div class="drop-zone" id="drop-zone">
-                <i class="ti ti-layout-grid-add" aria-hidden="true"></i>
-                Type a prompt above to generate with AI,<br>or click fields in the left panel to add them
+                <i class="ti ti-layout-grid-add"></i>
+                Click fields in the left panel to add them,<br>or use the AI bar above to generate fields
               </div>
             </div>
           </div>
         </main>
 
-        <!-- Right panel: properties + AI checks -->
-        <aside class="fb-right" aria-label="Field properties">
+        <!-- Right panel -->
+        <aside class="fb-right" aria-label="Properties & guidance">
           <div class="right-tabs" role="tablist">
-            <button class="rtab active" onclick="switchRight('props')" id="rtab-props" role="tab" aria-selected="true">Properties</button>
-            <button class="rtab" onclick="switchRight('ai')" id="rtab-ai" role="tab" aria-selected="false">AI checks</button>
+            <button class="rtab active" onclick="switchRight('props')" id="rtab-props" role="tab">Properties</button>
+            <button class="rtab" onclick="switchRight('checks')" id="rtab-checks" role="tab">Compliance</button>
           </div>
           <div class="right-body" id="right-props" role="tabpanel">
-            <div class="empty-state">
-              <i class="ti ti-cursor-text" aria-hidden="true"></i>
-              Select a field to edit its properties
+            <div style="padding:4px 0;">
+              <div style="font-size:12px;font-weight:500;color:var(--text-primary);margin-bottom:10px;">Getting started</div>
+              <div class="guide-card">
+                <div class="guide-step">
+                  <span class="guide-num">1</span>
+                  <span>Click a field from the left panel to add it to the canvas</span>
+                </div>
+              </div>
+              <div class="guide-card">
+                <div class="guide-step">
+                  <span class="guide-num">2</span>
+                  <span>Click any field on the canvas to edit its properties here</span>
+                </div>
+              </div>
+              <div class="guide-card">
+                <div class="guide-step">
+                  <span class="guide-num">3</span>
+                  <span>When ready, move to <strong>Configure</strong> to add logic rules</span>
+                </div>
+              </div>
             </div>
           </div>
-          <div class="right-body" id="right-ai" style="display:none" role="tabpanel">
+          <div class="right-body" id="right-checks" style="display:none" role="tabpanel">
             <div style="font-size:12px;color:var(--text-secondary);margin-bottom:10px;line-height:1.5">
-              Run AI compliance and quality checks against TRID, HMDA, RESPA, and ECOA.
+              Run AI compliance checks against TRID, HMDA, RESPA, and ECOA.
             </div>
             <button class="btn-primary" onclick="runChecks()" style="width:100%;justify-content:center;margin-bottom:12px">
-              <i class="ti ti-shield-check" aria-hidden="true"></i>Run compliance checks
+              <i class="ti ti-shield-check"></i>Run checks
             </button>
             <div id="checks-area" aria-live="polite"></div>
           </div>
         </aside>
-
       </div>
     </div>
 
-    <!-- ===== LOGIC VIEW ===== -->
-    <div id="main-logic" class="fb-view" role="main">
-      <div class="view-body">
-        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
-          <h2 style="font-size:15px;font-weight:500;color:var(--text-primary)">Conditional logic rules</h2>
-          <button class="btn-primary" onclick="addAIRule()" style="font-size:12px;padding:6px 12px">
-            <i class="ti ti-sparkles" aria-hidden="true"></i>Suggest rules with AI
-          </button>
-        </div>
+    <!-- ═══════════════════════════════════
+         STEP 3: CONFIGURE — Logic + Analytics
+         ═══════════════════════════════════ -->
+    <div id="view-configure" class="fb-view" style="min-height:580px">
+      <div class="configure-body">
 
-        <div id="rules-area">
-          <!-- Rule 1 -->
-          <div class="logic-rule-card">
-            <div class="rule-header">
-              <div class="rule-title">Rule 1</div>
-              <span class="chip-active">Active</span>
+        <!-- Logic rules -->
+        <div class="config-section">
+          <div class="config-section-header">
+            <div class="config-section-title">
+              <i class="ti ti-git-branch" style="color:var(--purple)"></i>
+              Conditional logic rules
             </div>
-            <div class="logic-row">
-              <span class="logic-label">IF</span>
-              <select class="logic-select" aria-label="Field condition">
-                <option>Employment type</option>
-                <option>Income source</option>
-                <option>Loan amount</option>
-              </select>
-              <select class="logic-select" aria-label="Operator">
-                <option>equals</option>
-                <option>does not equal</option>
-                <option>contains</option>
-              </select>
-              <select class="logic-select" aria-label="Value">
-                <option>Self-employed</option>
-                <option>W-2</option>
-                <option>1099</option>
-              </select>
-            </div>
-            <div class="logic-then">
-              <i class="ti ti-corner-down-right" aria-hidden="true" style="color:var(--text-secondary);font-size:14px"></i>
-              <span class="then-label">THEN</span>
-              <select class="logic-select" aria-label="Action">
-                <option>Show field</option>
-                <option>Hide field</option>
-                <option>Require field</option>
-                <option>Set value</option>
-              </select>
-              <select class="logic-select" aria-label="Target field">
-                <option>Business name</option>
-                <option>YTD income</option>
-                <option>Tax returns</option>
-              </select>
-            </div>
+            <button class="btn-primary" onclick="addAIRule()" style="font-size:12px;padding:6px 12px" id="ai-rule-btn">
+              <i class="ti ti-sparkles"></i>Suggest rules with AI
+            </button>
           </div>
 
-          <!-- Rule 2 -->
-          <div class="logic-rule-card">
-            <div class="rule-header">
-              <div class="rule-title">Rule 2</div>
-              <span class="chip-active">Active</span>
-            </div>
-            <div class="logic-row">
-              <span class="logic-label">IF</span>
-              <select class="logic-select"><option>Other income</option><option>Employment type</option></select>
-              <select class="logic-select"><option>is greater than</option><option>equals</option><option>is less than</option></select>
-              <span style="font-size:12px;padding:5px 8px;background:var(--bg-secondary);border-radius:var(--radius-md);border:0.5px solid var(--border-light)">$0</span>
-            </div>
-            <div class="logic-then">
-              <i class="ti ti-corner-down-right" aria-hidden="true" style="color:var(--text-secondary);font-size:14px"></i>
-              <span class="then-label">THEN</span>
-              <select class="logic-select"><option>Require field</option><option>Show field</option><option>Hide field</option></select>
-              <select class="logic-select"><option>Income source</option><option>Other income docs</option><option>Verification method</option></select>
-            </div>
-          </div>
-
-          <!-- Rule 3 (AI suggested, hidden by default) -->
-          <div class="logic-rule-card" id="rule-3" style="display:none">
-            <div class="rule-header">
-              <div class="rule-title">
-                Rule 3
-                <span class="pill" style="background:var(--green-light);color:var(--green-dark);font-size:11px">AI suggested</span>
+          <div id="rules-area">
+            <div class="logic-rule-card">
+              <div class="rule-header">
+                <div class="rule-title">Rule 1</div>
+                <span class="chip-active">Active</span>
               </div>
-              <span class="chip-active">Active</span>
+              <div class="logic-row">
+                <span class="logic-label">IF</span>
+                <select class="logic-select"><option>Employment type</option><option>Income source</option><option>Loan amount</option></select>
+                <select class="logic-select"><option>equals</option><option>does not equal</option><option>contains</option></select>
+                <select class="logic-select"><option>Self-employed</option><option>W-2</option><option>1099</option></select>
+              </div>
+              <div class="logic-then">
+                <i class="ti ti-corner-down-right" style="color:var(--text-secondary);font-size:14px"></i>
+                <span class="then-label">THEN</span>
+                <select class="logic-select"><option>Show field</option><option>Hide field</option><option>Require field</option><option>Set value</option></select>
+                <select class="logic-select"><option>Business name</option><option>YTD income</option><option>Tax returns</option></select>
+              </div>
             </div>
-            <div class="logic-row">
-              <span class="logic-label">IF</span>
-              <select class="logic-select"><option>Loan amount</option></select>
-              <select class="logic-select"><option>exceeds</option></select>
-              <span style="font-size:12px;padding:5px 8px;background:var(--bg-secondary);border-radius:var(--radius-md);border:0.5px solid var(--border-light)">$726,200</span>
+
+            <div class="logic-rule-card">
+              <div class="rule-header">
+                <div class="rule-title">Rule 2</div>
+                <span class="chip-active">Active</span>
+              </div>
+              <div class="logic-row">
+                <span class="logic-label">IF</span>
+                <select class="logic-select"><option>Other income</option><option>Employment type</option></select>
+                <select class="logic-select"><option>is greater than</option><option>equals</option><option>is less than</option></select>
+                <span style="font-size:12px;padding:5px 8px;background:var(--bg-secondary);border-radius:var(--radius-md);border:0.5px solid var(--border-light)">$0</span>
+              </div>
+              <div class="logic-then">
+                <i class="ti ti-corner-down-right" style="color:var(--text-secondary);font-size:14px"></i>
+                <span class="then-label">THEN</span>
+                <select class="logic-select"><option>Require field</option><option>Show field</option><option>Hide field</option></select>
+                <select class="logic-select"><option>Income source</option><option>Other income docs</option><option>Verification method</option></select>
+              </div>
             </div>
-            <div style="font-size:11px;color:var(--text-secondary);margin-bottom:8px;padding-left:40px">AND</div>
-            <div class="logic-row">
-              <span class="logic-label"></span>
-              <select class="logic-select"><option>Loan type</option></select>
-              <select class="logic-select"><option>equals</option></select>
-              <select class="logic-select"><option>Conventional</option><option>FHA</option><option>VA</option></select>
+
+            <div class="logic-rule-card" id="rule-3" style="display:none">
+              <div class="rule-header">
+                <div class="rule-title">
+                  Rule 3
+                  <span class="pill" style="background:var(--green-light);color:var(--green-dark);font-size:11px">AI suggested</span>
+                </div>
+                <span class="chip-active">Active</span>
+              </div>
+              <div class="logic-row">
+                <span class="logic-label">IF</span>
+                <select class="logic-select"><option>Loan amount</option></select>
+                <select class="logic-select"><option>exceeds</option></select>
+                <span style="font-size:12px;padding:5px 8px;background:var(--bg-secondary);border-radius:var(--radius-md);border:0.5px solid var(--border-light)">$726,200</span>
+              </div>
+              <div style="font-size:11px;color:var(--text-secondary);margin-bottom:8px;padding-left:40px">AND</div>
+              <div class="logic-row">
+                <span class="logic-label"></span>
+                <select class="logic-select"><option>Loan type</option></select>
+                <select class="logic-select"><option>equals</option></select>
+                <select class="logic-select"><option>Conventional</option><option>FHA</option><option>VA</option></select>
+              </div>
+              <div class="logic-then">
+                <i class="ti ti-corner-down-right" style="color:var(--text-secondary);font-size:14px"></i>
+                <span class="then-label">THEN</span>
+                <select class="logic-select"><option>Show section</option><option>Hide section</option></select>
+                <select class="logic-select"><option>Jumbo disclosure block</option><option>TRID disclosures</option></select>
+              </div>
             </div>
-            <div class="logic-then">
-              <i class="ti ti-corner-down-right" aria-hidden="true" style="color:var(--text-secondary);font-size:14px"></i>
-              <span class="then-label">THEN</span>
-              <select class="logic-select"><option>Show section</option><option>Hide section</option></select>
-              <select class="logic-select"><option>Jumbo disclosure block</option><option>TRID disclosures</option></select>
+          </div>
+
+          <button class="add-rule-btn" onclick="addManualRule()">
+            <i class="ti ti-plus"></i>Add rule
+          </button>
+
+          <div class="ai-suggestion" id="ai-rule-suggestion">
+            <i class="ti ti-sparkles"></i>
+            <div>
+              <strong style="font-weight:500">AI suggestion:</strong> Based on TRID rules, loan amounts over $726,200 on conventional loans should trigger additional disclosures.
+              <span class="link" onclick="document.getElementById('rule-3').style.display='block';document.getElementById('ai-rule-suggestion').style.display='none'">Add rule</span>
             </div>
           </div>
         </div>
 
-        <button class="add-rule-btn" onclick="alert('Rule builder: select IF condition → THEN action')">
-          <i class="ti ti-plus" aria-hidden="true"></i>Add rule
-        </button>
-
-        <div class="ai-suggestion">
-          <i class="ti ti-sparkles" aria-hidden="true"></i>
-          <div>
-            <strong style="font-weight:500">AI suggestion:</strong> Based on TRID rules, loan amounts over $726,200 on conventional loans should trigger additional disclosures.
-            <span class="link" onclick="document.getElementById('rule-3').style.display='block'">Add rule →</span>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- ===== ANALYTICS VIEW ===== -->
-    <div id="main-analytics" class="fb-view" role="main">
-      <div class="view-body">
-        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
-          <h2 style="font-size:15px;font-weight:500;color:var(--text-primary)">Form analytics</h2>
-          <div style="display:flex;align-items:center;gap:10px">
+        <!-- Analytics -->
+        <div class="config-section">
+          <div class="config-section-header">
+            <div class="config-section-title">
+              <i class="ti ti-chart-bar" style="color:var(--blue)"></i>
+              Form performance
+            </div>
             <select class="logic-select" style="font-size:12px">
               <option>Last 30 days</option>
               <option>Last 7 days</option>
               <option>Last 90 days</option>
             </select>
-            <span style="font-size:12px;color:var(--text-secondary)">217 submissions</span>
           </div>
-        </div>
 
-        <div class="metric-grid">
-          <div class="metric-card">
-            <div class="metric-label">Avg. completion time</div>
-            <div class="metric-val">4m 12s</div>
-            <div class="metric-delta delta-up">↓ 38s vs last month</div>
+          <div class="metric-grid">
+            <div class="metric-card">
+              <div class="metric-label">Avg. completion</div>
+              <div class="metric-val">4m 12s</div>
+              <div class="metric-delta delta-up">&#8595; 38s vs last month</div>
+            </div>
+            <div class="metric-card">
+              <div class="metric-label">Completion rate</div>
+              <div class="metric-val">84%</div>
+              <div class="metric-delta delta-up">&#8593; 6% vs last month</div>
+            </div>
+            <div class="metric-card">
+              <div class="metric-label">Validation errors</div>
+              <div class="metric-val">1.8 <span class="metric-unit">avg</span></div>
+              <div class="metric-delta delta-down">&#8593; 0.3 — review</div>
+            </div>
+            <div class="metric-card">
+              <div class="metric-label">AI pre-fill rate</div>
+              <div class="metric-val">62%</div>
+              <div class="metric-delta delta-up">Fields auto-filled</div>
+            </div>
           </div>
-          <div class="metric-card">
-            <div class="metric-label">Completion rate</div>
-            <div class="metric-val">84%</div>
-            <div class="metric-delta delta-up">↑ 6% vs last month</div>
-          </div>
-          <div class="metric-card">
-            <div class="metric-label">Validation errors</div>
-            <div class="metric-val">1.8 <span class="metric-unit">avg</span></div>
-            <div class="metric-delta delta-down">↑ 0.3 — needs attention</div>
-          </div>
-          <div class="metric-card">
-            <div class="metric-label">AI pre-fill rate</div>
-            <div class="metric-val">62%</div>
-            <div class="metric-delta delta-up">Fields filled by AI</div>
-          </div>
-        </div>
 
-        <div class="section-label">Field completion rate</div>
-        <div id="bar-chart">
-          <div class="bar-row"><span class="bar-label">Employer name</span><div class="bar-track"><div class="bar-fill" style="width:97%;background:#1D9E75"></div></div><span class="bar-pct">97%</span></div>
-          <div class="bar-row"><span class="bar-label">Employment type</span><div class="bar-track"><div class="bar-fill" style="width:95%;background:#1D9E75"></div></div><span class="bar-pct">95%</span></div>
-          <div class="bar-row"><span class="bar-label">Monthly base income</span><div class="bar-track"><div class="bar-fill" style="width:91%;background:#1D9E75"></div></div><span class="bar-pct">91%</span></div>
-          <div class="bar-row"><span class="bar-label">Start date</span><div class="bar-track"><div class="bar-fill" style="width:88%;background:#185FA5"></div></div><span class="bar-pct">88%</span></div>
-          <div class="bar-row"><span class="bar-label">Income source</span><div class="bar-track"><div class="bar-fill" style="width:79%;background:#185FA5"></div></div><span class="bar-pct">79%</span></div>
-          <div class="bar-row"><span class="bar-label">Other income</span><div class="bar-track"><div class="bar-fill" style="width:58%;background:#BA7517"></div></div><span class="bar-pct">58%</span></div>
-          <div class="bar-row"><span class="bar-label">Verification method</span><div class="bar-track"><div class="bar-fill" style="width:43%;background:#E24B4A"></div></div><span class="bar-pct">43%</span></div>
-        </div>
-
-        <div style="margin-top:16px">
-          <div class="ai-insight">
-            <i class="ti ti-sparkles" aria-hidden="true"></i>
-            <div><strong style="font-weight:500">AI insight:</strong> "Verification method" has a 43% completion rate and is the top drop-off field. Consider making it optional until the processing stage, or adding contextual help text. Estimated impact: +18% completion rate.</div>
+          <div class="section-label">Field completion rate</div>
+          <div>
+            <div class="bar-row"><span class="bar-label">Employer name</span><div class="bar-track"><div class="bar-fill" style="width:97%;background:#1D9E75"></div></div><span class="bar-pct">97%</span></div>
+            <div class="bar-row"><span class="bar-label">Employment type</span><div class="bar-track"><div class="bar-fill" style="width:95%;background:#1D9E75"></div></div><span class="bar-pct">95%</span></div>
+            <div class="bar-row"><span class="bar-label">Monthly base income</span><div class="bar-track"><div class="bar-fill" style="width:91%;background:#1D9E75"></div></div><span class="bar-pct">91%</span></div>
+            <div class="bar-row"><span class="bar-label">Start date</span><div class="bar-track"><div class="bar-fill" style="width:88%;background:#185FA5"></div></div><span class="bar-pct">88%</span></div>
+            <div class="bar-row"><span class="bar-label">Other income</span><div class="bar-track"><div class="bar-fill" style="width:58%;background:#BA7517"></div></div><span class="bar-pct">58%</span></div>
+            <div class="bar-row"><span class="bar-label">Verification method</span><div class="bar-track"><div class="bar-fill" style="width:43%;background:#E24B4A"></div></div><span class="bar-pct">43%</span></div>
           </div>
-          <div class="ai-insight">
-            <i class="ti ti-sparkles" aria-hidden="true"></i>
-            <div><strong style="font-weight:500">AI insight:</strong> "Other income" is frequently left blank by self-employed borrowers. A conditional logic rule could auto-show a "Business net income" field for that employment type. <span class="link" onclick="switchMain('logic')">Go to Logic rules →</span></div>
+
+          <div style="margin-top:12px">
+            <div class="ai-insight">
+              <i class="ti ti-sparkles"></i>
+              <div><strong style="font-weight:500">AI insight:</strong> "Verification method" has 43% completion — the top drop-off field. Consider making it optional until processing, or add contextual help text. Estimated impact: +18% completion.</div>
+            </div>
           </div>
         </div>
       </div>
     </div>
 
-    <!-- ===== PUBLISH VIEW ===== -->
-    <div id="main-publish" class="fb-view" role="main">
-      <div class="view-body">
-        <h2 style="font-size:15px;font-weight:500;color:var(--text-primary);margin-bottom:16px">Publish — Income Verification v2</h2>
+    <!-- ═══════════════════════════════════
+         STEP 4: REVIEW & PUBLISH
+         ═══════════════════════════════════ -->
+    <div id="view-review" class="fb-view" style="min-height:580px">
+      <div class="review-body">
+        <h2 style="font-size:15px;font-weight:500;color:var(--text-primary);margin-bottom:16px;display:flex;align-items:center;gap:8px">
+          <i class="ti ti-checklist" style="color:var(--blue);font-size:18px"></i>
+          Review & Publish
+        </h2>
 
-        <div class="publish-section">
-          <div class="publish-title">
-            <i class="ti ti-shield-check" style="color:var(--green)" aria-hidden="true"></i>
-            Pre-publish checks
-          </div>
-          <div class="check-row"><i class="ti ti-circle-check i-ok" aria-hidden="true"></i> All required fields have validation rules</div>
-          <div class="check-row"><i class="ti ti-circle-check i-ok" aria-hidden="true"></i> TRID disclosure fields present</div>
-          <div class="check-row"><i class="ti ti-circle-check i-ok" aria-hidden="true"></i> HMDA data fields complete</div>
-          <div class="check-row"><i class="ti ti-circle-check i-ok" aria-hidden="true"></i> Conditional logic rules validated (2 active)</div>
-          <div class="check-row"><i class="ti ti-alert-triangle i-warn" aria-hidden="true"></i> "Verification method" has low completion — consider review</div>
-          <div class="check-row"><i class="ti ti-circle-check i-ok" aria-hidden="true"></i> WCAG 2.1 AA — all field labels present</div>
-          <div class="check-row"><i class="ti ti-circle-check i-ok" aria-hidden="true"></i> No PII fields without masking rules</div>
-        </div>
+        <div class="review-cols">
+          <div>
+            <!-- Pre-publish checks -->
+            <div class="review-section">
+              <div class="review-title">
+                <i class="ti ti-shield-check" style="color:var(--green)"></i>
+                Pre-publish checks
+              </div>
+              <div class="check-row"><i class="ti ti-circle-check i-ok"></i> All required fields have validation rules</div>
+              <div class="check-row"><i class="ti ti-circle-check i-ok"></i> TRID disclosure fields present</div>
+              <div class="check-row"><i class="ti ti-circle-check i-ok"></i> HMDA data fields complete</div>
+              <div class="check-row"><i class="ti ti-circle-check i-ok"></i> Conditional logic validated (2 active)</div>
+              <div class="check-row"><i class="ti ti-alert-triangle i-warn"></i> "Verification method" low completion — review</div>
+              <div class="check-row"><i class="ti ti-circle-check i-ok"></i> WCAG 2.1 AA — labels present</div>
+              <div class="check-row"><i class="ti ti-circle-check i-ok"></i> No PII without masking</div>
+            </div>
 
-        <div class="publish-section">
-          <div class="publish-title">
-            <i class="ti ti-git-branch" style="color:var(--blue)" aria-hidden="true"></i>
-            Version history
+            <!-- Version history -->
+            <div class="review-section">
+              <div class="review-title">
+                <i class="ti ti-git-branch" style="color:var(--blue)"></i>
+                Version history
+              </div>
+              <div class="version-row">
+                <span style="font-weight:500;color:var(--text-primary)">v2 (current)</span>
+                <span style="color:var(--text-secondary)">Draft · 2 rules · 9 fields</span>
+                <span style="margin-left:auto;color:var(--text-secondary)">Today</span>
+              </div>
+              <div class="version-row">
+                <span style="color:var(--text-secondary)">v1</span>
+                <span style="color:var(--text-secondary)">Published · 7 fields</span>
+                <span style="margin-left:auto;color:var(--text-secondary)">May 14</span>
+                <button class="btn-secondary" style="padding:3px 10px;font-size:11px;margin-left:8px">Rollback</button>
+              </div>
+            </div>
           </div>
-          <div class="version-row">
-            <span style="font-weight:500;color:var(--text-primary)">v2 (current)</span>
-            <span style="color:var(--text-secondary)">Draft · 3 logic rules · 9 fields</span>
-            <span style="margin-left:auto;color:var(--text-secondary)">Today</span>
-          </div>
-          <div class="version-row">
-            <span style="color:var(--text-secondary)">v1</span>
-            <span style="color:var(--text-secondary)">Published · 7 fields</span>
-            <span style="margin-left:auto;color:var(--text-secondary)">May 14</span>
-            <button class="btn-secondary" style="padding:3px 10px;font-size:11px;margin-left:8px">Rollback</button>
-          </div>
-        </div>
 
-        <div class="publish-section">
-          <div class="publish-title">
-            <i class="ti ti-server" style="color:var(--blue)" aria-hidden="true"></i>
-            Environment &amp; assignment
+          <div>
+            <!-- Environment & publish -->
+            <div class="review-section">
+              <div class="review-title">
+                <i class="ti ti-server" style="color:var(--blue)"></i>
+                Environment & assignment
+              </div>
+              <div class="env-row">
+                <div class="env-card" onclick="selectEnv(this)" tabindex="0"><i class="ti ti-test-pipe"></i>Staging</div>
+                <div class="env-card selected" onclick="selectEnv(this)" tabindex="0"><i class="ti ti-world"></i>Production</div>
+                <div class="env-card" onclick="selectEnv(this)" tabindex="0"><i class="ti ti-eye"></i>Preview</div>
+              </div>
+              <div class="assign-row">
+                Milestone:
+                <select class="logic-select" aria-label="Milestone">
+                  <option>Processing — income review</option>
+                  <option>Application</option>
+                  <option>Underwriting</option>
+                  <option>Closing</option>
+                </select>
+              </div>
+              <div class="assign-row">
+                Roles:
+                <select class="logic-select" aria-label="Roles">
+                  <option>Loan Processor, Underwriter</option>
+                  <option>All roles</option>
+                  <option>Loan Officer only</option>
+                </select>
+              </div>
+              <button class="publish-btn" id="publish-btn" onclick="publishForm()">
+                <i class="ti ti-rocket"></i>Publish to production
+              </button>
+            </div>
           </div>
-          <div class="env-row">
-            <div class="env-card" onclick="selectEnv(this)" tabindex="0"><i class="ti ti-test-pipe" aria-hidden="true"></i>Staging</div>
-            <div class="env-card selected" onclick="selectEnv(this)" tabindex="0"><i class="ti ti-world" aria-hidden="true"></i>Production</div>
-            <div class="env-card" onclick="selectEnv(this)" tabindex="0"><i class="ti ti-eye" aria-hidden="true"></i>Preview link</div>
-          </div>
-          <div class="assign-row">
-            Milestone:
-            <select class="logic-select" aria-label="Assign to milestone">
-              <option>Processing — income review</option>
-              <option>Application</option>
-              <option>Underwriting</option>
-              <option>Closing</option>
-            </select>
-          </div>
-          <div class="assign-row">
-            Roles with access:
-            <select class="logic-select" aria-label="Role access">
-              <option>Loan Processor, Underwriter</option>
-              <option>All roles</option>
-              <option>Loan Officer only</option>
-            </select>
-          </div>
-          <button class="publish-btn" id="publish-btn" onclick="publishForm()">
-            <i class="ti ti-rocket" aria-hidden="true"></i>Publish to production
-          </button>
         </div>
       </div>
     </div>
 
-    <!-- ============ LIBRARY VIEW (Form template library) ============ -->
-    <div id="main-library" class="fb-view active" role="main" style="padding:24px 32px 48px; overflow-y:auto; background:#FAFAFB;">
-      <div style="max-width:1280px; margin:0 auto;">
-        <div style="display:flex; align-items:baseline; justify-content:space-between; margin-bottom:6px;">
-          <h1 style="font-size:24px; font-weight:800; letter-spacing:-0.02em; color:#111827; margin:0;">Form template library</h1>
-          <span style="font-size:12px; color:#6B7280;">10 system templates · compliance-mapped</span>
-        </div>
-        <p style="font-size:13.5px; color:#6B7280; margin:0 0 18px; max-width:680px; line-height:1.55;">
-          Pre-built templates covering the full loan origination lifecycle. Deploy as-is or open in the builder to customize. All edits create a new version — the system default is never overwritten.
-        </p>
-
-        <!-- Filter chips -->
-        <div id="library-filters" style="display:flex; gap:6px; flex-wrap:wrap; margin-bottom:18px;">
-          <button class="lib-chip active" data-stage="all" onclick="filterLibrary('all')" style="padding:6px 13px; border-radius:999px; border:1px solid #E5E7EB; background:#111827; color:#fff; font-size:12.5px; font-weight:700; cursor:pointer; font-family:inherit;">All · 10</button>
-          <button class="lib-chip" data-stage="Application" onclick="filterLibrary('Application')" style="padding:6px 13px; border-radius:999px; border:1px solid #E5E7EB; background:#fff; color:#374151; font-size:12.5px; font-weight:600; cursor:pointer; font-family:inherit;">Application · 3</button>
-          <button class="lib-chip" data-stage="Processing" onclick="filterLibrary('Processing')" style="padding:6px 13px; border-radius:999px; border:1px solid #E5E7EB; background:#fff; color:#374151; font-size:12.5px; font-weight:600; cursor:pointer; font-family:inherit;">Processing · 4</button>
-          <button class="lib-chip" data-stage="Underwriting" onclick="filterLibrary('Underwriting')" style="padding:6px 13px; border-radius:999px; border:1px solid #E5E7EB; background:#fff; color:#374151; font-size:12.5px; font-weight:600; cursor:pointer; font-family:inherit;">Underwriting · 1</button>
-          <button class="lib-chip" data-stage="Closing" onclick="filterLibrary('Closing')" style="padding:6px 13px; border-radius:999px; border:1px solid #E5E7EB; background:#fff; color:#374151; font-size:12.5px; font-weight:600; cursor:pointer; font-family:inherit;">Closing · 1</button>
-          <button class="lib-chip" data-stage="Post-Close" onclick="filterLibrary('Post-Close')" style="padding:6px 13px; border-radius:999px; border:1px solid #E5E7EB; background:#fff; color:#374151; font-size:12.5px; font-weight:600; cursor:pointer; font-family:inherit;">Post-Close · 1</button>
-        </div>
-
-        <!-- Cards grid -->
-        <div id="library-grid" style="display:grid; grid-template-columns:repeat(auto-fill, minmax(360px, 1fr)); gap:14px;"></div>
-      </div>
-    </div>
   </div><!-- /fb-app -->
 </div><!-- /app-wrapper -->
 
 <script>
 var formFields = [];
 var selectedField = null;
+var currentStep = 'start';
 
 var AI_FIELDS = [
   {id:'employer', label:'Employer name', type:'Text', fieldId:'FE.EMPLOYER.NAME', required:true, ai:true},
-  {id:'emptype', label:'Employment type', type:'Dropdown', fieldId:'FE.EMP.TYPE', required:true, ai:true, options:'W-2 · 1099 · Self-employed · Contract'},
+  {id:'emptype', label:'Employment type', type:'Dropdown', fieldId:'FE.EMP.TYPE', required:true, ai:true, options:'W-2 · 1099 · Self-employed · Contract', logic:'IF Self-employed THEN show Business name'},
   {id:'startdate', label:'Employment start date', type:'Date', fieldId:'FE.START.DATE', required:true, ai:true},
   {id:'gross', label:'Annual gross income', type:'Currency', fieldId:'INCOME.ANNUAL.GROSS', required:true, ai:true},
   {id:'basemonth', label:'Monthly base income', type:'Currency', fieldId:'INCOME.MONTHLY.BASE', required:true, ai:true, calc:true},
   {id:'incsource', label:'Income source', type:'Dropdown', fieldId:'INCOME.SOURCE', required:false, ai:true, options:'Primary employment · Additional employment · Self-employment'},
-  {id:'otherinc', label:'Other income amount', type:'Currency', fieldId:'INCOME.OTHER', required:false, ai:true},
+  {id:'otherinc', label:'Other income amount', type:'Currency', fieldId:'INCOME.OTHER', required:false, ai:true, logic:'IF > $0 THEN require Income source'},
   {id:'totalinc', label:'Total monthly income', type:'Calculated', fieldId:'INCOME.TOTAL.MONTHLY', required:true, ai:true, calc:true},
   {id:'vermethod', label:'Verification method', type:'Dropdown', fieldId:'VERIFY.METHOD', required:false, ai:true, options:'VOE · Paystub · Tax return · Bank statement'},
 ];
 
-// ── Template library (10 PRD templates) ──────────────────────────────────────
 var LIBRARY_TEMPLATES = [
   { id:'prequal', name:'Prequalification Form', stage:'Application',
-    purpose:'Borrower personal info, SSN, employment, income, est. property value, loan purpose, credit tier, co-borrower flag. The entry-point form.',
+    purpose:'Borrower info, SSN, employment, income, est. property value, loan purpose, credit tier, co-borrower.',
     compliance:['ECOA','FCRA','Reg B'], fields:30 },
-  { id:'urla', name:'Uniform Residential Loan Application (URLA 1003)', stage:'Application',
-    purpose:'All URLA 2020 sections: borrower, employment, income, assets, liabilities, REO, loan, declarations, military, HMDA, co-borrower.',
+  { id:'urla', name:'URLA 1003', stage:'Application',
+    purpose:'All URLA 2020 sections: borrower, employment, income, assets, liabilities, REO, declarations, HMDA.',
     compliance:['HMDA','RESPA','TRID','URLA 2020','ECOA'], fields:140 },
   { id:'income', name:'Income & Employment Verification', stage:'Processing',
-    purpose:'Employer, employment type, start date, gross/monthly/YTD income, other income sources, doc type, verification method.',
+    purpose:'Employer, employment type, gross/monthly/YTD income, other income sources, verification method.',
     compliance:['TRID','FNMA B3-3.1','FHLMC 5306'], fields:18 },
   { id:'assets', name:'Asset & Reserves Verification', stage:'Processing',
-    purpose:'Bank accounts, balances, source of funds, gift letter flag, large deposit explanation, retirement, reserves auto-calc.',
+    purpose:'Bank accounts, balances, source of funds, gift letter, large deposit explanation, reserves.',
     compliance:['FNMA B3-4','AML SoF','RESPA'], fields:22 },
   { id:'credauth', name:'Credit Authorization & Disclosure', stage:'Application',
-    purpose:'Borrower consent to pull credit, authorization date/signature, bureau selection, hard/soft inquiry, pre-adverse notice.',
+    purpose:'Borrower consent to pull credit, authorization date/signature, bureau selection, pre-adverse notice.',
     compliance:['FCRA §604','ECOA','FACTA'], fields:11 },
-  { id:'property', name:'Property Information Form', stage:'Processing',
-    purpose:'Subject address, type (SFR/condo/multi/manufactured), occupancy, year built, lot size, HOA, flood zone, appraisal trigger.',
-    compliance:['TRID','FNMA property type','HMDA reporting'], fields:16 },
-  { id:'disclose', name:'Disclosure Tracking & Acknowledgment', stage:'Processing',
-    purpose:'LE issued/ack date, COC log, revised LE, CD issued/ack, 3-day waiting period calc, e-consent flag.',
-    compliance:['TRID 3-day','RESPA §5','CFPB timing'], fields:14 },
-  { id:'uwcond', name:'Underwriting Conditions Checklist', stage:'Underwriting',
-    purpose:'Auto-populated condition list, condition type (PTD/PTF/post-close), responsible party, received date, doc reference, UW sign-off.',
+  { id:'property', name:'Property Information', stage:'Processing',
+    purpose:'Subject address, type, occupancy, year built, lot size, HOA, flood zone, appraisal trigger.',
+    compliance:['TRID','FNMA property type','HMDA'], fields:16 },
+  { id:'disclose', name:'Disclosure Tracking', stage:'Processing',
+    purpose:'LE issued/ack, COC log, revised LE, CD issued/ack, 3-day waiting period, e-consent.',
+    compliance:['TRID 3-day','RESPA §5','CFPB'], fields:14 },
+  { id:'uwcond', name:'UW Conditions Checklist', stage:'Underwriting',
+    purpose:'Condition list, type (PTD/PTF/post-close), responsible party, received date, UW sign-off.',
     compliance:['FNMA/FHLMC UW','Investor overlays'], fields:12 },
-  { id:'preclose', name:'Pre-Close Audit Checklist', stage:'Closing',
-    purpose:'Final loan amount, lock expiry, title commitment, flood cert, HOI binder, wire verified, closing agent, final 1003, final CD.',
+  { id:'preclose', name:'Pre-Close Audit', stage:'Closing',
+    purpose:'Final loan amount, lock expiry, title commitment, flood cert, HOI, wire, closing agent.',
     compliance:['TRID final CD','RESPA','State closing'], fields:19 },
-  { id:'postclose', name:'Post-Close & Shipping Form', stage:'Post-Close',
-    purpose:'Note date, first payment, investor commitment, delivery package, trailing docs, MERS, warehouse repayment, exception log.',
-    compliance:['FNMA/FHLMC delivery','MERS','Investor commits'], fields:17 },
+  { id:'postclose', name:'Post-Close & Shipping', stage:'Post-Close',
+    purpose:'Note date, first payment, investor commitment, delivery package, trailing docs, MERS.',
+    compliance:['FNMA/FHLMC delivery','MERS','Investor'], fields:17 },
 ];
 
-var libraryActiveStage = 'all';
-function renderLibrary() {
-  var grid = document.getElementById('library-grid');
-  if (!grid) return;
-  var rows = LIBRARY_TEMPLATES.filter(function(t) {
-    return libraryActiveStage === 'all' || t.stage === libraryActiveStage;
-  });
-  grid.innerHTML = rows.map(function(t) {
-    var stageColor = ({Application:'#5166FE', Processing:'#0EA5E9', Underwriting:'#7E68FA', Closing:'#059669', 'Post-Close':'#6B7280'})[t.stage] || '#6B7280';
-    return ''
-      + '<div class="lib-card" style="background:#fff; border:1px solid #E5E7EB; border-radius:14px; padding:18px 18px 16px; display:flex; flex-direction:column; gap:10px; box-shadow:0 1px 3px rgba(15,23,42,0.04);">'
-      + '  <div style="display:flex; align-items:center; gap:8px;">'
-      + '    <span style="font-size:10px; font-weight:800; letter-spacing:0.08em; text-transform:uppercase; color:' + stageColor + '; background:' + stageColor + '18; padding:3px 8px; border-radius:4px;">' + t.stage + '</span>'
-      + '    <span style="font-size:11px; color:#9CA3AF; font-family:DM Mono;">' + t.fields + ' fields</span>'
-      + '  </div>'
-      + '  <div style="font-size:15px; font-weight:800; color:#111827; letter-spacing:-0.01em; line-height:1.3;">' + t.name + '</div>'
-      + '  <div style="font-size:12.5px; color:#4B5563; line-height:1.5; flex:1;">' + t.purpose + '</div>'
-      + '  <div style="display:flex; flex-wrap:wrap; gap:5px; padding-top:4px; border-top:1px solid #F3F4F6; margin-top:2px;">'
-      +      t.compliance.map(function(c) { return '<span style="font-size:10.5px; font-weight:600; color:#6B7280; background:#F3F4F6; padding:2px 7px; border-radius:999px;">' + c + '</span>'; }).join('')
-      + '  </div>'
-      + '  <div style="display:flex; gap:6px; margin-top:6px;">'
-      + '    <button onclick="useTemplate(\'' + t.id + '\')" style="flex:1; background:#5166FE; color:#fff; border:none; border-radius:7px; padding:8px 12px; font-size:12.5px; font-weight:700; cursor:pointer; font-family:inherit;">Use as-is →</button>'
-      + '    <button onclick="customizeTemplate(\'' + t.id + '\')" style="background:#fff; color:#374151; border:1px solid #E5E7EB; border-radius:7px; padding:8px 12px; font-size:12.5px; font-weight:600; cursor:pointer; font-family:inherit;">Customize</button>'
-      + '  </div>'
+var STAGES = ['all','Application','Processing','Underwriting','Closing','Post-Close'];
+var STAGE_COLORS = {Application:'#5166FE', Processing:'#0EA5E9', Underwriting:'#7E68FA', Closing:'#059669', 'Post-Close':'#6B7280'};
+var activeStage = 'all';
+
+function renderTemplates() {
+  var filtersEl = document.getElementById('template-filters');
+  var counts = {all: LIBRARY_TEMPLATES.length};
+  LIBRARY_TEMPLATES.forEach(function(t) { counts[t.stage] = (counts[t.stage]||0) + 1; });
+  filtersEl.innerHTML = STAGES.map(function(s) {
+    var label = s === 'all' ? 'All' : s;
+    return '<button class="filter-chip' + (s === activeStage ? ' active' : '') + '" onclick="filterTemplates(\'' + s + '\')">' + label + ' (' + (counts[s]||0) + ')</button>';
+  }).join('');
+
+  var gridEl = document.getElementById('template-grid');
+  var filtered = LIBRARY_TEMPLATES.filter(function(t) { return activeStage === 'all' || t.stage === activeStage; });
+  gridEl.innerHTML = filtered.map(function(t) {
+    var sc = STAGE_COLORS[t.stage] || '#6B7280';
+    return '<div class="template-card" onclick="startFromTemplate(\'' + t.id + '\')">'
+      + '<div class="tc-top">'
+      + '<span class="tc-stage" style="color:' + sc + ';background:' + sc + '18">' + t.stage + '</span>'
+      + '<span class="tc-fields">' + t.fields + ' fields</span>'
+      + '</div>'
+      + '<div class="tc-name">' + t.name + '</div>'
+      + '<div class="tc-desc">' + t.purpose + '</div>'
+      + '<div class="tc-compliance">' + t.compliance.map(function(c) { return '<span class="tc-tag">' + c + '</span>'; }).join('') + '</div>'
       + '</div>';
   }).join('');
-  // Update chip active states
-  document.querySelectorAll('.lib-chip').forEach(function(c) {
-    var on = c.getAttribute('data-stage') === libraryActiveStage;
-    c.style.background = on ? '#111827' : '#fff';
-    c.style.color = on ? '#fff' : '#374151';
-    c.style.fontWeight = on ? '700' : '600';
+}
+function filterTemplates(stage) { activeStage = stage; renderTemplates(); }
+
+// ── Step navigation ──
+function goToStep(step) {
+  currentStep = step;
+  ['start','build','configure','review'].forEach(function(s) {
+    document.getElementById('view-' + s).classList.toggle('active', s === step);
+    var stepEl = document.getElementById('step-' + s);
+    stepEl.classList.remove('active','completed','disabled');
   });
-}
-function filterLibrary(stage) { libraryActiveStage = stage; renderLibrary(); }
-function useTemplate(id) { switchMain('builder'); }
-function customizeTemplate(id) { switchMain('builder'); }
-
-function switchMain(tab) {
-  if (tab === 'library') renderLibrary();
-  ['library','builder','logic','analytics','publish'].forEach(function(t) {
-    document.getElementById('main-'+t).classList.remove('active');
-    document.getElementById('mtab-'+t).classList.remove('active');
+  var steps = ['start','build','configure','review'];
+  var idx = steps.indexOf(step);
+  steps.forEach(function(s, i) {
+    var el = document.getElementById('step-' + s);
+    if (i < idx) el.classList.add('completed');
+    else if (i === idx) el.classList.add('active');
+    else if (formFields.length > 0 || i <= idx + 1) { /* accessible */ }
+    else el.classList.add('disabled');
   });
-  document.getElementById('main-'+tab).classList.add('active');
-  document.getElementById('mtab-'+tab).classList.add('active');
+  // Connectors
+  for (var c = 1; c <= 3; c++) {
+    var conn = document.getElementById('conn-' + c);
+    conn.classList.toggle('done', c <= idx);
+  }
+  // Show/hide back button
+  document.getElementById('back-btn').style.display = step === 'start' ? 'none' : '';
+  // Enable all steps once building has started
+  if (formFields.length > 0) {
+    ['build','configure','review'].forEach(function(s) {
+      document.getElementById('step-' + s).classList.remove('disabled');
+    });
+  }
 }
 
-function switchRight(tab) {
-  document.getElementById('rtab-props').classList.toggle('active', tab==='props');
-  document.getElementById('rtab-ai').classList.toggle('active', tab==='ai');
-  document.getElementById('right-props').style.display = tab==='props' ? '' : 'none';
-  document.getElementById('right-ai').style.display = tab==='ai' ? '' : 'none';
+function goBack() {
+  var steps = ['start','build','configure','review'];
+  var idx = steps.indexOf(currentStep);
+  if (idx > 0) goToStep(steps[idx - 1]);
 }
 
-function runAI() {
-  var prompt = document.getElementById('ai-prompt').value.trim() || 'borrower income verification form with TRID compliance checks';
+// ── AI generation from start screen ──
+function useExample(text) {
+  document.getElementById('ai-prompt').value = text;
+}
+
+function startAIGeneration() {
+  var prompt = document.getElementById('ai-prompt').value.trim();
+  if (!prompt) prompt = 'Borrower income verification form with TRID compliance checks';
+  document.getElementById('form-name').value = 'Income & Employment Verification';
+  goToStep('build');
+  runAIWithPrompt(prompt);
+}
+
+function startFromTemplate(id) {
+  var tpl = LIBRARY_TEMPLATES.find(function(t) { return t.id === id; });
+  if (tpl) {
+    document.getElementById('form-name').value = tpl.name;
+  }
+  goToStep('build');
+  runAIWithPrompt('Generate a ' + (tpl ? tpl.name : 'loan form') + ' with all required compliance fields');
+}
+
+function startBlank() {
+  document.getElementById('form-name').value = 'Untitled form';
+  goToStep('build');
+}
+
+// ── AI field generation ──
+function runAIWithPrompt(prompt) {
   var chatArea = document.getElementById('ai-chat-area');
   chatArea.style.display = 'block';
   chatArea.innerHTML = '<div class="chat-msg"><div class="chat-user">' + prompt + '</div></div>';
@@ -1104,11 +1254,12 @@ function runAI() {
   chatArea.appendChild(thinkEl);
 
   setTimeout(function() {
-    thinkEl.innerHTML = '<div class="chat-ai">Generating a <strong>9-field income verification form</strong> with TRID-compliant field IDs, auto-calculated fields, and conditional logic pre-loaded. Adding to canvas now…</div>';
-    document.getElementById('drop-zone') && (document.getElementById('drop-zone').style.display='none');
+    thinkEl.innerHTML = '<div class="chat-ai">Generated a <strong>9-field income verification form</strong> with TRID-compliant field IDs, auto-calculated fields, and 2 conditional logic rules pre-loaded.</div>';
+    var dz = document.getElementById('drop-zone');
+    if (dz) dz.style.display = 'none';
     document.getElementById('form-area').innerHTML =
       '<div style="display:none" id="drop-zone"></div>' +
-      '<div class="form-banner"><i class="ti ti-sparkles" aria-hidden="true"></i>AI generated · Income Verification Form · 9 fields · TRID-mapped · Compliance-ready</div>' +
+      '<div class="form-banner"><i class="ti ti-sparkles"></i>AI generated · 9 fields · TRID-mapped · 2 logic rules</div>' +
       '<div id="fields-list"></div>';
     formFields = [];
     var delay = 0;
@@ -1116,7 +1267,33 @@ function runAI() {
       delay += 110;
       setTimeout(function() { addAIField(f); }, delay);
     });
-  }, 1400);
+    setTimeout(function() {
+      showSaveIndicator();
+      updateFieldCount();
+      document.getElementById('compliance-status').style.display = '';
+      // Enable all workflow steps
+      ['build','configure','review'].forEach(function(s) {
+        document.getElementById('step-' + s).classList.remove('disabled');
+      });
+    }, delay + 200);
+  }, 1200);
+}
+
+function runInlineAI() {
+  var input = document.getElementById('ai-prompt-inline');
+  var prompt = input.value.trim();
+  if (!prompt) return;
+  input.value = '';
+  var chatArea = document.getElementById('ai-chat-area');
+  chatArea.style.display = 'block';
+  chatArea.innerHTML += '<div class="chat-msg"><div class="chat-user">' + prompt + '</div></div>';
+  var thinkEl = document.createElement('div');
+  thinkEl.className = 'chat-msg';
+  thinkEl.innerHTML = '<div class="chat-ai"><div class="thinking"><div class="dot"></div><div class="dot"></div><div class="dot"></div></div></div>';
+  chatArea.appendChild(thinkEl);
+  setTimeout(function() {
+    thinkEl.innerHTML = '<div class="chat-ai">Added fields based on your request. Review the new fields below.</div>';
+  }, 800);
 }
 
 function addAIField(f) {
@@ -1125,21 +1302,24 @@ function addAIField(f) {
   var d = document.createElement('div');
   d.className = 'field-card';
   d.id = 'field-' + f.id;
-  d.setAttribute('role','button');
-  d.setAttribute('tabindex','0');
+  d.setAttribute('role', 'button');
+  d.setAttribute('tabindex', '0');
   d.onclick = function() { selectFieldCard(f); };
   var calcBadge = f.calc ? '<span class="field-type-badge calc-badge" style="margin-left:4px">Auto-calc</span>' : '';
   var aiB = f.ai ? '<span class="ai-mapped-badge">AI-mapped</span>' : '';
   var req = f.required ? '<span style="color:#E24B4A;margin-left:1px">*</span>' : '';
+  var logicLine = f.logic ? '<div class="field-logic-inline"><i class="ti ti-git-branch"></i>' + f.logic + '</div>' : '';
   d.innerHTML =
     '<div class="field-id">' + f.fieldId + '</div>' +
     '<div class="field-row">' +
       '<div style="flex:1"><div class="field-name">' + f.label + req + calcBadge + '</div></div>' +
       '<span class="field-type-badge">' + f.type + '</span>' + aiB +
     '</div>' +
-    (f.options ? '<div class="field-options">Options: ' + f.options + '</div>' : '');
+    (f.options ? '<div class="field-options">Options: ' + f.options + '</div>' : '') +
+    logicLine;
   list.appendChild(d);
   formFields.push(f);
+  updateFieldCount();
 }
 
 function addField(id, label, type) {
@@ -1147,20 +1327,29 @@ function addField(id, label, type) {
   if (dz && dz.style.display !== 'none') {
     dz.style.display = 'none';
     document.getElementById('form-area').innerHTML +=
-      '<div class="form-banner"><i class="ti ti-layout-grid" aria-hidden="true"></i>Custom form · Manual fields</div>' +
+      '<div class="form-banner"><i class="ti ti-layout-grid"></i>Custom form · Manual fields</div>' +
       '<div id="fields-list"></div>';
   }
-  var f = {id:id, label:label, type:type, fieldId:'CUST.'+id.toUpperCase(), required:false, ai:false};
+  var f = {id: id, label: label, type: type, fieldId: 'CUST.' + id.toUpperCase(), required: false, ai: false};
   addAIField(f);
   selectFieldCard(f);
+  showSaveIndicator();
+  // Enable build step once there are fields
+  ['build','configure','review'].forEach(function(s) {
+    document.getElementById('step-' + s).classList.remove('disabled');
+  });
 }
 
 function selectFieldCard(f) {
-  document.querySelectorAll('.field-card').forEach(function(c){c.classList.remove('selected');});
-  var el = document.getElementById('field-'+f.id);
+  document.querySelectorAll('.field-card').forEach(function(c) { c.classList.remove('selected'); });
+  var el = document.getElementById('field-' + f.id);
   if (el) el.classList.add('selected');
   selectedField = f;
   switchRight('props');
+  var logicSection = f.logic
+    ? '<div class="prop-label">Logic rule</div><div style="font-size:11px;padding:6px 8px;background:var(--purple-light);border-radius:var(--radius-sm);color:var(--purple)">' + f.logic + '</div>'
+    : '<div class="prop-label">Logic rule</div><button class="btn-secondary" style="width:100%;font-size:11px;padding:5px 8px;margin-top:4px;justify-content:center" onclick="goToStep(\'configure\')"><i class="ti ti-plus" style="font-size:12px"></i>Add logic</button>';
+
   document.getElementById('right-props').innerHTML =
     '<div class="prop-label">Field label</div>' +
     '<div class="prop-val">' + f.label + '</div>' +
@@ -1168,61 +1357,97 @@ function selectFieldCard(f) {
     '<div class="prop-val prop-mono">' + f.fieldId + '</div>' +
     '<div class="prop-label">Control type</div>' +
     '<div class="prop-val">' + f.type + '</div>' +
-    '<div class="toggle-row"><span class="toggle-label">Required</span><div class="toggle'+(f.required?'':' off')+'" onclick="this.classList.toggle(\'off\')" role="switch" aria-checked="'+(f.required?'true':'false')+'"></div></div>' +
-    '<div class="toggle-row"><span class="toggle-label">AI pre-fill</span><div class="toggle'+(f.ai?'':' off')+'" onclick="this.classList.toggle(\'off\')" role="switch" aria-checked="'+(f.ai?'true':'false')+'"></div></div>' +
+    '<div class="toggle-row"><span class="toggle-label">Required</span><div class="toggle' + (f.required ? '' : ' off') + '" onclick="this.classList.toggle(\'off\')" role="switch"></div></div>' +
+    '<div class="toggle-row"><span class="toggle-label">AI pre-fill</span><div class="toggle' + (f.ai ? '' : ' off') + '" onclick="this.classList.toggle(\'off\')" role="switch"></div></div>' +
     '<div class="toggle-row"><span class="toggle-label">Show on mobile</span><div class="toggle" onclick="this.classList.toggle(\'off\')" role="switch"></div></div>' +
     '<div class="prop-label">Validation</div>' +
     '<select class="prop-select"><option>None</option><option>Not empty</option><option>Number only</option><option>Currency format</option><option>Custom regex</option></select>' +
     '<div class="prop-label">Help text</div>' +
-    '<input class="ai-bar-input" style="width:100%;margin-top:4px;font-size:12px" placeholder="Optional hint for loan officers…" aria-label="Field help text">';
+    '<input class="ai-bar-input" style="width:100%;margin-top:4px;font-size:12px" placeholder="Optional hint for borrowers..." aria-label="Help text">' +
+    logicSection;
+}
+
+function switchRight(tab) {
+  document.getElementById('rtab-props').classList.toggle('active', tab === 'props');
+  document.getElementById('rtab-checks').classList.toggle('active', tab === 'checks');
+  document.getElementById('right-props').style.display = tab === 'props' ? '' : 'none';
+  document.getElementById('right-checks').style.display = tab === 'checks' ? '' : 'none';
+}
+
+function updateFieldCount() {
+  var el = document.getElementById('field-count');
+  if (el) el.textContent = formFields.length + ' field' + (formFields.length !== 1 ? 's' : '');
+}
+
+function showSaveIndicator() {
+  var el = document.getElementById('save-indicator');
+  el.style.display = '';
+  el.style.opacity = '1';
 }
 
 function runChecks() {
   var area = document.getElementById('checks-area');
-  area.innerHTML = '<div style="display:flex;gap:6px;align-items:center;font-size:12px;color:var(--text-secondary);margin-bottom:8px"><div class="thinking"><div class="dot"></div><div class="dot"></div><div class="dot"></div></div>Checking compliance…</div>';
+  area.innerHTML = '<div style="display:flex;gap:6px;align-items:center;font-size:12px;color:var(--text-secondary)"><div class="thinking"><div class="dot"></div><div class="dot"></div><div class="dot"></div></div>Checking...</div>';
   var checks = [
-    ['circle-check','RESPA Section 6 — servicing transfer fields present','ok'],
-    ['circle-check','TRID 3-day disclosure window fields mapped','ok'],
-    ['alert-triangle','HMDA income field not using standard field ID — update recommended','warn'],
+    ['circle-check','RESPA Section 6 — fields present','ok'],
+    ['circle-check','TRID 3-day fields mapped','ok'],
+    ['alert-triangle','HMDA income field — update ID recommended','warn'],
     ['circle-check','ECOA adverse action fields present','ok'],
-    ['circle-check','No PII fields without masking rules','ok'],
-    ['sparkles','AI: "Monthly base income" should include a YTD field for seasonal workers','info'],
+    ['circle-check','No PII without masking','ok'],
+    ['sparkles','AI: Add YTD field for seasonal workers','info'],
   ];
   setTimeout(function() {
     area.innerHTML = checks.map(function(c) {
-      var cls = c[2]==='ok' ? 'check-ok' : c[2]==='warn' ? 'check-warn' : 'check-info';
-      return '<div class="check-item '+cls+'"><i class="ti ti-'+c[0]+'" aria-hidden="true"></i>'+c[1]+'</div>';
+      var cls = c[2] === 'ok' ? 'check-ok' : c[2] === 'warn' ? 'check-warn' : 'check-info';
+      return '<div class="check-item ' + cls + '"><i class="ti ti-' + c[0] + '"></i>' + c[1] + '</div>';
     }).join('');
-  }, 1600);
+  }, 1200);
 }
 
 function addAIRule() {
   document.getElementById('rule-3').style.display = 'block';
-  var btn = event && event.target ? event.target.closest('button') : null;
-  if (btn) { btn.innerHTML = '<i class="ti ti-circle-check" aria-hidden="true"></i>Rule added'; btn.style.background = '#1D9E75'; }
+  var btn = document.getElementById('ai-rule-btn');
+  btn.innerHTML = '<i class="ti ti-circle-check"></i>Rule added';
+  btn.style.background = '#1D9E75';
+  document.getElementById('ai-rule-suggestion').style.display = 'none';
+}
+
+function addManualRule() {
+  var area = document.getElementById('rules-area');
+  var card = document.createElement('div');
+  card.className = 'logic-rule-card';
+  card.innerHTML =
+    '<div class="rule-header"><div class="rule-title">New rule</div><span class="chip-active">Active</span></div>' +
+    '<div class="logic-row"><span class="logic-label">IF</span>' +
+    '<select class="logic-select"><option>Select field...</option><option>Employment type</option><option>Other income</option><option>Loan amount</option></select>' +
+    '<select class="logic-select"><option>equals</option><option>does not equal</option><option>is greater than</option></select>' +
+    '<select class="logic-select"><option>Select value...</option></select></div>' +
+    '<div class="logic-then"><i class="ti ti-corner-down-right" style="color:var(--text-secondary);font-size:14px"></i>' +
+    '<span class="then-label">THEN</span>' +
+    '<select class="logic-select"><option>Show field</option><option>Hide field</option><option>Require field</option></select>' +
+    '<select class="logic-select"><option>Select target...</option></select></div>';
+  area.appendChild(card);
 }
 
 function selectEnv(el) {
-  document.querySelectorAll('.env-card').forEach(function(c){c.classList.remove('selected');});
+  document.querySelectorAll('.env-card').forEach(function(c) { c.classList.remove('selected'); });
   el.classList.add('selected');
 }
 
 function publishForm() {
   var btn = document.getElementById('publish-btn');
-  btn.innerHTML = '<i class="ti ti-circle-check" aria-hidden="true"></i>Published to production!';
+  btn.innerHTML = '<i class="ti ti-circle-check"></i>Published to production!';
   btn.classList.add('success');
-  document.querySelector('.pill-draft').textContent = 'Live';
-  document.querySelector('.pill-draft').classList.remove('pill-draft');
-  document.querySelector('.pill').classList.add('pill-live');
+  document.getElementById('status-pill').textContent = 'Live';
+  document.getElementById('status-pill').className = 'status-pill pill-live';
   setTimeout(function() {
-    btn.innerHTML = '<i class="ti ti-rocket" aria-hidden="true"></i>Publish to production';
+    btn.innerHTML = '<i class="ti ti-rocket"></i>Publish to production';
     btn.classList.remove('success');
   }, 3000);
 }
 
-// Library is now the default landing — render cards on initial load.
-if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', renderLibrary);
-else renderLibrary();
+// Init
+renderTemplates();
 </script>
 
 </body>
