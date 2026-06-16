@@ -115,7 +115,7 @@ function DeltaBadge({ delta }) {
   );
 }
 
-function Leaderboard() {
+function Leaderboard({ branchOnly = false }) {
   const [period, setPeriod] = React.useState('MTD');
   const [metric, setMetric] = React.useState('volume');
   const [expanded, setExpanded] = React.useState(null);
@@ -164,11 +164,11 @@ function Leaderboard() {
   const npsColor = (v) => v >= 70 ? '#059669' : v >= 50 ? '#0EA5E9' : v >= 30 ? '#D97706' : '#EF4444';
 
   return (
-    <div style={{ background: '#fff', border: '1px solid #E5E7EB', borderRadius: 16, overflow: 'hidden' }}>
+    <div style={{ background: '#fff', border: '1px solid #E5E7EB', borderRadius: 14, overflow: 'hidden' }}>
 
       {/* ── Branch ecosystem strip ───────────────────────────── */}
       {flags.leaderboardBranchStats && (
-        <div style={{ padding: '16px 20px 14px', borderBottom: '1px solid #F3F4F6' }}>
+        <div style={{ padding: '14px 18px', borderBottom: branchOnly ? 'none' : '1px solid #F3F4F6' }}>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
               <Icon name="pin" size={13} color="var(--text-tertiary)" strokeWidth={1.8}/>
@@ -222,6 +222,9 @@ function Leaderboard() {
         </div>
       )}
 
+      {/* ── Top performers — hidden when branchOnly (Processor/Underwriter
+          keep the branch stats above, but not the leaderboard). ── */}
+      {!branchOnly && (<>
       {/* ── Header ───────────────────────────────── */}
       <div style={{ padding: '14px 18px 0', borderBottom: '1px solid #F3F4F6' }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
@@ -407,6 +410,7 @@ function Leaderboard() {
 
       {/* Bar grow keyframe injected once */}
       <style>{`@keyframes lbBarGrow { from { width: 0% } }`}</style>
+      </>)}
     </div>
   );
 }
@@ -491,6 +495,25 @@ const HERO_TILES = [
     intent: { filters: [{ field: 'lockStatus', op: 'is', value: 'Expiring' }], label: 'Locks expiring ≤7d' } },
   { icon: 'zap',        value: '5', label: 'New leads',            sub: 'Assigned overnight', severity: 'routine',
     intent: { filters: [{ field: 'status', op: 'is', value: 'Application' }], label: 'New leads' } },
+];
+
+// Processor / Underwriter keep the first two LO tiles but swap the last two
+// (locks/leads) for counts that matter to their stage of the file.
+const PROCESSOR_HERO_TILES = [
+  HERO_TILES[0],
+  HERO_TILES[1],
+  { icon: 'listCheck',  value: '9', label: 'Conditions to clear',  sub: 'Across 4 files',     severity: 'critical',
+    intent: { filters: [{ field: 'status', op: 'is', value: 'Processing' }], label: 'Conditions to clear' } },
+  { icon: 'fileSearch', value: '6', label: 'Docs to review',       sub: 'Uploaded today',     severity: 'routine',
+    intent: { filters: [{ field: 'aiStatus', op: 'is', value: 'Needs Review' }], label: 'Docs to review' } },
+];
+const UNDERWRITER_HERO_TILES = [
+  HERO_TILES[0],
+  HERO_TILES[1],
+  { icon: 'listCheck',  value: '5', label: 'Files to underwrite',  sub: '2 rush',             severity: 'deadline',
+    intent: { filters: [{ field: 'status', op: 'is', value: 'Underwriting' }], label: 'Files to underwrite' } },
+  { icon: 'fileSearch', value: '8', label: 'Conditions to review', sub: 'Submitted today',    severity: 'routine',
+    intent: { filters: [{ field: 'aiStatus', op: 'is', value: 'Needs Review' }], label: 'Conditions to review' } },
 ];
 
 function greeting() {
@@ -1221,9 +1244,9 @@ function ScorecardStrip() {
       <div style={{
         background: '#fff',
         border: '1px solid #E5E7EB',
-        borderRadius: 12,
+        borderRadius: 14,
         padding: '14px 18px',
-        marginBottom: 18,
+        marginBottom: 0,
         display: 'flex', alignItems: 'center', gap: 18,
       }}>
         {/* Denser layout: donut + tight label group hug the left, stats on the right with no big empty gutter. */}
@@ -1248,9 +1271,9 @@ function ScorecardStrip() {
     <div style={{
       background: '#fff',
       border: '1px solid #E5E7EB',
-      borderRadius: 12,
+      borderRadius: 14,
       padding: '14px 18px',
-      marginBottom: 18,
+      marginBottom: 0,
       display: 'flex', alignItems: 'center', gap: 22,
     }}>
       <MiniDonut pct={SCORECARD.pct}/>
@@ -1271,7 +1294,11 @@ function ScorecardStrip() {
   );
 }
 
-export function HomeView({ onNavigate, onOpenLoan }) {
+export function HomeView({ onNavigate, onOpenLoan, persona }) {
+  const isProcUW = persona === 'Processor' || persona === 'Underwriter';
+  const heroTiles = persona === 'Processor' ? PROCESSOR_HERO_TILES
+                  : persona === 'Underwriter' ? UNDERWRITER_HERO_TILES
+                  : HERO_TILES;
   const [doneTasks, setDoneTasks] = React.useState(new Set());
   const [doneAI, setDoneAI]       = React.useState(new Set());
   const [impactToast, setImpactToast] = React.useState(null);
@@ -1300,6 +1327,20 @@ export function HomeView({ onNavigate, onOpenLoan }) {
   const visibleAI    = AI_ACTIONS.filter(a => !doneAI.has(a.id));
   const urgentCount  = visibleTasks.filter(t => t.urgent).length;
   const doneCount    = doneTasks.size;
+
+  // AI Coach insights card — placed under the scorecard for LO, but moved
+  // above the "Your dashboard" label for Processor/Underwriter (see layout).
+  const aiCoachCard = flags.aiInsightsUnderScorecard ? (
+    flags.homePolishV2 ? (
+      <div style={{ background: '#fff', border: '1px solid #E5E7EB', borderRadius: 14, overflow: 'hidden' }}>
+        <div style={{ padding: '14px 18px' }}>
+          <AIInsightsCards onOpenLoan={onOpenLoan} persona={persona}/>
+        </div>
+      </div>
+    ) : (
+      <AIInsightsCards onOpenLoan={onOpenLoan} persona={persona}/>
+    )
+  ) : null;
 
   const handleTaskComplete = (taskId) => {
     const impact = TASK_IMPACTS[taskId];
@@ -1407,7 +1448,7 @@ export function HomeView({ onNavigate, onOpenLoan }) {
 
           {/* Right — 2x2 KPI tile grid with severity tone differentiation */}
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, alignSelf: 'center' }}>
-            {HERO_TILES.map((t, i) => {
+            {heroTiles.map((t, i) => {
               const sev = SEVERITY[t.severity] || SEVERITY.routine;
               return (
               <button key={i} onClick={() => onNavigate('pipeline', t.intent)} style={{
@@ -1489,9 +1530,13 @@ export function HomeView({ onNavigate, onOpenLoan }) {
               sublede="Risks to resolve, locks to extend, and borrowers to chase."
             />
           )}
-          {/* homeReorderV1: Your dashboard → ScorecardStrip → Leaderboard
-              → loan-level WidgetGrid → Lakeside Feed.
-              When OFF, fall back to the original ordering. */}
+          {/* homeReorderV1 layout.
+              LO: Your dashboard → ScorecardStrip → AI Coach → Leaderboard.
+              Processor/Underwriter: AI Coach moves above the "Your dashboard"
+              label and the Leaderboard is hidden. */}
+          {flags.homeReorderV1 && isProcUW && aiCoachCard && (
+            <>{aiCoachCard}<div style={{ height: 24 }}/></>
+          )}
           {flags.homeReorderV1 && (
             <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 18 }}>
               <span style={{ fontSize: 12, fontWeight: 700, letterSpacing: '0.07em', textTransform: 'uppercase', color: '#9CA3AF', flex: 1 }}>
@@ -1514,27 +1559,13 @@ export function HomeView({ onNavigate, onOpenLoan }) {
             </div>
           )}
           {flags.homeReorderV1 && <ScorecardStrip/>}
-          {flags.homeReorderV1 && <div style={{ height: 14 }}/>}
-          {flags.homeReorderV1 && flags.aiInsightsUnderScorecard && (
-            flags.homePolishV2 ? (
-              <div style={{ background: '#fff', border: '1px solid #E5E7EB', borderRadius: 14, overflow: 'hidden' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '14px 18px', borderBottom: '1px solid #F3F4F6' }}>
-                  <div style={{ width: 22, height: 22, borderRadius: 6, background: '#7E68FA18', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                    <Icon name="sparkle" size={12} color="#7E68FA"/>
-                  </div>
-                  <span style={{ fontSize: 13, fontWeight: 700, color: '#111827' }}>AI Coach insights</span>
-                </div>
-                <div style={{ padding: '14px 18px' }}>
-                  <AIInsightsCards onOpenLoan={onOpenLoan}/>
-                </div>
-              </div>
-            ) : (
-              <AIInsightsCards onOpenLoan={onOpenLoan}/>
-            )
+          {flags.homeReorderV1 && <div style={{ height: 24 }}/>}
+          {flags.homeReorderV1 && !isProcUW && aiCoachCard && (
+            <>{aiCoachCard}<div style={{ height: 24 }}/></>
           )}
-          {flags.homeReorderV1 && flags.aiInsightsUnderScorecard && <div style={{ height: 14 }}/>}
-          {flags.homeReorderV1 && <Leaderboard/>}
-          {flags.homeReorderV1 && <div style={{ height: 14 }}/>}
+          {flags.homeReorderV1 && (
+            <><Leaderboard branchOnly={isProcUW}/><div style={{ height: 24 }}/></>
+          )}
 
           <WidgetGrid
             hiddenIds={hiddenWidgetIds}
@@ -1580,7 +1611,7 @@ export function HomeView({ onNavigate, onOpenLoan }) {
               SectionHeader is replaced with a single card titled
               "Lakeside Feed" wrapping the company feed. */}
           {flags.lakesideFeedCard ? (
-            <div style={{ background: '#fff', border: '1px solid #E5E7EB', borderRadius: 14, marginTop: 24, overflow: 'hidden' }}>
+            <div style={{ background: '#fff', border: '1px solid #E5E7EB', borderRadius: 14, overflow: 'hidden' }}>
               {/* Matches the WidgetShell header model: icon tile + title + subtle border-bottom line. */}
               <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '14px 18px', borderBottom: '1px solid #F3F4F6' }}>
                 <div style={{ width: 22, height: 22, borderRadius: 6, background: '#7E68FA18', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>

@@ -1,7 +1,7 @@
 import React from 'react';
 import { StatusBar, AIFab, LeftNav } from './components/Shell';
 import { LoginScreen } from './components/LoginScreen';
-import { ProcessorHomeView } from './views/ProcessorHome';
+// import { ProcessorHomeView } from './views/ProcessorHome'; // Processor now shares the LO HomeView
 import { LOANS } from './data/loans';
 import { AIAssistantPanel } from './components/AIAssistant';
 import { CommandPalette } from './components/CommandPalette';
@@ -16,13 +16,13 @@ import { PreferencesModal } from './components/PreferencesModal';
 import { AdminWorkflowsView } from './views/AdminWorkflows';
 import { WorkflowProvider } from './workflows/WorkflowContext';
 import { flags } from './flags';
-import { PersonaStubHome } from './views/PersonaStubHome';
+// import { PersonaStubHome } from './views/PersonaStubHome'; // Underwriter now shares the LO HomeView
 import { AdminHomeView } from './views/AdminHome';
 import { AdminFormsView } from './views/AdminFormsView';
 import { ConsumerHomeView } from './views/ConsumerHomeView';
 import { ConsumerDashboard } from './views/ConsumerDashboard';
 import { ConsumerApplicationFlow } from './views/ConsumerApplicationFlow';
-import { findPersonaById } from './personas';
+// import { findPersonaById } from './personas'; // only used by the removed PersonaStubHome
 
 // ── Standalone URLA window (opened via window.open) ──────────────────────────
 function StandaloneURLA() {
@@ -195,16 +195,14 @@ export default function App() {
         {route === 'deposit-review' && <LargeDepositReviewView onBack={() => navigate('home')}/>}
         {route !== 'deposit-review' && (
           <>
-            {route === 'home' && persona === 'Processor' && <ProcessorHomeView onNavigate={navigate} onOpenLoan={openLoan} onOpenAi={openAiWith} onOpenDepositReview={() => navigate('deposit-review')}/>}
-            {route === 'home' && persona === 'LO' && <HomeView onNavigate={navigate} onOpenLoan={openLoan} onOpenAi={openAiWith}/>}
+            {/* LO, Processor, and Underwriter share the home template; HomeView
+                adapts some widgets/insights per persona. */}
+            {route === 'home' && (persona === 'LO' || persona === 'Processor' || persona === 'Underwriter') && <HomeView onNavigate={navigate} onOpenLoan={openLoan} onOpenAi={openAiWith} persona={persona}/>}
             {route === 'home' && persona === 'Admin' && <AdminHomeView onNavigate={navigate}/>}
             {route === 'admin-forms' && persona === 'Admin' && <AdminFormsView onBack={() => navigate('home')}/>}
             {route === 'home' && persona === 'Consumer' && !flags.consumerPortalDashboard && <ConsumerHomeView/>}
             {route === 'home' && persona === 'Consumer' && flags.consumerPortalDashboard && <ConsumerDashboard onStartApplication={() => navigate('consumer-application')}/>}
             {route === 'consumer-application' && persona === 'Consumer' && <ConsumerApplicationFlow onBack={() => navigate('home')}/>}
-            {route === 'home' && persona === 'Underwriter' && (
-              <PersonaStubHome persona={findPersonaById(persona)}/>
-            )}
             {route === 'pipeline' && <PipelineView onOpenLoan={openLoan} persona={persona} intent={pipelineIntent}/>}
             {route === 'feed' && <AIFeedView onOpenLoan={openLoan}/>}
             {route === 'loan' && <LoanDetailView loanId={currentLoan} tab={loanTab} onTab={changeLoanTab} persona={persona}/>}

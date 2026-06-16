@@ -30,11 +30,13 @@ import { flags } from '../flags';
 //     tabbed "Files needing action" card behind the mergedActionCard flag.
 // v10: Loan Health Monitor removed from the default layout. Still in the
 //      catalog so users can add it back through the dashboard customizer.
-const STORAGE_KEY = 'los-widget-layout-v10';
+// v11: "Files needing action" card removed from the default layout
+//      (commented out below; still in the catalog to re-add if wanted).
+const STORAGE_KEY = 'los-widget-layout-v11';
 
 const DEFAULT_LAYOUT = [
   { id: 'ai-coach-brief',       width: 'full' },
-  { id: 'files-needing-action', width: 'full' },
+  // { id: 'files-needing-action', width: 'full' },
 ];
 
 function loadLayout() {

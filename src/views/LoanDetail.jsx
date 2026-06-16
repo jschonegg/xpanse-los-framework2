@@ -29,6 +29,8 @@ import { DocumentsTool } from '../components/DocumentsTool';
 import { IncomeTool } from '../components/IncomeTool';
 import { useWorkflows } from '../workflows/WorkflowContext';
 import { FIXED_SYSTEM_LINKS, PAGE_CONTENT_TAB, getPage } from '../workflows/workflowModel';
+import { FormsView, FormDetailView } from './FormsLibrary';
+import { formById } from '../data/imsForms';
 // import { PreviewContextSwitcher } from './AdminWorkflows'; // preview-context switcher (removed for now)
 
 // ─── Property intelligence data per loan ─────────────────────────────────────
@@ -678,7 +680,7 @@ const DEFAULT_NAV_CONFIG = {
   ],
 };
 
-function LeftRail({ tab, onTab, onOpenURLA, dataSubTab, onDataSubTab, onOpenDocs, previewWorkflow, loan }) {
+function LeftRail({ tab, onTab, onOpenURLA, dataSubTab, onDataSubTab, onOpenDocs, previewWorkflow, loan, favorites = [] }) {
   // Groups state: open/closed + doc ordering per group
   const [groups, setGroups] = React.useState(
     DOC_GROUPS.map(g => ({ ...g, open: g.defaultOpen, docs: [...g.docs] }))
@@ -985,8 +987,22 @@ function LeftRail({ tab, onTab, onOpenURLA, dataSubTab, onDataSubTab, onOpenDocs
     }}>
       <div style={{ flex: 1, overflowY: 'auto', padding: '16px 12px 8px', display: 'flex', flexDirection: 'column', gap: 2 }}>
 
-        {/* Fixed (system) links — Tasks, Loan Story */}
+        {/* Fixed (system) links — Tasks, Loan Story, Forms */}
         {activeNav.fixed.map(it => renderNavItem(it, { isFixed: true }))}
+
+        {/* Favorites — forms the user pinned from the Forms page (normal mode only) */}
+        {!configMode && favorites.length > 0 && (
+          <div style={{ marginTop: 8 }}>
+            <div style={{ padding: '8px 12px 4px', fontSize: 10.5, fontWeight: 600, color: 'var(--text-tertiary)', textTransform: 'uppercase', letterSpacing: '0.07em' }}>
+              Favorites
+            </div>
+            {favorites.map(fid => {
+              const f = formById(fid);
+              if (!f) return null;
+              return renderNavItem({ id: 'form:' + fid, label: f.name, icon: 'star' }, { isFixed: true });
+            })}
+          </div>
+        )}
 
         {/* Divider beneath fixed links — only visible in config mode */}
         {configMode && (
@@ -2765,6 +2781,17 @@ function resolveLoanMeta(loanId) {
 function LoanDetailView({ loanId, tab, onTab, persona = 'LO', previewWorkflow = null }) {
   const localTab = tab || 'now';
   const setTab = onTab || (() => {});
+  // Favorited IMS forms — pinned to the loan nav under "Favorites" (global pref).
+  const [formFavorites, setFormFavorites] = React.useState(() => {
+    try { return JSON.parse(localStorage.getItem('ims-form-favorites') || '[]'); } catch { return []; }
+  });
+  const toggleFormFavorite = React.useCallback((fid) => {
+    setFormFavorites(prev => {
+      const next = prev.includes(fid) ? prev.filter(x => x !== fid) : [...prev, fid];
+      try { localStorage.setItem('ims-form-favorites', JSON.stringify(next)); } catch (e) { /* ignore */ }
+      return next;
+    });
+  }, []);
   const meta = resolveLoanMeta(loanId);
   const loan = LOANS.find(l => l.id === loanId) || {};
   const isApplication = meta.status === 'Application';
@@ -2962,12 +2989,14 @@ function LoanDetailView({ loanId, tab, onTab, persona = 'LO', previewWorkflow = 
       {/* Scrollable region: LeftRail + Main + ToolsPanel.
           Only <main> scrolls vertically; the rails handle their own overflow. */}
       <div style={{ display: 'flex', flex: 1, minHeight: 0, overflow: 'hidden' }}>
-        <LeftRail tab={localTab} onTab={handleTab} onOpenURLA={openURLA} dataSubTab={dataSubTab} onDataSubTab={setDataSubTab} onOpenDocs={openDocsWindow} previewWorkflow={previewWorkflow} loan={loan}/>
+        <LeftRail tab={localTab} onTab={handleTab} onOpenURLA={openURLA} dataSubTab={dataSubTab} onDataSubTab={setDataSubTab} onOpenDocs={openDocsWindow} previewWorkflow={previewWorkflow} loan={loan} favorites={formFavorites}/>
 
         {/* Main */}
         <main style={{ flex: 1, padding: '24px 28px 40px', overflowY: 'auto', display: 'flex', flexDirection: 'column', minHeight: 0 }}>
           {(!localTab || localTab === 'now') && <LoanSummaryCards loan={loan} meta={meta}/>}
-          {localTab === 'story' ? <StoryTab/>
+          {localTab === 'forms' ? <FormsView loan={loan} favorites={formFavorites} onToggleFavorite={toggleFormFavorite} onOpenForm={(fid) => handleTab('form:' + fid)}/>
+           : (typeof localTab === 'string' && localTab.startsWith('form:')) ? <FormDetailView formId={Number(localTab.slice(5))} loan={loan} favorites={formFavorites} onToggleFavorite={toggleFormFavorite} onBack={() => handleTab('forms')}/>
+           : localTab === 'story' ? <StoryTab/>
            : localTab === 'data' ? <DataTab subTab={dataSubTab} onOpenURLA={openURLA} loanId={loanId}/>
            : localTab === 'filereview' ? <FileReviewTab borrowerName={meta?.borrower} loanId={loanId}/>
            : localTab === 'conditions' ? <ConditionsTab/>
