@@ -74,8 +74,52 @@ function LockBadge({ lockStatus, lockDays }) {
 
 // Derive a specific, human-readable action item from a loan's state.
 // Returns { label, detail, icon, iconColor, ctaLabel, ctaTab, severity }
-function getLoanAction(l) {
+function getLoanAction(l, persona = 'LO') {
   const d = daysUntil(l.closingDate);
+
+  // ── Persona-specific framing (falls through to the shared chain below
+  //    when none of the role's signals apply) ──
+  if (persona === 'Processor') {
+    if (l.aiStatus === 'Needs Review') {
+      return { icon: 'fileSearch', iconColor: 'var(--status-amber)', label: l.borrower,
+        detail: 'New documents uploaded — review to clear conditions',
+        ctaLabel: 'Review docs', ctaTab: 'conditions',
+        severity: (d !== null && d <= 7 && d >= 0) ? 'red' : 'amber' };
+    }
+    if ((l.conditionsOpen || 0) > 0 && d !== null && d <= 10 && d >= 0) {
+      return { icon: 'listCheck', iconColor: 'var(--status-red)', label: l.borrower,
+        detail: `${l.conditionsOpen} condition${l.conditionsOpen !== 1 ? 's' : ''} open · closes in ${d === 0 ? 'today' : `${d}d`} — collect docs`,
+        ctaLabel: 'Collect docs', ctaTab: 'conditions', severity: 'red' };
+    }
+    if (/appraisal/i.test(l.milestone || '')) {
+      return { icon: 'home', iconColor: 'var(--status-amber)', label: l.borrower,
+        detail: 'Appraisal outstanding — follow up with the AMC',
+        ctaLabel: 'Track appraisal', ctaTab: 'now', severity: 'amber' };
+    }
+    if (/title/i.test(l.milestone || '')) {
+      return { icon: 'fileSearch', iconColor: 'var(--status-amber)', label: l.borrower,
+        detail: 'Title review delayed — escalate with the title company',
+        ctaLabel: 'Open file', ctaTab: 'now', severity: 'amber' };
+    }
+  }
+  if (persona === 'Underwriter') {
+    if (l.aus && /refer/i.test(l.aus)) {
+      return { icon: 'alert', iconColor: 'var(--status-red)', label: l.borrower,
+        detail: 'AUS returned Refer — needs a manual underwriting decision',
+        ctaLabel: 'Underwrite', ctaTab: 'underwriting', severity: 'red' };
+    }
+    if (l.dti != null && l.dti >= 43) {
+      return { icon: 'alertCircle', iconColor: 'var(--status-amber)', label: l.borrower,
+        detail: `DTI ${l.dti}% over guideline — document compensating factors`,
+        ctaLabel: 'Review file', ctaTab: 'underwriting', severity: 'amber' };
+    }
+    if ((l.conditionsOpen || 0) > 0) {
+      return { icon: 'listCheck', iconColor: 'var(--status-amber)', label: l.borrower,
+        detail: `${l.conditionsOpen} condition${l.conditionsOpen !== 1 ? 's' : ''} submitted — review for sign-off`,
+        ctaLabel: 'Review conditions', ctaTab: 'conditions',
+        severity: (d !== null && d <= 7 && d >= 0) ? 'red' : 'amber' };
+    }
+  }
 
   // Priority 1: lock expiring today or tomorrow
   if (l.lockStatus === 'Expiring' || (l.lockStatus === 'Locked' && l.lockDays != null && l.lockDays <= 3)) {
@@ -250,15 +294,21 @@ function DailyFocus({ loans, onOpenLoan }) {
 const INITIAL_PIPELINE_LOANS = SHARED_LOANS.map(l => ({ ...l }));
 
 // ── KPI summary cards ─────────────────────────────────────────────────────
-function computeKpis(loans) {
+// Returns an ordered array of KPI card defs tuned to the persona. LO sees the
+// book-of-business view; Processor/Underwriter see the work-queue metrics that
+// matter for their stage of the file.
+function computeKpis(loans, persona = 'LO') {
   const activeStages = new Set(['Application','Processing','Underwriting','Approval','Closing']);
   const active = loans.filter(l => activeStages.has(l.status));
 
-  // Total volume across all loans in pipeline
   const totalVolume = loans.reduce((sum, l) => sum + (l.amount || 0), 0);
-
-  // Pipeline velocity: total days currently sitting across all in-process loans
   const totalDays = active.reduce((sum, l) => sum + (l.days || 0), 0);
+  const sumConditions = (arr) => arr.reduce((sum, l) => sum + (l.conditionsOpen || 0), 0);
+  const closingWithin = (arr, n) => arr.filter(l => {
+    const d = daysUntil(l.closingDate);
+    return d !== null && d >= 0 && d <= n;
+  }).length;
+  const needsReview = loans.filter(l => l.aiStatus === 'Needs Review');
 
   // Alerts: loans needing attention (low health, expiring lock, overdue closing, many open conditions)
   const alerts = loans.filter(l => {
@@ -271,13 +321,39 @@ function computeKpis(loans) {
       || l.flag;
   });
 
-  return {
-    totalPipeline: { value: loans.length,        detail: 'All stages' },
-    totalVolume:   { value: `$${(totalVolume/1_000_000).toFixed(1)}M`, detail: 'Loan amount' },
-    activeLoans:   { value: active.length,       detail: 'In process' },
-    avgDays:       { value: totalDays,           detail: 'Pipeline velocity' },
-    totalAlerts:   { value: alerts.length,       detail: 'Needs attention' },
-  };
+  if (persona === 'Processor') {
+    const processing = loans.filter(l => l.status === 'Processing');
+    const withOpen = active.filter(l => (l.conditionsOpen || 0) > 0).length;
+    return [
+      { icon: 'listCheck',   iconColor: 'var(--text-secondary)', label: 'Active Files',       value: processing.length, detail: 'In processing' },
+      { icon: 'alertCircle', iconColor: 'var(--status-amber)',   label: 'Conditions to Clear', value: sumConditions(active), detail: `Across ${withOpen} files` },
+      { icon: 'fileSearch',  iconColor: '#3A6BAD',               label: 'Docs to Review',      value: needsReview.length, detail: 'Uploaded / flagged' },
+      { icon: 'calendar',    iconColor: 'var(--text-secondary)', label: 'Closing ≤ 7 Days',    value: closingWithin(active, 7), detail: 'Keep moving' },
+      { icon: 'alertOctagon',iconColor: 'var(--status-red)',     label: 'At-Risk Files',       value: alerts.length, detail: 'Needs attention' },
+    ];
+  }
+
+  if (persona === 'Underwriter') {
+    const inUW = loans.filter(l => l.status === 'Underwriting');
+    const decisionStages = loans.filter(l => l.status === 'Underwriting' || l.status === 'Approval');
+    const referManual = loans.filter(l => l.aus && /refer|manual/i.test(l.aus));
+    return [
+      { icon: 'listCheck',   iconColor: 'var(--text-secondary)', label: 'In Underwriting',      value: inUW.length, detail: 'Awaiting your review' },
+      { icon: 'alertCircle', iconColor: 'var(--status-amber)',   label: 'Conditions to Review', value: sumConditions(decisionStages), detail: 'Submitted for sign-off' },
+      { icon: 'alert',       iconColor: 'var(--status-red)',     label: 'Refer / Manual',       value: referManual.length, detail: 'Need manual decision' },
+      { icon: 'calendar',    iconColor: 'var(--text-secondary)', label: 'Decisions Due ≤ 5d',   value: closingWithin(decisionStages, 5), detail: 'Protect close dates' },
+      { icon: 'alertOctagon',iconColor: 'var(--status-red)',     label: 'At-Risk Files',        value: alerts.length, detail: 'Needs attention' },
+    ];
+  }
+
+  // LO (default) — book-of-business view
+  return [
+    { icon: 'doc',         iconColor: 'var(--text-secondary)', label: 'Total Pipeline', value: loans.length, detail: 'All stages' },
+    { icon: 'dollar',      iconColor: '#3A6BAD',               label: 'Total Volume',   value: `$${(totalVolume/1_000_000).toFixed(1)}M`, detail: 'Loan amount' },
+    { icon: 'trendingUp',  iconColor: '#3DB371',               label: 'Active Loans',   value: active.length, detail: 'In process' },
+    { icon: 'clock',       iconColor: 'var(--text-secondary)', label: 'Avg Days/Stage', value: totalDays, detail: 'Pipeline velocity' },
+    { icon: 'alertCircle', iconColor: 'var(--status-red)',     label: 'Total Alerts',   value: alerts.length, detail: 'Needs attention' },
+  ];
 }
 
 function KpiCard({ icon, iconColor, label, value, detail }) {
@@ -297,22 +373,20 @@ function KpiCard({ icon, iconColor, label, value, detail }) {
   );
 }
 
-function KpiRow({ loans }) {
-  const k = React.useMemo(() => computeKpis(loans), [loans]);
+function KpiRow({ loans, persona = 'LO' }) {
+  const cards = React.useMemo(() => computeKpis(loans, persona), [loans, persona]);
   return (
     <div style={{ display: 'flex', gap: 12, marginBottom: 14 }}>
-      <KpiCard icon="doc"         iconColor="var(--text-secondary)" label="Total Pipeline"  value={k.totalPipeline.value} detail={k.totalPipeline.detail}/>
-      <KpiCard icon="dollar"      iconColor="#3A6BAD"               label="Total Volume"    value={k.totalVolume.value}   detail={k.totalVolume.detail}/>
-      <KpiCard icon="trendingUp"  iconColor="#3DB371"               label="Active Loans"    value={k.activeLoans.value}   detail={k.activeLoans.detail}/>
-      <KpiCard icon="clock"       iconColor="var(--text-secondary)" label="Avg Days/Stage"  value={k.avgDays.value}       detail={k.avgDays.detail}/>
-      <KpiCard icon="alertCircle" iconColor="var(--status-red)"     label="Total Alerts"    value={k.totalAlerts.value}   detail={k.totalAlerts.detail}/>
+      {cards.map((c, i) => (
+        <KpiCard key={i} icon={c.icon} iconColor={c.iconColor} label={c.label} value={c.value} detail={c.detail}/>
+      ))}
     </div>
   );
 }
 
 // ── Single-line AI insights banner (replaces the bulkier multi-row DailyFocus) ─
 // Exported so Home.jsx can render it where 'Your Next Move' used to be.
-export function AIInsightsBanner({ loans, onOpenLoan }) {
+export function AIInsightsBanner({ loans, onOpenLoan, persona = 'LO' }) {
   const [dismissedIds, setDismissedIds] = React.useState(new Set());
   const [cursor, setCursor] = React.useState(0);
   const [animDir, setAnimDir] = React.useState(0); // -1 prev, +1 next, 0 idle
@@ -322,14 +396,19 @@ export function AIInsightsBanner({ loans, onOpenLoan }) {
       if (dismissedIds.has(l.id)) return false;
       const d = daysUntil(l.closingDate);
       const { score } = computeHealth(l);
-      return score < 60
+      const base = score < 60
         || l.lockStatus === 'Expiring'
         || (l.lockStatus === 'Locked' && l.lockDays != null && l.lockDays <= 7)
         || (d !== null && d <= 10 && d >= 0);
+      // Surface the signals each role acts on, even when the file isn't
+      // otherwise flagged.
+      if (persona === 'Processor') return base || l.aiStatus === 'Needs Review' || (l.conditionsOpen || 0) > 3;
+      if (persona === 'Underwriter') return base || (l.aus && /refer|manual/i.test(l.aus)) || (l.dti != null && l.dti >= 43) || (l.conditionsOpen || 0) > 3;
+      return base;
     })
-    .map(l => ({ loan: l, action: getLoanAction(l) }))
+    .map(l => ({ loan: l, action: getLoanAction(l, persona) }))
     .sort((a, b) => (a.action.severity === 'red' ? -1 : 1) - (b.action.severity === 'red' ? -1 : 1)),
-    [loans, dismissedIds]);
+    [loans, dismissedIds, persona]);
 
   // Reset animation flag shortly after each move so subsequent renders don't replay it
   React.useEffect(() => {
@@ -1133,14 +1212,14 @@ export function PipelineView({ onOpenLoan, persona = 'LO', intent }) {
       </div>
 
       {viewMode === 'tasks' ? (
-        <TasksView onOpenLoan={onOpenLoan}/>
+        <TasksView onOpenLoan={onOpenLoan} persona={persona}/>
       ) : (
       <>
       {/* ── KPI summary cards ── */}
-      <KpiRow loans={scopedLoans}/>
+      <KpiRow loans={scopedLoans} persona={persona}/>
 
       {/* ── AI insights banner ── */}
-      <AIInsightsBanner loans={scopedLoans} onOpenLoan={onOpenLoan}/>
+      <AIInsightsBanner loans={scopedLoans} onOpenLoan={onOpenLoan} persona={persona}/>
 
       <div style={viewMode === 'hybrid'
         ? { display: 'grid', gridTemplateColumns: 'minmax(0, 1fr) 340px', gap: 16, alignItems: 'flex-start' }
@@ -1392,7 +1471,7 @@ export function PipelineView({ onOpenLoan, persona = 'LO', intent }) {
       </div>
 
       </div>{/* end pipeline column */}
-      {viewMode === 'hybrid' && <TasksSidebar onOpenLoan={onOpenLoan}/>}
+      {viewMode === 'hybrid' && <TasksSidebar onOpenLoan={onOpenLoan} persona={persona}/>}
       </div>{/* end hybrid grid */}
       </>
       )}

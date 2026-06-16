@@ -86,7 +86,18 @@ function LeftNavItem({ icon, label, active, onClick, disabled, iconSize = 19, st
   );
 }
 
+// Signed-in user per persona — drives the nav avatar and the home greeting.
+export const USER_BY_PERSONA = {
+  LO:          { first: 'Jordan', name: 'Jordan Schonegg', initials: 'JS', color: '#3D49E6' },
+  Processor:   { first: 'Priya',  name: 'Priya Nair',      initials: 'PN', color: '#0E7C66' },
+  Underwriter: { first: 'David',  name: 'David Kim',       initials: 'DK', color: '#A8541C' },
+  Admin:       { first: 'Jordan', name: 'Jordan Schonegg', initials: 'JS', color: '#3D49E6' },
+  Consumer:    { first: 'Jordan', name: 'Jordan Schonegg', initials: 'JS', color: '#3D49E6' },
+};
+export function userForPersona(persona) { return USER_BY_PERSONA[persona] || USER_BY_PERSONA.LO; }
+
 export function LeftNav({ route, onNavigate, onOpenCmd, onOpenPrefs, onLogoClick, persona }) {
+  const navUser = userForPersona(persona);
   const logoInteractive = flags.logoToLogin && typeof onLogoClick === 'function';
   // Polished icon set (flag: leftNavPolish):
   //   pipeline: 'pipeline' (bar chart) → 'listCheck' (list of files in pipeline)
@@ -175,7 +186,7 @@ export function LeftNav({ route, onNavigate, onOpenCmd, onOpenPrefs, onLogoClick
 
       {/* Avatar */}
       <div style={{ marginTop: 8, padding: '12px 0 0', borderTop: '1px solid rgba(255,255,255,0.06)', width: 28, display: 'flex', justifyContent: 'center' }}>
-        <Avatar initials="J" size={30} color="#3D49E6" />
+        <Avatar initials={navUser.initials} size={30} color={navUser.color} />
       </div>
     </aside>
   );
@@ -467,7 +478,10 @@ export function TopNav({ route, onNavigate, currentLoan, urlaLoanId, urlaBorrowe
   );
 }
 
-export function StatusBar({ activeCount = 0, attentionCount = 0 }) {
+// Display names for the signed-in role shown in the footer.
+const ROLE_LABELS = { LO: 'Loan Officer', Processor: 'Processor', Underwriter: 'Underwriter', Admin: 'Admin', Consumer: 'Borrower' };
+
+export function StatusBar({ activeCount = 0, attentionCount = 0, persona = 'LO' }) {
   const [tick, setTick] = React.useState(0);
   React.useEffect(() => {
     const t = setInterval(() => setTick(n => n + 1), 60000);
@@ -507,6 +521,8 @@ export function StatusBar({ activeCount = 0, attentionCount = 0 }) {
         All systems operational
       </span>
       <div style={{ flex: 1 }}/>
+      <span style={{ fontWeight: 600, color: 'var(--text-primary)' }}>{ROLE_LABELS[persona] || persona}</span>
+      <Sep/>
       <span>{syncLabel}</span>
       <Sep/>
       <span>Press <kbd style={{

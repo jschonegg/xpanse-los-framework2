@@ -10,6 +10,7 @@ import { AIInsightsCards } from './AIInsightsCards';
 import { LoanHealthMonitorWidget } from './LoanHealthMonitor';
 import { LOANS } from '../data/loans';
 import { loadPrefs, PREFS_EVENT } from '../components/PreferencesModal';
+import { userForPersona } from '../components/Shell';
 
 // ─── Data ─────────────────────────────────────────────────────────────────────
 
@@ -55,6 +56,76 @@ const AI_ACTIONS = [
   { id: 'a2', loanId: 'LN-2024-0189', initials: 'DC', color: '#2A8C53', label: 'Appraisal gap — suggest rebuttal for Chen', conf: 88, tab: 'now' },
   { id: 'a3', loanId: 'LN-2024-0289', initials: 'RK', color: '#7B3FA0', label: 'Gift letter satisfies C-009 — Kim', conf: 91, tab: 'conditions' },
 ];
+
+// ── Persona task lists ───────────────────────────────────────────────────────
+// Processor and Underwriter see role-relevant work instead of the LO's
+// sales/lock/closing tasks. Ids are namespaced so completion state never
+// collides across personas. (TASK_IMPACTS only covers the LO 't*' ids, so these
+// complete cleanly without a toast.)
+const PROCESSOR_TASKS = [
+  { id: 'p1', loanId: 'LN-2024-0344', borrower: 'Aria Washington', initials: 'AW', color: '#2A8C53',
+    label: 'Escalate title exception — Washington', context: 'Title review delayed 11 days · closing July 12 at risk',
+    dueLabel: 'Today', daysLeft: 0, tab: 'now', urgent: true },
+  { id: 'p2', loanId: 'LN-2024-0350', borrower: 'Mia Castillo', initials: 'MC', color: '#C25535',
+    label: 'Run instant VOE — Castillo', context: 'VOE pending · jumbo file · blocks AUS submission',
+    dueLabel: 'Today', daysLeft: 0, tab: 'now', urgent: true },
+  { id: 'p3', loanId: 'LN-2024-0189', borrower: 'David Chen', initials: 'DC', color: '#2A8C53',
+    label: 'Review 6 uploaded docs — Chen', context: 'Borrower uploaded overnight · clears C-002, C-007',
+    dueLabel: 'Today', daysLeft: 0, tab: 'conditions', urgent: true },
+  { id: 'p4', loanId: 'LN-2024-0189', borrower: 'David Chen', initials: 'DC', color: '#2A8C53',
+    label: 'Follow up on appraisal — Chen', context: 'FHA appraisal ordered May 10 · ETA unknown',
+    dueLabel: 'May 22', daysLeft: 3, tab: 'now', urgent: false },
+  { id: 'p5', loanId: 'LN-2024-0347', borrower: 'Noah Friedman', initials: 'NF', color: '#4A39C9',
+    label: 'Build stacking order — Friedman', context: 'AUS Approve/Eligible · package ready to assemble',
+    dueLabel: 'May 23', daysLeft: 4, tab: 'now', urgent: false },
+  { id: 'p6', loanId: 'LN-2024-0312', borrower: 'Thomas Park', initials: 'TP', color: '#3A8294',
+    label: 'Submit Park to underwriting', context: 'Conditions cleared · ready for UW hand-off',
+    dueLabel: 'May 24', daysLeft: 5, tab: 'now', urgent: false },
+];
+
+const UNDERWRITER_TASKS = [
+  { id: 'u1', loanId: 'LN-2024-0356', borrower: 'Isabella Romano', initials: 'IR', color: '#A8541C',
+    label: 'Manual decision — Romano (DU Refer)', context: 'DU Refer · DTI 38% · lock expires in 3 days',
+    dueLabel: 'Today', daysLeft: 0, tab: 'underwriting', urgent: true },
+  { id: 'u2', loanId: 'LN-2024-0234', borrower: 'Sarah Anderson', initials: 'SA', color: '#4A39C9',
+    label: 'Review income calculation — Anderson', context: 'VOE returned · verify against 1003 · 4 conditions open',
+    dueLabel: 'Today', daysLeft: 0, tab: 'conditions', urgent: true },
+  { id: 'u3', loanId: 'LN-2024-0353', borrower: 'Lucas Schmidt', initials: 'LS', color: '#6E5527',
+    label: 'Review VA certification — Schmidt', context: 'VA streamline · COE + lender cert review needed',
+    dueLabel: 'Today', daysLeft: 0, tab: 'underwriting', urgent: true },
+  { id: 'u4', loanId: 'LN-2024-0391', borrower: 'Carlos Rivera', initials: 'CR', color: '#B91C1C',
+    label: 'FEMA disaster review — Rivera', context: 'Property in DR-4830-FL zone · re-inspection required',
+    dueLabel: 'Today', daysLeft: 0, tab: 'now', urgent: true, fema: true },
+  { id: 'u5', loanId: 'LN-2024-0301', borrower: 'Emily Rodriguez', initials: 'ER', color: '#C25535',
+    label: 'Sign off 3 conditions — Rodriguez', context: 'Submitted today · income + asset docs attached',
+    dueLabel: 'May 20', daysLeft: 2, tab: 'conditions', urgent: false },
+  { id: 'u6', loanId: 'LN-2024-0359', borrower: 'Benjamin Lee', initials: 'BL', color: '#3A8294',
+    label: 'Issue initial decision — Lee', context: 'Clean file · DU Approve/Eligible · ready to decision',
+    dueLabel: 'May 21', daysLeft: 3, tab: 'underwriting', urgent: false },
+];
+
+const PROCESSOR_AI = [
+  { id: 'pa1', loanId: 'LN-2024-0189', initials: 'DC', color: '#2A8C53', label: 'AI drafted gift letter for Chen — ready to send', conf: 95, tab: 'conditions' },
+  { id: 'pa2', loanId: 'LN-2024-0350', initials: 'MC', color: '#C25535', label: 'Instant VOE available via Equifax — Castillo', conf: 92, tab: 'now' },
+  { id: 'pa3', loanId: 'LN-2024-0344', initials: 'AW', color: '#2A8C53', label: 'Title escalation email drafted — Washington', conf: 89, tab: 'now' },
+];
+
+const UNDERWRITER_AI = [
+  { id: 'ua1', loanId: 'LN-2024-0356', initials: 'IR', color: '#A8541C', label: 'Compensating factors summarized — Romano', conf: 90, tab: 'underwriting' },
+  { id: 'ua2', loanId: 'LN-2024-0234', initials: 'SA', color: '#4A39C9', label: 'Income recalculated from VOE — matches 1003', conf: 96, tab: 'conditions' },
+  { id: 'ua3', loanId: 'LN-2024-0359', initials: 'BL', color: '#3A8294', label: 'Decision memo drafted — Lee (Approve)', conf: 93, tab: 'underwriting' },
+];
+
+function tasksForPersona(persona) {
+  if (persona === 'Processor')   return PROCESSOR_TASKS;
+  if (persona === 'Underwriter') return UNDERWRITER_TASKS;
+  return TASKS;
+}
+function aiActionsForPersona(persona) {
+  if (persona === 'Processor')   return PROCESSOR_AI;
+  if (persona === 'Underwriter') return UNDERWRITER_AI;
+  return AI_ACTIONS;
+}
 
 const ACTIVITY = [
   { initials: 'SA', color: '#A8541C', loanId: 'LN-2024-0234', tab: 'conditions', text: 'Anderson uploaded paystub + bank statements', time: '8m ago', actionable: true },
@@ -1296,6 +1367,7 @@ function ScorecardStrip() {
 
 export function HomeView({ onNavigate, onOpenLoan, persona }) {
   const isProcUW = persona === 'Processor' || persona === 'Underwriter';
+  const user = userForPersona(persona);
   const heroTiles = persona === 'Processor' ? PROCESSOR_HERO_TILES
                   : persona === 'Underwriter' ? UNDERWRITER_HERO_TILES
                   : HERO_TILES;
@@ -1323,8 +1395,10 @@ export function HomeView({ onNavigate, onOpenLoan, persona }) {
     // doesn't appear twice.
     ...(flags.aiInsightsUnderScorecard ? ['ai-coach-brief'] : []),
   ];
-  const visibleTasks = TASKS.filter(t => !doneTasks.has(t.id));
-  const visibleAI    = AI_ACTIONS.filter(a => !doneAI.has(a.id));
+  const taskList     = tasksForPersona(persona);
+  const aiList       = aiActionsForPersona(persona);
+  const visibleTasks = taskList.filter(t => !doneTasks.has(t.id));
+  const visibleAI    = aiList.filter(a => !doneAI.has(a.id));
   const urgentCount  = visibleTasks.filter(t => t.urgent).length;
   const doneCount    = doneTasks.size;
 
@@ -1414,7 +1488,7 @@ export function HomeView({ onNavigate, onOpenLoan, persona }) {
             </div>
 
             <h1 style={{ margin: '0 0 6px', fontSize: 30, fontWeight: 800, letterSpacing: '-0.025em', color: '#fff', lineHeight: 1.1 }}>
-              {greeting()}, Jordan.
+              {greeting()}, {user.first}.
             </h1>
 
             <p style={{ margin: '0 0 14px', fontSize: 13, color: 'rgba(255,255,255,0.6)', lineHeight: 1.5, maxWidth: 480 }}>
@@ -1530,11 +1604,10 @@ export function HomeView({ onNavigate, onOpenLoan, persona }) {
               sublede="Risks to resolve, locks to extend, and borrowers to chase."
             />
           )}
-          {/* homeReorderV1 layout.
-              LO: Your dashboard → ScorecardStrip → AI Coach → Leaderboard.
-              Processor/Underwriter: AI Coach moves above the "Your dashboard"
-              label and the Leaderboard is hidden. */}
-          {flags.homeReorderV1 && isProcUW && aiCoachCard && (
+          {/* homeReorderV1 layout — AI Coach insights sit above the "Your
+              dashboard" label for every persona. The Leaderboard is hidden
+              (branch stats only) for Processor/Underwriter. */}
+          {flags.homeReorderV1 && aiCoachCard && (
             <>{aiCoachCard}<div style={{ height: 24 }}/></>
           )}
           {flags.homeReorderV1 && (
@@ -1560,9 +1633,6 @@ export function HomeView({ onNavigate, onOpenLoan, persona }) {
           )}
           {flags.homeReorderV1 && <ScorecardStrip/>}
           {flags.homeReorderV1 && <div style={{ height: 24 }}/>}
-          {flags.homeReorderV1 && !isProcUW && aiCoachCard && (
-            <>{aiCoachCard}<div style={{ height: 24 }}/></>
-          )}
           {flags.homeReorderV1 && (
             <><Leaderboard branchOnly={isProcUW}/><div style={{ height: 24 }}/></>
           )}
@@ -1652,7 +1722,7 @@ export function HomeView({ onNavigate, onOpenLoan, persona }) {
 
           {/* Progress bar */}
           <div style={{ padding: '12px 18px 0' }}>
-            <DayProgress done={doneCount} total={TASKS.length}/>
+            <DayProgress done={doneCount} total={taskList.length}/>
           </div>
 
           <div style={{ height: 1, background: '#F3F4F6', margin: '2px 0 12px' }}/>
@@ -1672,7 +1742,7 @@ export function HomeView({ onNavigate, onOpenLoan, persona }) {
           {/* Tasks */}
           <div style={{ padding: '0 14px' }}>
             <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase', color: '#9CA3AF', marginBottom: 10 }}>Tasks</div>
-            {visibleTasks.length === 0 && doneCount === TASKS.length ? (
+            {visibleTasks.length === 0 && doneCount === taskList.length ? (
               <div style={{ padding: '18px 0', textAlign: 'center' }}>
                 <div style={{ fontSize: 28, marginBottom: 8 }}>🎉</div>
                 <div style={{ fontSize: 14, fontWeight: 700, color: '#111827' }}>Pipeline's moving.</div>

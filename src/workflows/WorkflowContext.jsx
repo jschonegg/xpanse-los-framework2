@@ -142,10 +142,12 @@ export function WorkflowProvider({ children }) {
     return getMatchingWorkflow(workflows, { role }, loanContext);
   }, [workflows, previewContext]);
 
-  // Resolve the workflow for an actual loan from its purpose + status. Role is
-  // ignored for now (role-based targeting is config-example only), so the loan
-  // view reflects the loan's real purpose/status.
-  const resolveWorkflowForLoan = React.useCallback((loan) => {
+  // Resolve the workflow for an actual loan from the signed-in user's role plus
+  // the loan's purpose + status. With a role, role-targeted workflows apply
+  // (e.g. a Processor gets the Processor-configured nav); without one, the
+  // resolver falls back to role-agnostic matching on purpose + status.
+  const resolveWorkflowForLoan = React.useCallback((loan, role) => {
+    if (role) return getMatchingWorkflow(workflows, { role }, loanToWorkflowContext(loan));
     return getMatchingWorkflow(workflows, {}, loanToWorkflowContext(loan), ['role']);
   }, [workflows]);
 

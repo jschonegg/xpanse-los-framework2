@@ -1,7 +1,7 @@
 import React from 'react';
 import { Icon } from '../components/Icon';
 import { Avatar } from '../components/Shell';
-import { TASKS, TASK_COUNTS, TASK_TYPES, TASK_TYPE_ORDER } from '../data/tasks';
+import { getTasks, getTaskCounts, getTaskTypeOrder, TASK_TYPES } from '../data/tasks';
 
 // ── Shared bits ─────────────────────────────────────────────────────────────
 function fmtAmount(n) {
@@ -229,7 +229,7 @@ function TaskDetail({ task, onOpenLoan }) {
           <Icon name="sparkle" size={12} color="var(--ai-primary, #6E59E8)"/>
         </div>
         <div style={{ fontSize: 12.5, color: 'var(--ai-ink, #3F2FBF)', lineHeight: 1.5 }}>
-          <span style={{ fontWeight: 600 }}>Suggested script: </span>
+          <span style={{ fontWeight: 600 }}>{task.aiLabel || 'Suggested script'}: </span>
           {task.suggestedScript}
         </div>
       </div>
@@ -279,9 +279,13 @@ const TASK_TABS = [
 ];
 
 // ── Full Tasks view ────────────────────────────────────────────────────────
-export function TasksView({ onOpenLoan }) {
+export function TasksView({ onOpenLoan, persona = 'LO' }) {
+  const tasks = getTasks(persona);
+  const counts = getTaskCounts(persona);
+  const typeOrder = getTaskTypeOrder(persona);
+
   const [tab, setTab] = React.useState('all');
-  const [selectedId, setSelectedId] = React.useState(TASKS[0].id);
+  const [selectedId, setSelectedId] = React.useState(() => tasks[0]?.id);
   const [checked, setChecked] = React.useState(new Set());
   const [groupByType, setGroupByType] = React.useState(true);
 
@@ -292,15 +296,15 @@ export function TasksView({ onOpenLoan }) {
   };
 
   const tabDef = TASK_TABS.find(t => t.id === tab) || TASK_TABS[0];
-  const filtered = TASKS.filter(tabDef.filter);
+  const filtered = tasks.filter(tabDef.filter);
   const selected = filtered.find(t => t.id === selectedId) || filtered[0];
 
   // The inline CTA focuses the task so its full action surface opens in the
   // detail panel (no backend wired in this prototype).
   const handleAction = (task) => setSelectedId(task.id);
 
-  // Group the filtered rows by type, preserving the canonical type order.
-  const groups = TASK_TYPE_ORDER
+  // Group the filtered rows by type, preserving the persona's type order.
+  const groups = typeOrder
     .map(type => ({ type, tasks: filtered.filter(t => t.type === type) }))
     .filter(g => g.tasks.length > 0);
 
@@ -318,10 +322,10 @@ export function TasksView({ onOpenLoan }) {
     <>
       {/* KPI cards */}
       <div style={{ display: 'flex', gap: 12, marginBottom: 14 }}>
-        <TaskKpi icon="clock"        iconColor="#C97A1B"             label="Due today"     value={TASK_COUNTS.dueToday}/>
-        <TaskKpi icon="alertOctagon" iconColor="var(--status-red)"   label="Overdue"       value={TASK_COUNTS.overdue}/>
-        <TaskKpi icon="arrowRight"   iconColor="#3A6BAD"             label="This week"     value={TASK_COUNTS.thisWeek}/>
-        <TaskKpi icon="checkCircle"  iconColor="#3DB371"             label="Completed (7d)" value={TASK_COUNTS.completed7d}/>
+        <TaskKpi icon="clock"        iconColor="#C97A1B"             label="Due today"     value={counts.dueToday}/>
+        <TaskKpi icon="alertOctagon" iconColor="var(--status-red)"   label="Overdue"       value={counts.overdue}/>
+        <TaskKpi icon="arrowRight"   iconColor="#3A6BAD"             label="This week"     value={counts.thisWeek}/>
+        <TaskKpi icon="checkCircle"  iconColor="#3DB371"             label="Completed (7d)" value={counts.completed7d}/>
       </div>
 
       {/* Tab row */}
@@ -330,7 +334,7 @@ export function TasksView({ onOpenLoan }) {
         marginBottom: 12,
       }}>
         {TASK_TABS.map(t => {
-          const count = TASKS.filter(t.filter).length;
+          const count = tasks.filter(t.filter).length;
           const active = tab === t.id;
           return (
             <button key={t.id} onClick={() => setTab(t.id)} style={{
@@ -410,7 +414,9 @@ export function TasksView({ onOpenLoan }) {
 }
 
 // ── Compact sidebar for Hybrid mode ────────────────────────────────────────
-export function TasksSidebar({ onOpenLoan }) {
+export function TasksSidebar({ onOpenLoan, persona = 'LO' }) {
+  const tasks = getTasks(persona);
+  const counts = getTaskCounts(persona);
   const [tab, setTab] = React.useState('today');
   const [checked, setChecked] = React.useState(new Set());
   const toggleChecked = (id) => {
@@ -419,7 +425,7 @@ export function TasksSidebar({ onOpenLoan }) {
     setChecked(next);
   };
   const tabDef = TASK_TABS.find(t => t.id === tab) || TASK_TABS[0];
-  const filtered = TASKS.filter(tabDef.filter).slice(0, 4);
+  const filtered = tasks.filter(tabDef.filter).slice(0, 4);
 
   return (
     <aside style={{
@@ -444,7 +450,7 @@ export function TasksSidebar({ onOpenLoan }) {
           </button>
         </div>
         <div style={{ fontSize: 11.5, color: 'var(--text-tertiary)' }}>
-          {TASK_COUNTS.dueToday} due today · {TASK_COUNTS.overdue} overdue
+          {counts.dueToday} due today · {counts.overdue} overdue
         </div>
       </div>
 
@@ -452,7 +458,7 @@ export function TasksSidebar({ onOpenLoan }) {
       <div style={{ display: 'flex', gap: 2, padding: '0 12px 10px', borderBottom: '1px solid var(--border-subtle)' }}>
         {[{ id: 'today', label: 'Today' }, { id: 'overdue', label: 'Overdue' }, { id: 'upcoming', label: 'Upcoming' }, { id: 'all', label: 'All' }].map(t => {
           const def = TASK_TABS.find(x => x.id === t.id);
-          const count = TASKS.filter(def.filter).length;
+          const count = tasks.filter(def.filter).length;
           const active = tab === t.id;
           return (
             <button key={t.id} onClick={() => setTab(t.id)} style={{
@@ -508,7 +514,7 @@ export function TasksSidebar({ onOpenLoan }) {
         display: 'flex', alignItems: 'center', gap: 8,
         background: 'rgba(0,0,0,0.01)',
       }}>
-        <span style={{ fontSize: 11.5, color: 'var(--text-tertiary)' }}>{filtered.length} of {TASKS.length} tasks</span>
+        <span style={{ fontSize: 11.5, color: 'var(--text-tertiary)' }}>{filtered.length} of {tasks.length} tasks</span>
         <div style={{ flex: 1 }}/>
         <button style={{
           display: 'inline-flex', alignItems: 'center', gap: 4,

@@ -210,7 +210,7 @@ export default function App() {
           </>
         )}
       </div>
-      <StatusBar activeCount={activeCount} attentionCount={attentionCount}/>
+      <StatusBar activeCount={activeCount} attentionCount={attentionCount} persona={persona}/>
       {!aiOpen && <AIFab onClick={toggleAi}/>}
       {aiOpen && <AIAssistantPanel ctx={ctx} onClose={toggleAi} onOpenLoan={openLoan} persona={persona}/>}
       {cmdOpen && <CommandPalette onClose={() => setCmdOpen(false)} onNavigate={navigate} onOpenLoan={openLoan} onOpenAi={openAiWith} onOpenURLA={(name) => { setCmdOpen(false); openURLA(name); }}/>}
