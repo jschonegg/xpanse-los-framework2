@@ -10,6 +10,7 @@ import { AIInsightsCards } from './AIInsightsCards';
 import { LoanHealthMonitorWidget } from './LoanHealthMonitor';
 import { LOANS } from '../data/loans';
 import { loadPrefs, PREFS_EVENT } from '../components/PreferencesModal';
+import { userForPersona } from '../components/Shell';
 
 // ─── Data ─────────────────────────────────────────────────────────────────────
 
@@ -1366,6 +1367,7 @@ function ScorecardStrip() {
 
 export function HomeView({ onNavigate, onOpenLoan, persona }) {
   const isProcUW = persona === 'Processor' || persona === 'Underwriter';
+  const user = userForPersona(persona);
   const heroTiles = persona === 'Processor' ? PROCESSOR_HERO_TILES
                   : persona === 'Underwriter' ? UNDERWRITER_HERO_TILES
                   : HERO_TILES;
@@ -1486,7 +1488,7 @@ export function HomeView({ onNavigate, onOpenLoan, persona }) {
             </div>
 
             <h1 style={{ margin: '0 0 6px', fontSize: 30, fontWeight: 800, letterSpacing: '-0.025em', color: '#fff', lineHeight: 1.1 }}>
-              {greeting()}, Jordan.
+              {greeting()}, {user.first}.
             </h1>
 
             <p style={{ margin: '0 0 14px', fontSize: 13, color: 'rgba(255,255,255,0.6)', lineHeight: 1.5, maxWidth: 480 }}>
@@ -1602,11 +1604,10 @@ export function HomeView({ onNavigate, onOpenLoan, persona }) {
               sublede="Risks to resolve, locks to extend, and borrowers to chase."
             />
           )}
-          {/* homeReorderV1 layout.
-              LO: Your dashboard → ScorecardStrip → AI Coach → Leaderboard.
-              Processor/Underwriter: AI Coach moves above the "Your dashboard"
-              label and the Leaderboard is hidden. */}
-          {flags.homeReorderV1 && isProcUW && aiCoachCard && (
+          {/* homeReorderV1 layout — AI Coach insights sit above the "Your
+              dashboard" label for every persona. The Leaderboard is hidden
+              (branch stats only) for Processor/Underwriter. */}
+          {flags.homeReorderV1 && aiCoachCard && (
             <>{aiCoachCard}<div style={{ height: 24 }}/></>
           )}
           {flags.homeReorderV1 && (
@@ -1632,9 +1633,6 @@ export function HomeView({ onNavigate, onOpenLoan, persona }) {
           )}
           {flags.homeReorderV1 && <ScorecardStrip/>}
           {flags.homeReorderV1 && <div style={{ height: 24 }}/>}
-          {flags.homeReorderV1 && !isProcUW && aiCoachCard && (
-            <>{aiCoachCard}<div style={{ height: 24 }}/></>
-          )}
           {flags.homeReorderV1 && (
             <><Leaderboard branchOnly={isProcUW}/><div style={{ height: 24 }}/></>
           )}
