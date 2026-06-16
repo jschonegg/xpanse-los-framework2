@@ -13,6 +13,7 @@
 export const FIXED_SYSTEM_LINKS = [
   { id: 'tasks',      label: 'Tasks',      icon: 'target', tab: 'now' },
   { id: 'loan-story', label: 'Loan Story', icon: 'book',   tab: 'story' },
+  { id: 'forms',      label: 'Forms',      icon: 'doc',    tab: 'forms' },
 ];
 
 // Every page an admin can place into a workflow section. `kind` distinguishes

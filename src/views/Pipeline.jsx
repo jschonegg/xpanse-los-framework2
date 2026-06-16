@@ -1140,7 +1140,7 @@ export function PipelineView({ onOpenLoan, persona = 'LO', intent }) {
       <KpiRow loans={scopedLoans}/>
 
       {/* ── AI insights banner ── */}
-      {!isProcessor && <AIInsightsBanner loans={scopedLoans} onOpenLoan={onOpenLoan}/>}
+      <AIInsightsBanner loans={scopedLoans} onOpenLoan={onOpenLoan}/>
 
       <div style={viewMode === 'hybrid'
         ? { display: 'grid', gridTemplateColumns: 'minmax(0, 1fr) 340px', gap: 16, alignItems: 'flex-start' }

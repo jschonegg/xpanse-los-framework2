@@ -97,7 +97,8 @@ export function LeftNav({ route, onNavigate, onOpenCmd, onOpenPrefs, onLogoClick
   const allTop = [
     { id: 'home',     icon: 'home', label: 'Home', kind: 'route' },
     { id: 'pipeline', icon: flags.leftNavPolish ? 'listCheck' : 'pipeline', label: 'Pipeline', kind: 'route', hideFor: ['Consumer'] },
-    { id: 'feed',     icon: flags.leftNavPolish ? 'sparkle'   : 'bell',     label: 'Feed',     kind: 'route', hideFor: ['Consumer'] },
+    // Feed link removed from the global nav for now — uncomment to bring it back.
+    // { id: 'feed',     icon: flags.leftNavPolish ? 'sparkle'   : 'bell',     label: 'Feed',     kind: 'route', hideFor: ['Consumer'] },
     { id: 'search',   icon: 'search', label: 'Search (⌘K)', kind: 'action', hideFor: ['Consumer'] },
   ];
   const allBottom = [
