@@ -181,6 +181,26 @@ function GoogleG() {
   );
 }
 
+// Synchronous clipboard fallback for when the async Clipboard API is
+// unavailable or rejects (e.g. the page isn't focused). Copies the exact text
+// passed in, so the clicked value is what actually lands on the clipboard.
+function legacyCopy(text) {
+  try {
+    const ta = document.createElement('textarea');
+    ta.value = text;
+    ta.setAttribute('readonly', '');
+    ta.style.position = 'fixed';
+    ta.style.top = '-9999px';
+    document.body.appendChild(ta);
+    ta.select();
+    const ok = document.execCommand('copy');
+    document.body.removeChild(ta);
+    return ok;
+  } catch (e) {
+    return false;
+  }
+}
+
 export function LoginScreen({ onLogin }) {
   const [showPassword, setShowPassword] = React.useState(false);
   const [remember, setRemember] = React.useState(true);
@@ -190,9 +210,18 @@ export function LoginScreen({ onLogin }) {
   const [copiedId, setCopiedId] = React.useState(null);
 
   const copyEmail = (p) => {
-    try { navigator.clipboard?.writeText(p.email); } catch (e) { /* clipboard unavailable */ }
-    setCopiedId(p.id);
-    setTimeout(() => setCopiedId(c => (c === p.id ? null : c)), 1400);
+    const onCopied = () => {
+      setCopiedId(p.id);
+      setTimeout(() => setCopiedId(c => (c === p.id ? null : c)), 1400);
+    };
+    // The async Clipboard API can reject (page not focused, permissions); its
+    // promise can't be caught by try/catch, so handle it here and fall back to
+    // execCommand so the clicked email reliably reaches the clipboard.
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(p.email).then(onCopied, () => { if (legacyCopy(p.email)) onCopied(); });
+    } else if (legacyCopy(p.email)) {
+      onCopied();
+    }
   };
 
   React.useEffect(() => {
