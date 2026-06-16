@@ -1,6 +1,9 @@
 import React from 'react';
 import { Icon } from '../components/Icon';
 import { IMS_FORMS, AGENCIES, loanAgencies, isApplicable, formAgencyKeys, formById } from '../data/imsForms';
+import { getFormSchema } from '../data/imsFormSchemas';
+import { FormDocument } from './FormDocument';
+import { URLA1003View } from './URLA1003View';
 
 // Agency badge tones (conventional = blue, FHA = amber, VA = green, USDA = purple).
 const AGENCY_TONE = {
@@ -181,7 +184,10 @@ function thStyle(w) {
 }
 const tdStyle = { padding: '11px 14px', verticalAlign: 'top' };
 
-// ─── Single form reference page ──────────────────────────────────────────────
+// ─── Single form page ────────────────────────────────────────────────────────
+// Renders the actual form: the full URLA1003View for the 1003, the schema-driven
+// FormDocument for forms that have a structured layout, or the catalog reference
+// card for forms whose layout hasn't been built yet.
 export function FormDetailView({ formId, loan, favorites = [], onToggleFavorite, onBack }) {
   const form = formById(formId);
   if (!form) {
@@ -193,53 +199,70 @@ export function FormDetailView({ formId, loan, favorites = [], onToggleFavorite,
     );
   }
   const fav = favorites.includes(form.id);
-  const applicable = isApplicable(form, loan);
+  const schema = getFormSchema(form.id);
+  const isURLA = form.id === 1;
 
   return (
     <div>
-      <Breadcrumb onBack={onBack} name={form.name}/>
+      {/* Breadcrumb + favorite */}
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>
+        <Breadcrumb onBack={onBack} name={form.name}/>
+        <FavStar active={fav} onClick={() => onToggleFavorite && onToggleFavorite(form.id)} size={18}/>
+      </div>
 
-      <div style={{ maxWidth: 720, border: '1px solid var(--border-subtle)', borderRadius: 14, background: 'var(--bg-surface)', overflow: 'hidden' }}>
-        {/* Header band */}
-        <div style={{ display: 'flex', alignItems: 'flex-start', gap: 14, padding: '18px 20px', borderBottom: '1px solid var(--border-subtle)' }}>
-          <div style={{
-            width: 40, height: 40, borderRadius: 10, flexShrink: 0,
-            background: 'var(--ai-bg)', color: 'var(--ai-ink)',
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-          }}>
-            <Icon name="doc" size={20} strokeWidth={1.7}/>
-          </div>
-          <div style={{ flex: 1, minWidth: 0 }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-              <h1 style={{ margin: 0, fontSize: 20, fontWeight: 700, letterSpacing: '-0.01em' }}>{form.name}</h1>
-              <span style={{ fontSize: 11, fontWeight: 700, color: 'var(--text-tertiary)', fontFamily: 'DM Sans', background: 'var(--bg-muted)', borderRadius: 999, padding: '2px 8px' }}>#{form.id}</span>
-            </div>
-            <div style={{ fontSize: 13.5, color: 'var(--text-secondary)', marginTop: 6, lineHeight: 1.5 }}>{form.desc}</div>
-          </div>
-          <FavStar active={fav} onClick={() => onToggleFavorite && onToggleFavorite(form.id)} size={20}/>
+      {isURLA
+        ? <URLA1003View loanId={loan?.id}/>
+        : schema
+          ? <FormDocument form={form} schema={schema} loan={loan}/>
+          : <ReferenceCard form={form} loan={loan}/>}
+    </div>
+  );
+}
+
+// Fallback for forms whose structured layout hasn't been built yet — shows the
+// catalog reference (description, agencies, applicability, model form).
+function ReferenceCard({ form, loan }) {
+  const applicable = isApplicable(form, loan);
+  return (
+    <div style={{ maxWidth: 720, border: '1px solid var(--border-subtle)', borderRadius: 14, background: 'var(--bg-surface)', overflow: 'hidden' }}>
+      {/* Header band */}
+      <div style={{ display: 'flex', alignItems: 'flex-start', gap: 14, padding: '18px 20px', borderBottom: '1px solid var(--border-subtle)' }}>
+        <div style={{
+          width: 40, height: 40, borderRadius: 10, flexShrink: 0,
+          background: 'var(--ai-bg)', color: 'var(--ai-ink)',
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+        }}>
+          <Icon name="doc" size={20} strokeWidth={1.7}/>
         </div>
-
-        {/* Meta rows */}
-        <div style={{ padding: '6px 20px 14px' }}>
-          <MetaRow label="Applies to"><AgencyBadges form={form}/></MetaRow>
-          <MetaRow label="This loan">
-            <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: 13, fontWeight: 600, color: applicable ? 'var(--status-green)' : 'var(--text-tertiary)' }}>
-              <Icon name={applicable ? 'checkCircle' : 'x'} size={14}/>
-              {applicable ? 'Applicable to this loan' : 'Not applicable to this loan'}
-            </span>
-          </MetaRow>
-          <MetaRow label="Model form">
-            <span style={{ fontSize: 13, color: 'var(--text-secondary)' }}>{form.link}</span>
-          </MetaRow>
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            <h1 style={{ margin: 0, fontSize: 20, fontWeight: 700, letterSpacing: '-0.01em' }}>{form.name}</h1>
+            <span style={{ fontSize: 11, fontWeight: 700, color: 'var(--text-tertiary)', fontFamily: 'DM Sans', background: 'var(--bg-muted)', borderRadius: 999, padding: '2px 8px' }}>#{form.id}</span>
+          </div>
+          <div style={{ fontSize: 13.5, color: 'var(--text-secondary)', marginTop: 6, lineHeight: 1.5 }}>{form.desc}</div>
         </div>
+      </div>
 
-        {/* Reference note */}
-        <div style={{ margin: '0 20px 18px', background: 'var(--ai-bg)', border: '1px solid var(--ai-border)', borderRadius: 9, padding: '10px 13px', display: 'flex', gap: 9, alignItems: 'flex-start' }}>
-          <Icon name="sparkle" size={13} color="var(--ai-primary)" strokeWidth={1.5} style={{ marginTop: 1, flexShrink: 0 }}/>
-          <span style={{ fontSize: 12.5, color: 'var(--ai-ink)', lineHeight: 1.45 }}>
-            Reference entry from the IMS forms catalog. Favorite it to pin it to this loan's left navigation under Favorites.
+      {/* Meta rows */}
+      <div style={{ padding: '6px 20px 14px' }}>
+        <MetaRow label="Applies to"><AgencyBadges form={form}/></MetaRow>
+        <MetaRow label="This loan">
+          <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: 13, fontWeight: 600, color: applicable ? 'var(--status-green)' : 'var(--text-tertiary)' }}>
+            <Icon name={applicable ? 'checkCircle' : 'x'} size={14}/>
+            {applicable ? 'Applicable to this loan' : 'Not applicable to this loan'}
           </span>
-        </div>
+        </MetaRow>
+        <MetaRow label="Model form">
+          <span style={{ fontSize: 13, color: 'var(--text-secondary)' }}>{form.link}</span>
+        </MetaRow>
+      </div>
+
+      {/* Reference note */}
+      <div style={{ margin: '0 20px 18px', background: 'var(--ai-bg)', border: '1px solid var(--ai-border)', borderRadius: 9, padding: '10px 13px', display: 'flex', gap: 9, alignItems: 'flex-start' }}>
+        <Icon name="sparkle" size={13} color="var(--ai-primary)" strokeWidth={1.5} style={{ marginTop: 1, flexShrink: 0 }}/>
+        <span style={{ fontSize: 12.5, color: 'var(--ai-ink)', lineHeight: 1.45 }}>
+          This form’s structured layout hasn’t been built yet — showing the catalog reference. Favorite it to pin it to this loan’s navigation under Favorites.
+        </span>
       </div>
     </div>
   );
