@@ -31,34 +31,11 @@ const LOGIN_CSS = `
 
 .lx-logo { height: 28px; display: flex; align-items: center; color: #fff; font-size: 22px; font-weight: 700; letter-spacing: -0.02em; }
 
-.lx-brand-mid { margin-top: auto; max-width: 32ch; }
-.lx-eyebrow {
-  display: inline-flex; align-items: center; gap: 8px;
-  font-size: 12.5px; font-weight: 500; letter-spacing: 0.04em; text-transform: uppercase;
-  color: rgba(255,255,255,0.66); margin-bottom: 22px;
-}
-.lx-eyebrow .lx-dot { width: 6px; height: 6px; border-radius: 50%; background: #6FE0A8; box-shadow: 0 0 0 4px rgba(111,224,168,0.18); flex-shrink: 0; }
-.lx-headline { font-size: 38px; line-height: 1.12; font-weight: 600; letter-spacing: -0.02em; margin: 0; }
+/* Centered vertically between the logo and the footer. */
+.lx-brand-mid { margin: auto 0; max-width: 100%; }
+.lx-headline { font-size: 50px; line-height: 1.08; font-weight: 600; letter-spacing: -0.02em; margin: 0; }
 .lx-headline .lx-accent { color: #B7A8FE; }
-.lx-sub { margin: 18px 0 0; font-size: 15.5px; line-height: 1.55; color: rgba(255,255,255,0.72); font-weight: 400; }
-
-.lx-quote {
-  margin-top: 36px; padding: 20px 22px;
-  background: rgba(255,255,255,0.06);
-  border: 1px solid rgba(255,255,255,0.12);
-  border-radius: 14px;
-  backdrop-filter: blur(6px);
-}
-.lx-quote p { margin: 0; font-size: 14.5px; line-height: 1.6; color: rgba(255,255,255,0.88); font-style: italic; }
-.lx-quote-by { display: flex; align-items: center; gap: 11px; margin-top: 16px; }
-.lx-avatar {
-  width: 36px; height: 36px; border-radius: 50%; flex-shrink: 0;
-  background: linear-gradient(135deg, #6FE0A8, #3F4CED);
-  display: flex; align-items: center; justify-content: center;
-  font-size: 12.5px; font-weight: 700; color: #fff;
-}
-.lx-quote-name { font-size: 13.5px; font-weight: 600; color: #fff; }
-.lx-quote-role { font-size: 12px; color: rgba(255,255,255,0.55); margin-top: 1px; }
+.lx-sub { margin: 20px 0 0; font-size: 18px; line-height: 1.55; color: rgba(255,255,255,0.72); font-weight: 400; }
 
 .lx-brand-foot {
   margin-top: 36px; display: flex; gap: 24px;
@@ -254,30 +231,14 @@ export function LoginScreen({ onLogin }) {
         <div className="lx-logo">Xpanse</div>
 
         <div className="lx-brand-mid">
-          <span className="lx-eyebrow">
-            <span className="lx-dot"/>
-            Loan Origination System
-          </span>
           <h1 className="lx-headline">
-            The <span className="lx-accent">AI-native</span> loan origination system.
+            Welcome to your<br/>
+            <span className="lx-accent">mortgage workspace</span>.
           </h1>
-          <p className="lx-sub">Originate, underwrite, and close faster — with an AI copilot working every file alongside your team.</p>
-
-          <figure className="lx-quote" style={{ margin: 0 }}>
-            <p>"We cut our average time-to-clear-to-close by nine days in the first quarter on Xpanse. The copilot catches conditions before they become delays."</p>
-            <figcaption className="lx-quote-by">
-              <div className="lx-avatar">MR</div>
-              <div>
-                <div className="lx-quote-name">Maya Reyes</div>
-                <div className="lx-quote-role">VP of Lending, Meridian Mortgage</div>
-              </div>
-            </figcaption>
-          </figure>
+          <p className="lx-sub">Access to view your pipeline, manage tasks, and keep loans moving in one secure place.</p>
         </div>
 
         <div className="lx-brand-foot">
-          <span>SOC 2 Type II</span>
-          <span>256-bit encryption</span>
           <span>© 2026 Xpanse</span>
         </div>
       </aside>
