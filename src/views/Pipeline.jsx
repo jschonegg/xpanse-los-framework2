@@ -1162,11 +1162,20 @@ export function PipelineView({ onOpenLoan, persona = 'LO', intent }) {
               {viewMode === 'tasks' ? 'Tasks' : 'Pipeline'}
             </h1>
 
-            {/* Subtle view-mode toggle — sibling of the heading */}
-            <div role="tablist" aria-label="Pipeline view mode" style={{
-              display: 'inline-flex', background: 'var(--bg-muted)',
+            {/* DEMO label + view-mode toggle share one pill so the (gray)
+                label reads as attached to the Pipeline/Tasks/Hybrid switch. */}
+            <div style={{
+              display: 'inline-flex', alignItems: 'center', background: 'var(--bg-muted)',
               borderRadius: 7, padding: 2, gap: 1,
             }}>
+              <span title="For demonstration purposes only" style={{
+                display: 'inline-flex', alignItems: 'center', flexShrink: 0,
+                padding: '4px 9px', marginRight: 2,
+                borderRight: '1px solid var(--border-default)',
+                fontSize: 10.5, fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase',
+                color: 'var(--text-tertiary)',
+              }}>Demo</span>
+              <div role="tablist" aria-label="Pipeline view mode" style={{ display: 'inline-flex', gap: 1 }}>
               {[
                 { id: 'pipeline', label: 'Pipeline' },
                 { id: 'tasks',    label: 'Tasks' },
@@ -1189,6 +1198,7 @@ export function PipelineView({ onOpenLoan, persona = 'LO', intent }) {
                   </button>
                 );
               })}
+              </div>
             </div>
           </div>
 
