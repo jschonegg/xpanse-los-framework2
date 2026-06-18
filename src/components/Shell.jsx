@@ -2,6 +2,9 @@ import React from 'react';
 import { Icon } from './Icon';
 import { flags } from '../flags';
 import { IMSLogoMonogram } from './IMSLogo';
+import { LOANS } from '../data/loans';
+import { getRecentLoans } from '../recents';
+import { loanTabLabel } from '../workflows/workflowModel';
 
 // Xpanse primary X mark — inlined SVG from the design system
 // (Logo/Xpanse_Primary.svg). Used in the LeftNav rail.
@@ -96,9 +99,102 @@ export const USER_BY_PERSONA = {
 };
 export function userForPersona(persona) { return USER_BY_PERSONA[persona] || USER_BY_PERSONA.LO; }
 
-export function LeftNav({ route, onNavigate, onOpenCmd, onOpenPrefs, onLogoClick, persona }) {
+function initialsFor(loan) {
+  if (loan.initials) return loan.initials;
+  return (loan.borrower || '').split(' ').map(w => w[0]).filter(Boolean).slice(0, 2).join('').toUpperCase();
+}
+
+// One row in the Recents menu — a loan you opened recently. `tab` is the loan
+// page you were last on; we show it as a pill and reopen the loan there.
+function RecentRow({ loan, tab, onClick }) {
+  const [hover, setHover] = React.useState(false);
+  const pageLabel = loanTabLabel(tab) || 'Tasks';
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      onMouseEnter={() => setHover(true)}
+      onMouseLeave={() => setHover(false)}
+      style={{
+        width: '100%', display: 'flex', alignItems: 'center', gap: 10,
+        padding: '8px', borderRadius: 8, border: 'none', cursor: 'pointer',
+        background: hover ? 'var(--bg-muted)' : 'transparent', textAlign: 'left',
+        fontFamily: 'inherit', transition: 'background 0.1s',
+      }}
+    >
+      <Avatar initials={initialsFor(loan)} size={30} color={loan.avatarColor || '#5246C7'} />
+      <div style={{ flex: 1, minWidth: 0 }}>
+        <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-primary)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{loan.borrower}</div>
+        <div style={{ fontSize: 11.5, color: 'var(--text-tertiary)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+          {loan.id} · {loan.status}
+        </div>
+      </div>
+      <span title={`Last on: ${pageLabel}`} style={{
+        flexShrink: 0, maxWidth: 96, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
+        fontSize: 11, fontWeight: 600, color: 'var(--text-secondary)',
+        background: 'var(--bg-muted)', border: '1px solid var(--border-subtle)',
+        padding: '2px 8px', borderRadius: 6,
+      }}>{pageLabel}</span>
+    </button>
+  );
+}
+
+// Popover anchored to the left rail's Recents button — lists the loans the user
+// opened most recently (newest first), resolved from the shared recents store.
+function RecentsMenu({ onClose, onOpenLoan }) {
+  const entries = getRecentLoans()
+    .map(e => ({ loan: LOANS.find(l => l.id === e.id), tab: e.tab }))
+    .filter(e => e.loan);
+
+  React.useEffect(() => {
+    const onKey = (e) => { if (e.key === 'Escape') onClose(); };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [onClose]);
+
+  return (
+    <div className="recents-menu" role="menu" style={{
+      position: 'absolute', top: 0, left: 'calc(100% + 10px)', zIndex: 80,
+      width: 300, maxHeight: 'min(70vh, 560px)', display: 'flex', flexDirection: 'column',
+      background: 'var(--bg-surface)', border: '1px solid var(--border-subtle)',
+      borderRadius: 12, boxShadow: '0 12px 40px rgba(0,0,0,0.20)', overflow: 'hidden',
+    }}>
+      <div style={{ padding: '12px 14px 10px', borderBottom: '1px solid var(--border-subtle)', display: 'flex', alignItems: 'center', gap: 8 }}>
+        <Icon name="clock" size={14} color="var(--text-tertiary)" />
+        <span style={{ fontSize: 13, fontWeight: 700, color: 'var(--text-primary)' }}>Recent loans</span>
+        {entries.length > 0 && <span style={{ marginLeft: 'auto', fontSize: 11, color: 'var(--text-tertiary)' }}>{entries.length}</span>}
+      </div>
+      {entries.length === 0 ? (
+        <div style={{ padding: '24px 16px', fontSize: 12.5, color: 'var(--text-tertiary)', textAlign: 'center', lineHeight: 1.5 }}>
+          No recently opened loans yet.<br />Open a loan and it'll show up here.
+        </div>
+      ) : (
+        <div style={{ overflowY: 'auto', padding: 6 }}>
+          {entries.map(({ loan, tab }) => (
+            <RecentRow key={loan.id} loan={loan} tab={tab} onClick={() => onOpenLoan(loan.id, tab)} />
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+export function LeftNav({ route, onNavigate, onOpenLoan, onOpenCmd, onOpenPrefs, onLogoClick, persona }) {
   const navUser = userForPersona(persona);
   const logoInteractive = flags.logoToLogin && typeof onLogoClick === 'function';
+  const [recentsOpen, setRecentsOpen] = React.useState(false);
+
+  // Close the Recents menu on outside click (the trigger and menu both carry
+  // marker classes so clicks inside either are ignored).
+  React.useEffect(() => {
+    if (!recentsOpen) return;
+    const onDown = (e) => {
+      if (e.target.closest('.recents-menu, .recents-trigger')) return;
+      setRecentsOpen(false);
+    };
+    document.addEventListener('mousedown', onDown);
+    return () => document.removeEventListener('mousedown', onDown);
+  }, [recentsOpen]);
   // Polished icon set (flag: leftNavPolish):
   //   pipeline: 'pipeline' (bar chart) → 'listCheck' (list of files in pipeline)
   //   feed:     'bell'     (alerts)    → 'sparkle' (AI insights feed)
@@ -111,6 +207,7 @@ export function LeftNav({ route, onNavigate, onOpenCmd, onOpenPrefs, onLogoClick
     // Feed link removed from the global nav for now — uncomment to bring it back.
     // { id: 'feed',     icon: flags.leftNavPolish ? 'sparkle'   : 'bell',     label: 'Feed',     kind: 'route', hideFor: ['Consumer'] },
     { id: 'search',   icon: 'search', label: 'Search (⌘K)', kind: 'action', hideFor: ['Consumer'] },
+    { id: 'recents',  icon: 'clock',  label: 'Recents', kind: 'recents', hideFor: ['Consumer'] },
   ];
   const allBottom = [
     { id: 'admin',    icon: 'sliders',  label: 'Admin Console', kind: 'route', hideFor: ['Consumer', 'LO', 'Processor', 'Underwriter'] },
@@ -161,13 +258,30 @@ export function LeftNav({ route, onNavigate, onOpenCmd, onOpenPrefs, onLogoClick
 
       {/* Top items */}
       {topItems.map(item => (
-        <LeftNavItem
-          key={item.id}
-          icon={item.icon}
-          label={item.label}
-          active={item.kind === 'route' && route === item.id}
-          onClick={() => handle(item)}
-        />
+        item.kind === 'recents' ? (
+          <div key={item.id} className="recents-trigger" style={{ position: 'relative', width: '100%', display: 'flex', justifyContent: 'center' }}>
+            <LeftNavItem
+              icon={item.icon}
+              label={item.label}
+              active={recentsOpen}
+              onClick={() => setRecentsOpen(o => !o)}
+            />
+            {recentsOpen && (
+              <RecentsMenu
+                onClose={() => setRecentsOpen(false)}
+                onOpenLoan={(id, tab) => { setRecentsOpen(false); if (onOpenLoan) onOpenLoan(id, tab); }}
+              />
+            )}
+          </div>
+        ) : (
+          <LeftNavItem
+            key={item.id}
+            icon={item.icon}
+            label={item.label}
+            active={item.kind === 'route' && route === item.id}
+            onClick={() => handle(item)}
+          />
+        )
       ))}
 
       <div style={{ flex: 1 }} />

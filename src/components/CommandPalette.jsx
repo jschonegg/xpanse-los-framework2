@@ -1,6 +1,7 @@
 import React from 'react';
 import ReactDOM from 'react-dom';
 import { Icon } from './Icon';
+import { getRecentLoanIds, pushRecentLoan } from '../recents';
 
 const LOANS = [
   { id: 'LN-2024-0234', borrower: 'Sarah Anderson', property: '1842 Oak Street, Denver CO', status: 'Underwriting', amount: '$425K', health: 90, initials: 'SA', color: '#A8541C' },
@@ -28,16 +29,6 @@ const statusColor = {
 };
 
 function healthColor(s) { return s >= 75 ? '#3DB371' : s >= 50 ? '#E0A23A' : '#D74C3C'; }
-
-// Recent loans stored in localStorage
-const RECENT_KEY = 'los-recent-loans';
-function getRecent() {
-  try { return JSON.parse(localStorage.getItem(RECENT_KEY)) || []; } catch { return []; }
-}
-function pushRecent(loanId) {
-  const prev = getRecent().filter(id => id !== loanId);
-  localStorage.setItem(RECENT_KEY, JSON.stringify([loanId, ...prev].slice(0, 3)));
-}
 
 function exportCSV() {
   const headers = ['ID', 'Borrower', 'Property', 'Status', 'Amount', 'Health Score'];
@@ -76,8 +67,9 @@ export function CommandPalette({ onClose, onNavigate, onOpenLoan, onOpenAi, onOp
     const items = [];
 
     if (!q) {
-      // Recent loans first
-      const recentIds = getRecent();
+      // Recent loans first — show the top few here; the full history lives in
+      // the left-nav Recents menu.
+      const recentIds = getRecentLoanIds().slice(0, 3);
       const recentLoans = recentIds.map(id => LOANS.find(l => l.id === id)).filter(Boolean);
       if (recentLoans.length) items.push(...recentLoans.map(l => ({ type: 'loan', recent: true, ...l })));
 
@@ -92,7 +84,7 @@ export function CommandPalette({ onClose, onNavigate, onOpenLoan, onOpenAi, onOp
       );
 
       // All loans (excluding recent already shown)
-      const shownIds = new Set(getRecent());
+      const shownIds = new Set(recentIds);
       items.push(...LOANS.filter(l => !shownIds.has(l.id)).map(l => ({ type: 'loan', ...l })));
     } else {
       const matchedActions = [
@@ -127,7 +119,7 @@ export function CommandPalette({ onClose, onNavigate, onOpenLoan, onOpenAi, onOp
       else if (item.id === 'at-risk') { onClose(); onNavigate('home'); }
       else if (item.id === 'export') { exportCSV(); showToast('Exported pipeline-' + new Date().toISOString().slice(0,10) + '.csv'); }
     } else if (item.type === 'loan') {
-      pushRecent(item.id);
+      pushRecentLoan(item.id);
       setSelectedLoan(item);
       setMode('loan');
       setQuery('');
