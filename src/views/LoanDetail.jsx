@@ -560,7 +560,7 @@ function LoanHeader({ meta, loan, loanId, onNavigatePipeline, onOpenComms }) {
         </>
       )}
 
-      <HeaderStat label="Est. Closing" value={meta?.closing || '2026-06-30'}/>
+      <HeaderStat label="Est. Closing" value={isoToHuman(meta?.closing || '2026-06-30')}/>
 
       {/* Disclosure send dates */}
       <HeaderStat label="Last LE Sent" value={isoToHuman(discDates.leSent)}/>
@@ -2045,7 +2045,7 @@ const TRID_ITEMS = [
   { key: 'ssn',       label: 'Social Security #' },
   { key: 'property',  label: 'Property address' },
   { key: 'propValue', label: 'Est. property value' },
-  { key: 'amount',    label: 'Loan amount sought' },
+  { key: 'amount',    label: 'Loan amount' },
 ];
 
 // Quick-scan doc statuses: Rate / LE / CD — derived from the canonical
@@ -2145,23 +2145,7 @@ function LoanStatusBar({ meta, loan }) {
       <div style={{ width: 1, height: 22, background: 'var(--border-subtle)', flexShrink: 0 }}/>
 
       {/* TRID tracker */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexShrink: 0 }}>
-        <span style={{
-          fontSize: 10.5, fontWeight: 700, color: 'var(--text-tertiary)',
-          letterSpacing: '0.06em', textTransform: 'uppercase',
-        }}>
-          TRID
-        </span>
-        <span style={{
-          fontFamily: 'DM Sans', fontSize: 12, fontWeight: 600,
-          color: isComplete ? 'var(--status-green)' : 'var(--text-primary)',
-        }}>
-          {trid.received}<span style={{ color: 'var(--text-tertiary)' }}>/{trid.total}</span>
-        </span>
-        <div style={{ display: 'flex', gap: 5 }}>
-          {trid.items.map(item => <TridDot key={item.key} item={item}/>)}
-        </div>
-      </div>
+      <TridTracker trid={trid} isComplete={isComplete}/>
 
     </div>
   );
@@ -2407,41 +2391,96 @@ function ProgressInsightPopover({ meta, loan }) {
   );
 }
 
-function TridDot({ item }) {
-  const [hover, setHover] = React.useState(false);
+/* TRID tracker in the status bar — hovering the dots (or any one dot) opens a
+   single popover listing all six TRID data points, with the dot you're hovering
+   highlighted in the list. Mirrors the parties popover: shared open/hover state
+   plus a small grace period so the cursor can travel onto the popover. */
+function TridTracker({ trid, isComplete }) {
+  const [open, setOpen] = React.useState(false);
+  const [hoveredKey, setHoveredKey] = React.useState(null);
+  const closeTimer = React.useRef(null);
+  const openNow = () => { clearTimeout(closeTimer.current); setOpen(true); };
+  const closeSoon = () => { clearTimeout(closeTimer.current); closeTimer.current = setTimeout(() => { setOpen(false); setHoveredKey(null); }, 140); };
+
   return (
     <div
-      style={{ position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'center', width: 14, height: 14 }}
-      onMouseEnter={() => setHover(true)}
-      onMouseLeave={() => setHover(false)}
+      style={{ position: 'relative', display: 'flex', alignItems: 'center', gap: 10, flexShrink: 0 }}
+      onMouseEnter={openNow}
+      onMouseLeave={closeSoon}
     >
-      <div style={{
-        width: 10, height: 10, borderRadius: 999,
-        background: item.received ? 'var(--status-green)' : 'transparent',
-        border: item.received ? 'none' : '1.5px solid var(--border-default)',
-        cursor: 'pointer',
-        transition: 'all 0.15s',
-      }}/>
-      {hover && (
-        <div role="tooltip" style={{
-          position: 'absolute', top: 'calc(100% + 8px)', right: -6,
-          background: '#0F1014', color: '#fff',
-          padding: '6px 10px', borderRadius: 6,
-          fontSize: 11.5, fontWeight: 500, lineHeight: 1.4,
-          whiteSpace: 'nowrap', zIndex: 60,
-          boxShadow: '0 6px 20px rgba(0,0,0,0.22)',
-        }}>
-          {/* Arrow */}
+      <span style={{
+        fontSize: 10.5, fontWeight: 700, color: 'var(--text-tertiary)',
+        letterSpacing: '0.06em', textTransform: 'uppercase',
+      }}>
+        TRID
+      </span>
+      <span style={{
+        fontFamily: 'DM Sans', fontSize: 12, fontWeight: 600,
+        color: isComplete ? 'var(--status-green)' : 'var(--text-primary)',
+      }}>
+        {trid.received}<span style={{ color: 'var(--text-tertiary)' }}>/{trid.total}</span>
+      </span>
+      <div style={{ display: 'flex', gap: 5 }}>
+        {trid.items.map(item => (
+          <div
+            key={item.key}
+            style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: 14, height: 14 }}
+            onMouseEnter={() => { openNow(); setHoveredKey(item.key); }}
+          >
+            <div style={{
+              width: 10, height: 10, borderRadius: 999,
+              background: item.received ? 'var(--status-green)' : 'transparent',
+              border: item.received ? 'none' : '1.5px solid var(--border-default)',
+              outline: hoveredKey === item.key ? '2px solid var(--ai-primary)' : 'none',
+              outlineOffset: 1,
+              cursor: 'default',
+              transition: 'outline 0.1s',
+            }}/>
+          </div>
+        ))}
+      </div>
+
+      {open && (
+        <div
+          onMouseEnter={openNow}
+          onMouseLeave={closeSoon}
+          style={{
+            position: 'absolute', top: 'calc(100% + 8px)', right: 0, zIndex: 600,
+            minWidth: 232, whiteSpace: 'normal',
+            background: 'var(--bg-surface)', border: '1px solid var(--border-subtle)',
+            borderRadius: 10, boxShadow: '0 10px 32px rgba(0,0,0,0.16)', padding: '8px',
+          }}>
+          {/* Arrow pointing up at the dots */}
           <div style={{
-            position: 'absolute', bottom: '100%', right: 9,
-            width: 0, height: 0,
-            borderLeft: '5px solid transparent', borderRight: '5px solid transparent',
-            borderBottom: '5px solid #0F1014',
+            position: 'absolute', top: -5, right: 18, width: 9, height: 9,
+            background: 'var(--bg-surface)', borderLeft: '1px solid var(--border-subtle)',
+            borderTop: '1px solid var(--border-subtle)', transform: 'rotate(45deg)',
           }}/>
-          {item.label}{' '}
-          <span style={{ color: item.received ? '#7ED4A1' : 'rgba(255,255,255,0.55)' }}>
-            · {item.received ? 'Received' : 'Pending'}
-          </span>
+          <div style={{ fontSize: 9.5, fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase', color: 'var(--text-tertiary)', padding: '2px 6px 5px' }}>
+            TRID 6 · {trid.received}/{trid.total} received
+          </div>
+          {trid.items.map(item => (
+            <div key={item.key}
+              onMouseEnter={() => { openNow(); setHoveredKey(item.key); }}
+              style={{
+                display: 'flex', alignItems: 'center', gap: 9, padding: '5px 6px', borderRadius: 7,
+                background: hoveredKey === item.key ? 'var(--bg-muted)' : 'transparent',
+                transition: 'background 0.1s',
+              }}>
+              <div style={{
+                width: 16, height: 16, borderRadius: '50%', flexShrink: 0,
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                background: item.received ? 'var(--status-green)' : 'transparent',
+                border: item.received ? 'none' : '1.5px solid var(--border-default)',
+              }}>
+                {item.received && <Icon name="check" size={10} color="#fff" strokeWidth={2.5}/>}
+              </div>
+              <div style={{ flex: 1, minWidth: 0, fontSize: 12.5, fontWeight: 600, color: 'var(--text-primary)' }}>{item.label}</div>
+              <span style={{ fontSize: 11, fontWeight: 500, flexShrink: 0, color: item.received ? 'var(--status-green)' : 'var(--text-tertiary)' }}>
+                {item.received ? 'Received' : 'Pending'}
+              </span>
+            </div>
+          ))}
         </div>
       )}
     </div>
