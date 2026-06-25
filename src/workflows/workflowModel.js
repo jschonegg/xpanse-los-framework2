@@ -69,6 +69,19 @@ export function makeCustomPage(label) {
 // page id → Loan Level View content tab id (used by the loan nav renderer).
 export const PAGE_CONTENT_TAB = AVAILABLE_PAGES.reduce((m, p) => { m[p.id] = p.tab; return m; }, {});
 
+// content tab id → human label (for breadcrumbs, the Recents menu, etc.).
+// Built from the fixed system links plus every placeable page.
+const TAB_LABEL = [...FIXED_SYSTEM_LINKS, ...AVAILABLE_PAGES].reduce((m, p) => {
+  if (!(p.tab in m)) m[p.tab] = p.label;
+  return m;
+}, {});
+export function loanTabLabel(tab) {
+  if (!tab) return null;
+  if (TAB_LABEL[tab]) return TAB_LABEL[tab];
+  // Custom pages use a `custom_foo_bar` tab id — title-case it as a fallback.
+  return tab.replace(/^custom_/, '').replace(/[_-]+/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
+}
+
 // Suggested section names admins commonly use (free-form titles still allowed).
 export const SECTION_NAME_SUGGESTIONS = [
   'Forms', 'Workspaces', 'Review', 'Closing', 'Intake', 'Processing', 'Decisioning', 'Audit',

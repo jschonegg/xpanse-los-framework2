@@ -15,6 +15,7 @@ import { LargeDepositReviewView } from './views/LargeDepositReview';
 import { PreferencesModal } from './components/PreferencesModal';
 import { AdminWorkflowsView } from './views/AdminWorkflows';
 import { WorkflowProvider } from './workflows/WorkflowContext';
+import { pushRecentLoan, setRecentLoanTab } from './recents';
 import { flags } from './flags';
 // import { PersonaStubHome } from './views/PersonaStubHome'; // Underwriter now shares the LO HomeView
 import { AdminHomeView } from './views/AdminHome';
@@ -145,10 +146,17 @@ export default function App() {
   };
   const openLoan = (id, tab) => {
     setCurrentLoan(id); localStorage.setItem('los-loan', id);
+    // Remember the tab the loan will actually show (the explicit tab if given,
+    // otherwise the tab currently in play) so Recents reflects where you were.
+    pushRecentLoan(id, tab || loanTab);
     if (tab) { setLoanTab(tab); localStorage.setItem('los-loan-tab', tab); }
     navigate('loan');
   };
-  const changeLoanTab = (t) => { setLoanTab(t); localStorage.setItem('los-loan-tab', t); };
+  const changeLoanTab = (t) => {
+    setLoanTab(t); localStorage.setItem('los-loan-tab', t);
+    // Keep the loan's remembered tab current as you move around inside it.
+    setRecentLoanTab(currentLoan, t);
+  };
   const openURLA = (name) => {
     const year = new Date().getFullYear();
     const id = `LN-${year}-${String(Math.floor(Math.random() * 900) + 100).padStart(4, '0')}`;
@@ -184,6 +192,7 @@ export default function App() {
         route={route}
         persona={persona}
         onNavigate={navigate}
+        onOpenLoan={openLoan}
         onOpenCmd={() => setCmdOpen(true)}
         onOpenPrefs={() => setPrefsOpen(true)}
         onLogoClick={() => {
